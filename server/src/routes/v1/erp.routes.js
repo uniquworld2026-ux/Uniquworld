@@ -27,8 +27,9 @@ const requireAdminAccess = (req, res, next) => {
 router.get('/modules', requireAdminAccess, erpController.listModules);
 router.get('/dashboard', requireAdminAccess, erpController.dashboardSummary);
 
-/** Public ERP staff login (admin_users email + password) */
+/** Public ERP staff login (admin_users email + password → OTP) */
 router.post('/auth/login', erpController.adminLogin);
+router.post('/auth/verify-otp', erpController.adminVerifyOtp);
 
 router.get('/commerce/orders', requireAdminAccess, erpController.listOrders);
 router.patch('/commerce/orders/:id', requireAdminAccess, erpController.updateOrderStatus);

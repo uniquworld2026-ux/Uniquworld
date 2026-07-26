@@ -1,14 +1,23 @@
 const nodemailer = require('nodemailer');
 const config = require('../config');
 const logger = require('../utils/logger');
+const templates = require('../templates/email.templates');
 
 let transporter = null;
+
+const isSmtpConfigured = () => {
+  const user = config.smtp.user || '';
+  const pass = config.smtp.pass || '';
+  if (!config.smtp.host || !user || !pass) return false;
+  if (user.includes('your-email') || pass.includes('your-app-password')) return false;
+  return true;
+};
 
 const getTransporter = () => {
   if (transporter) return transporter;
 
-  if (!config.smtp.host || !config.smtp.user) {
-    logger.warn('SMTP not configured — emails will be logged to console in development');
+  if (!isSmtpConfigured()) {
+    logger.warn('SMTP not configured — emails will be logged to console');
     return null;
   }
 
@@ -30,51 +39,56 @@ const getTransporter = () => {
  */
 const sendMail = async ({ to, subject, html, text }) => {
   const transport = getTransporter();
-  const from = `"${config.smtp.fromName}" <${config.smtp.fromEmail}>`;
+  const from = `"${config.smtp.fromName}" <${config.smtp.fromEmail || config.smtp.user}>`;
 
   if (!transport) {
-    logger.info('[DEV EMAIL]', { to, subject, text: text || html });
+    logger.info('[DEV EMAIL]', { to, subject, text: text || '(html)' });
     return { messageId: 'dev-console', accepted: [to] };
   }
 
-  return transport.sendMail({ from, to, subject, html, text });
+  try {
+    const result = await transport.sendMail({ from, to, subject, html, text });
+    logger.info('Email sent', { to, subject, messageId: result.messageId });
+    return result;
+  } catch (err) {
+    logger.error('Email send failed', { to, subject, message: err.message });
+    throw err;
+  }
 };
 
 const sendOtpEmail = async ({ to, code, purpose, firstName }) => {
-  const purposeLabel = {
-    email_verification: 'Email Verification',
-    password_reset: 'Password Reset',
-    login: 'Login Verification',
-    phone_verification: 'Phone Verification',
-  }[purpose] || 'Verification';
-
-  const subject = `${config.appName} — ${purposeLabel} OTP`;
-  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
-  const text = `${greeting}\n\nYour OTP is ${code}. It expires in ${config.otp.expiresInMinutes} minutes.\n\nIf you did not request this, ignore this email.`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">
-      <h2>${config.appName}</h2>
-      <p>${greeting}</p>
-      <p>Your <strong>${purposeLabel}</strong> OTP is:</p>
-      <p style="font-size:28px;letter-spacing:6px;font-weight:bold">${code}</p>
-      <p>This code expires in <strong>${config.otp.expiresInMinutes} minutes</strong>.</p>
-      <p style="color:#666;font-size:12px">If you did not request this, you can safely ignore this email.</p>
-    </div>
-  `;
-
+  const { subject, html, text } = templates.otpEmail({
+    code,
+    purpose,
+    firstName,
+    expiresInMinutes: config.otp.expiresInMinutes,
+  });
   return sendMail({ to, subject, html, text });
 };
 
 const sendWelcomeEmail = async ({ to, firstName }) => {
-  const subject = `Welcome to ${config.appName}`;
-  const text = `Hi ${firstName},\n\nWelcome to ${config.appName}! Your account is ready.`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">
-      <h2>Welcome to ${config.appName}</h2>
-      <p>Hi ${firstName},</p>
-      <p>Your account has been created successfully. Happy shopping!</p>
-    </div>
-  `;
+  const { subject, html, text } = templates.welcomeEmail({ firstName });
+  return sendMail({ to, subject, html, text });
+};
+
+const sendPasswordResetSuccessEmail = async ({ to, firstName }) => {
+  const { subject, html, text } = templates.passwordResetSuccessEmail({ firstName });
+  return sendMail({ to, subject, html, text });
+};
+
+const sendOrderEmail = async ({ to, firstName, orderNumber, title, message, totalLabel }) => {
+  const { subject, html, text } = templates.orderEmail({
+    firstName,
+    orderNumber,
+    title,
+    message,
+    totalLabel,
+  });
+  return sendMail({ to, subject, html, text });
+};
+
+const sendNotificationEmail = async ({ to, firstName, title, body }) => {
+  const { subject, html, text } = templates.notificationEmail({ firstName, title, body });
   return sendMail({ to, subject, html, text });
 };
 
@@ -82,4 +96,8 @@ module.exports = {
   sendMail,
   sendOtpEmail,
   sendWelcomeEmail,
+  sendPasswordResetSuccessEmail,
+  sendOrderEmail,
+  sendNotificationEmail,
+  isSmtpConfigured,
 };

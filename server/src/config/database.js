@@ -1,6 +1,14 @@
+const dns = require('dns');
 const { Pool } = require('pg');
 const config = require('./index');
 const logger = require('../utils/logger');
+
+// Prefer IPv4 — Render cannot reach Supabase direct DB over IPv6 (ENETUNREACH)
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  // older Node
+}
 
 const pool = new Pool({
   connectionString: config.db.connectionString,

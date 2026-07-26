@@ -3,6 +3,7 @@ import {
   authenticateAdmin,
   clearAdminSession,
   readAdminSession,
+  verifyAdminOtp,
 } from '@/admin/auth/adminAuth'
 
 const AdminAuthContext = createContext(null)
@@ -12,7 +13,15 @@ export function AdminAuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const result = await authenticateAdmin(email, password)
-    if (result.ok) {
+    if (result.ok && result.session) {
+      setSession(result.session)
+    }
+    return result
+  }, [])
+
+  const verifyOtp = useCallback(async (email, code) => {
+    const result = await verifyAdminOtp(email, code)
+    if (result.ok && result.session) {
       setSession(result.session)
     }
     return result
@@ -28,9 +37,10 @@ export function AdminAuthProvider({ children }) {
       session,
       isAuthenticated: Boolean(session),
       login,
+      verifyOtp,
       logout,
     }),
-    [session, login, logout],
+    [session, login, verifyOtp, logout],
   )
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>

@@ -115,6 +115,7 @@ const login = async ({ email, password }, meta = {}) => {
     throw ApiError.forbidden('Account is inactive');
   }
 
+  // Unverified accounts must complete email verification OTP first
   if (!user.email_verified_at || user.status === USER_STATUS.PENDING) {
     const otpMeta = await createAndSendOtp({
       userId: user.id,
@@ -123,22 +124,29 @@ const login = async ({ email, password }, meta = {}) => {
       firstName: user.first_name,
     });
 
-    throw ApiError.forbidden('Email not verified. OTP sent to your email.', [
-      { code: 'EMAIL_NOT_VERIFIED', otp: otpMeta },
-    ]);
+    return {
+      requiresOtp: true,
+      purpose: OTP_PURPOSE.EMAIL_VERIFICATION,
+      email: user.email,
+      message: 'Verify your email with the OTP we just sent, then sign in again.',
+      otp: otpMeta,
+    };
   }
 
-  await userRepository.touchLastLogin(user.id);
-  const tokens = await tokenService.issueTokenPair(user, meta);
-  const permissions = tokens.permissions;
+  // Verified accounts: password OK → send login OTP (no tokens until verified)
+  const otpMeta = await createAndSendOtp({
+    userId: user.id,
+    email: user.email,
+    purpose: OTP_PURPOSE.LOGIN,
+    firstName: user.first_name,
+  });
 
   return {
-    user: toPublicUser({ ...user, permissions }),
-    tokens: {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
-    },
+    requiresOtp: true,
+    purpose: OTP_PURPOSE.LOGIN,
+    email: user.email,
+    message: 'OTP sent to your email. Enter it to complete sign-in.',
+    otp: otpMeta,
   };
 };
 
@@ -204,10 +212,15 @@ const resetPassword = async ({ email, code, newPassword }) => {
   await userRepository.updatePassword(user.id, passwordHash);
   await refreshTokenRepository.revokeAllForUser(user.id);
 
+  await emailService.sendPasswordResetSuccessEmail({
+    to: user.email,
+    firstName: user.first_name,
+  });
+
   return { message: 'Password reset successful. Please login.' };
 };
 
-const verifyOtp = async ({ email, code, purpose }) => {
+const verifyOtp = async ({ email, code, purpose }, meta = {}) => {
   const otp = await verifyOtpCode({ email, purpose, code });
 
   if (purpose === OTP_PURPOSE.EMAIL_VERIFICATION) {
@@ -219,6 +232,39 @@ const verifyOtp = async ({ email, code, purpose }) => {
     } else {
       await userRepository.markEmailVerified(userId);
     }
+
+    const user = await userRepository.findByEmail(email);
+    return {
+      verified: true,
+      purpose,
+      message: 'Email verified. Sign in with your password to receive a login OTP.',
+      user: toPublicUser(user),
+    };
+  }
+
+  if (purpose === OTP_PURPOSE.LOGIN) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) throw ApiError.notFound('User not found');
+    if (user.status === USER_STATUS.BANNED) {
+      throw ApiError.forbidden('Account is banned');
+    }
+    if (user.status === USER_STATUS.INACTIVE) {
+      throw ApiError.forbidden('Account is inactive');
+    }
+
+    await userRepository.touchLastLogin(user.id);
+    const tokens = await tokenService.issueTokenPair(user, meta);
+
+    return {
+      verified: true,
+      purpose,
+      user: toPublicUser({ ...user, permissions: tokens.permissions }),
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+      },
+    };
   }
 
   const user = await userRepository.findByEmail(email);

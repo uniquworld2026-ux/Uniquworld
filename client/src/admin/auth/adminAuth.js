@@ -49,9 +49,7 @@ function sessionFromUser(user) {
 }
 
 /**
- * Authenticate against ERP admin_users (email + password).
- * Falls back to bootstrap credentials only if the API is unreachable / user not found.
- * @returns {Promise<{ ok: true, session: object } | { ok: false, error: string }>}
+ * Step 1 — password check; returns requiresOtp when email OTP was sent.
  */
 export async function authenticateAdmin(email, password) {
   const normalized = String(email || '').trim().toLowerCase()
@@ -62,13 +60,25 @@ export async function authenticateAdmin(email, password) {
   }
 
   try {
-    const user = await erpApi.adminLogin(normalized, pass)
-    return { ok: true, session: sessionFromUser(user) }
+    const data = await erpApi.adminLogin(normalized, pass)
+    if (data?.requiresOtp) {
+      return {
+        ok: true,
+        requiresOtp: true,
+        email: data.email || normalized,
+        purpose: data.purpose,
+        message: data.message,
+        devOtp: data?.otp?.devOtp,
+      }
+    }
+    if (data?.user || data?.id) {
+      return { ok: true, session: sessionFromUser(data.user || data) }
+    }
+    return { ok: false, error: 'Unexpected login response.' }
   } catch (err) {
     const status = err?.response?.status
     const apiMessage = getErrorMessage(err)
 
-    // Bootstrap fallback for first-time setup when no staff users exist yet
     if (
       normalized === ADMIN_CREDENTIALS.email.toLowerCase() &&
       pass === ADMIN_CREDENTIALS.password
@@ -94,5 +104,23 @@ export async function authenticateAdmin(email, password) {
       ok: false,
       error: apiMessage || 'Unable to reach login service. Check that the API is running.',
     }
+  }
+}
+
+/**
+ * Step 2 — verify admin email OTP and create session.
+ */
+export async function verifyAdminOtp(email, code) {
+  const normalized = String(email || '').trim().toLowerCase()
+  const otp = String(code || '').trim()
+  if (!normalized || !otp) {
+    return { ok: false, error: 'Email and OTP are required.' }
+  }
+
+  try {
+    const user = await erpApi.adminVerifyOtp(normalized, otp)
+    return { ok: true, session: sessionFromUser(user) }
+  } catch (err) {
+    return { ok: false, error: getErrorMessage(err) || 'Invalid or expired OTP.' }
   }
 }

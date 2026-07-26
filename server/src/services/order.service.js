@@ -4,12 +4,42 @@ const addressRepository = require('../repositories/address.repository');
 const orderRepository = require('../repositories/order.repository');
 const notificationRepository = require('../repositories/notification.repository');
 const returnRepository = require('../repositories/return.repository');
+const userRepository = require('../repositories/user.repository');
 const razorpayService = require('./razorpay.service');
 const shiprocketService = require('./shiprocket.service');
+const emailService = require('./email.service');
 
 const calcShipping = (subtotal) => {
   if (subtotal >= config.commerce.freeShippingMin) return 0;
   return config.commerce.defaultShippingAmount;
+};
+
+const notifyUser = async (userId, { title, body, type, data, orderNumber, totalLabel }) => {
+  await notificationRepository.create({ userId, title, body, type, data });
+  try {
+    const user = await userRepository.findById(userId);
+    if (!user?.email) return;
+    if (orderNumber) {
+      await emailService.sendOrderEmail({
+        to: user.email,
+        firstName: user.first_name,
+        orderNumber,
+        title,
+        message: body,
+        totalLabel,
+      });
+    } else {
+      await emailService.sendNotificationEmail({
+        to: user.email,
+        firstName: user.first_name,
+        title,
+        body,
+      });
+    }
+  } catch (err) {
+    // Never fail the main flow if email delivery fails
+    require('../utils/logger').warn('Order notification email failed', { message: err.message });
+  }
 };
 
 const placeOrder = async (userId, payload) => {
@@ -109,12 +139,13 @@ const placeOrder = async (userId, payload) => {
     paymentMethod: dbMethod,
   });
 
-  await notificationRepository.create({
-    userId,
+  await notifyUser(userId, {
     title: `Order ${order.orderNumber} placed`,
     body: 'We received your order and will update you as it progresses.',
     type: 'order',
     data: { orderId: order.id, orderNumber: order.orderNumber },
+    orderNumber: order.orderNumber,
+    totalLabel: totalAmount != null ? `Total: ₹${Number(totalAmount).toFixed(2)}` : undefined,
   });
 
   if (dbMethod === 'cod') {
@@ -218,12 +249,12 @@ const verifyRazorpayPayment = async (userId, payload) => {
     await orderRepository.updateStatus(order.id, 'processing', 'Shipment created with Shiprocket');
   }
 
-  await notificationRepository.create({
-    userId,
+  await notifyUser(userId, {
     title: `Payment received for ${order.orderNumber}`,
     body: 'Your payment was successful. We are preparing your order.',
     type: 'payment',
     data: { orderId: order.id, orderNumber: order.orderNumber },
+    orderNumber: order.orderNumber,
   });
 
   return orderRepository.findByIdForUser(order.id, userId);
@@ -250,12 +281,12 @@ const cancelOrder = async (userId, id, reason) => {
     throw ApiError.badRequest('This order can no longer be cancelled');
   }
   await orderRepository.updateStatus(id, 'cancelled', reason || 'Cancelled by customer', userId);
-  await notificationRepository.create({
-    userId,
+  await notifyUser(userId, {
     title: `Order ${order.orderNumber} cancelled`,
     body: reason || 'Your order was cancelled.',
     type: 'order',
     data: { orderId: order.id },
+    orderNumber: order.orderNumber,
   });
   return orderRepository.findByIdForUser(id, userId);
 };
@@ -277,12 +308,12 @@ const requestReturn = async (userId, orderId, { reason, notes }) => {
     notes,
     refundAmount: order.totalAmount,
   });
-  await notificationRepository.create({
-    userId,
+  await notifyUser(userId, {
     title: `Return requested for ${order.orderNumber}`,
     body: 'We will review your return request shortly.',
     type: 'order',
     data: { orderId, returnId: ret.id },
+    orderNumber: order.orderNumber,
   });
   return ret;
 };

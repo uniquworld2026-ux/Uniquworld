@@ -38,19 +38,81 @@ function Text({ label, type = 'text', register, error }) {
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, isAuthenticated } = useCustomerAuth()
+  const { login, completeLoginWithOtp, isAuthenticated } = useCustomerAuth()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm()
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
+  const [otpStep, setOtpStep] = useState(null)
+  const [otpCode, setOtpCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
   const from = location.state?.from || '/account'
 
   useEffect(() => {
     if (isAuthenticated) navigate(from, { replace: true })
   }, [isAuthenticated, navigate, from])
 
+  if (otpStep) {
+    const isLoginOtp = otpStep.purpose === 'login'
+    return (
+      <AuthShell
+        title={isLoginOtp ? 'Enter login code' : 'Verify email'}
+        subtitle={`We sent a code to ${otpStep.email}`}
+        footer={<Link to="/login" className="text-hm-accent" onClick={() => setOtpStep(null)}>Back</Link>}
+      >
+        <form
+          className="space-y-4"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            setError('')
+            setInfo('')
+            setVerifying(true)
+            try {
+              const data = await completeLoginWithOtp({
+                email: otpStep.email,
+                code: otpCode,
+                purpose: otpStep.purpose,
+              })
+              if (data?.tokens) {
+                navigate(from, { replace: true })
+                return
+              }
+              setInfo(data?.message || 'Email verified. Sign in again to receive your login OTP.')
+              setOtpStep(null)
+              setOtpCode('')
+            } catch (err) {
+              setError(getErrorMessage(err))
+            } finally {
+              setVerifying(false)
+            }
+          }}
+        >
+          {otpStep.devOtp ? (
+            <p className="rounded-xl bg-hm-muted px-3 py-2 text-xs text-hm-text-muted">
+              Dev OTP: <strong className="text-hm-text">{otpStep.devOtp}</strong>
+            </p>
+          ) : null}
+          <input
+            value={otpCode}
+            onChange={(e) => setOtpCode(e.target.value)}
+            placeholder="6-digit OTP"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
+          />
+          {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
+          {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
+          <Button type="submit" variant="primary" className="w-full" disabled={verifying}>
+            {verifying ? 'Verifying…' : isLoginOtp ? 'Verify & sign in' : 'Verify email'}
+          </Button>
+        </form>
+      </AuthShell>
+    )
+  }
+
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in to track orders and saved addresses."
+      subtitle="Sign in with your password — we’ll email a one-time code to finish."
       footer={
         <>
           New here? <Link to="/signup" className="text-hm-accent">Create account</Link>
@@ -63,8 +125,18 @@ export function LoginPage() {
         className="space-y-4"
         onSubmit={handleSubmit(async (values) => {
           setError('')
+          setInfo('')
           try {
-            await login(values.email, values.password)
+            const data = await login(values.email, values.password)
+            if (data?.requiresOtp) {
+              setOtpStep({
+                email: data.email || values.email,
+                purpose: data.purpose,
+                devOtp: data?.otp?.devOtp,
+              })
+              setInfo(data.message || 'OTP sent to your email.')
+              return
+            }
             navigate(from, { replace: true })
           } catch (err) {
             setError(getErrorMessage(err, 'Invalid email or password'))
@@ -74,8 +146,9 @@ export function LoginPage() {
         <Text label="Email" type="email" register={register('email', { required: 'Email required' })} error={errors.email?.message} />
         <Text label="Password" type="password" register={register('password', { required: 'Password required' })} error={errors.password?.message} />
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
+        {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Signing in…' : 'Sign in'}
+          {isSubmitting ? 'Signing in…' : 'Continue'}
         </Button>
       </form>
     </AuthShell>

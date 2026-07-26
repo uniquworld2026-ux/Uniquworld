@@ -16,6 +16,7 @@ const OTP_PURPOSE = Object.freeze({
   EMAIL_VERIFICATION: 'email_verification',
   PASSWORD_RESET: 'password_reset',
   LOGIN: 'login',
+  ADMIN_LOGIN: 'admin_login',
   PHONE_VERIFICATION: 'phone_verification',
 });
 

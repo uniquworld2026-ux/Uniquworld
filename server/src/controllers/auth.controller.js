@@ -14,7 +14,10 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const data = await authService.login(req.body, getRequestMeta(req));
-  return ApiResponse.ok(res, data, 'Login successful');
+  const message = data.requiresOtp
+    ? data.message || 'OTP sent to your email'
+    : 'Login successful';
+  return ApiResponse.ok(res, data, message);
 });
 
 const logout = asyncHandler(async (req, res) => {
@@ -38,7 +41,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {
-  const data = await authService.verifyOtp(req.body);
+  const data = await authService.verifyOtp(req.body, getRequestMeta(req));
   return ApiResponse.ok(res, data, 'OTP verified successfully');
 });
 

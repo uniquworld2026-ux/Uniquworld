@@ -1,10 +1,16 @@
 const asyncHandler = require('../utils/asyncHandler');
 const ApiResponse = require('../utils/ApiResponse');
 const ApiError = require('../utils/ApiError');
+const config = require('../config');
 const erpRepository = require('../repositories/erp.repository');
+const otpRepository = require('../repositories/otp.repository');
+const emailService = require('../services/email.service');
 const { query } = require('../config/database');
 const { rowToApi } = require('../repositories/erp.repository');
 const { hashPassword, comparePassword } = require('../utils/password');
+const { hashToken } = require('../utils/jwt');
+const { generateOtpCode, otpExpiresAt } = require('../utils/otp');
+const { OTP_PURPOSE } = require('../types/enums');
 
 const prepareAdminUserPayload = async (body, { requirePassword = false } = {}) => {
   const payload = { ...(body || {}) };
@@ -63,9 +69,19 @@ const update = asyncHandler(async (req, res) => {
   return ApiResponse.ok(res, { item }, 'Updated');
 });
 
+const toAdminUser = (admin) => ({
+  id: admin.id,
+  name: admin.name,
+  email: admin.email,
+  roleSlug: admin.roleSlug,
+  department: admin.department,
+  avatarUrl: admin.avatarUrl || '',
+  phone: admin.phone || '',
+  status: admin.status,
+});
+
 /**
- * ERP admin panel login — email + password from admin_users.
- * Public (no admin key) so the login screen can authenticate staff.
+ * Step 1 — validate password, email OTP for admin portal.
  */
 const adminLogin = asyncHandler(async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
@@ -86,22 +102,75 @@ const adminLogin = asyncHandler(async (req, res) => {
   const ok = await comparePassword(password, admin.passwordHash);
   if (!ok) throw ApiError.unauthorized('Invalid email or password');
 
-  await erpRepository.touchAdminLogin(admin.id);
+  const code = generateOtpCode();
+  await otpRepository.create({
+    userId: null,
+    email: admin.email,
+    codeHash: hashToken(code),
+    purpose: OTP_PURPOSE.ADMIN_LOGIN,
+    expiresAt: otpExpiresAt(),
+    maxAttempts: config.otp.maxAttempts,
+  });
+
+  await emailService.sendOtpEmail({
+    to: admin.email,
+    code,
+    purpose: OTP_PURPOSE.ADMIN_LOGIN,
+    firstName: admin.name?.split?.(' ')?.[0] || admin.name,
+  });
 
   return ApiResponse.ok(
     res,
     {
-      user: {
-        id: admin.id,
-        name: admin.name,
-        email: admin.email,
-        roleSlug: admin.roleSlug,
-        department: admin.department,
-        avatarUrl: admin.avatarUrl || '',
-        phone: admin.phone || '',
-        status: admin.status,
+      requiresOtp: true,
+      purpose: OTP_PURPOSE.ADMIN_LOGIN,
+      email: admin.email,
+      message: 'OTP sent to your email. Enter it to complete admin sign-in.',
+      otp: {
+        expiresInMinutes: config.otp.expiresInMinutes,
+        ...(config.env === 'development' ? { devOtp: code } : {}),
       },
     },
+    'OTP sent'
+  );
+});
+
+/**
+ * Step 2 — verify admin login OTP and return session user.
+ */
+const adminVerifyOtp = asyncHandler(async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const code = String(req.body?.code || '').trim();
+
+  if (!email || !code) {
+    throw ApiError.badRequest('Email and OTP code are required');
+  }
+
+  const otp = await otpRepository.findLatestActive(email, OTP_PURPOSE.ADMIN_LOGIN);
+  if (!otp) {
+    throw ApiError.badRequest('OTP expired or not found. Request a new one.');
+  }
+  if (otp.attempts >= otp.max_attempts) {
+    throw ApiError.tooManyRequests('Maximum OTP attempts exceeded');
+  }
+
+  if (hashToken(code) !== otp.code_hash) {
+    await otpRepository.incrementAttempts(otp.id);
+    throw ApiError.badRequest('Invalid OTP');
+  }
+
+  await otpRepository.markVerified(otp.id);
+
+  const admin = await erpRepository.findAdminByEmail(email);
+  if (!admin || admin.status !== 'active') {
+    throw ApiError.unauthorized('Admin account not found or inactive');
+  }
+
+  await erpRepository.touchAdminLogin(admin.id);
+
+  return ApiResponse.ok(
+    res,
+    { user: toAdminUser(admin) },
     'Signed in'
   );
 });
@@ -557,4 +626,5 @@ module.exports = {
   listPublicCatalogCategories,
   dashboardSummary,
   adminLogin,
+  adminVerifyOtp,
 };

@@ -25,9 +25,11 @@ export const erpApi = {
   remove: (module, id) =>
     api.delete(`/erp/${module}/${id}`, adminConfig()).then((r) => r.data),
 
-  /** ERP staff login — uses admin_users email + password (no admin key required) */
+  /** ERP staff login — password then email OTP */
   adminLogin: (email, password) =>
-    api.post('/erp/auth/login', { email, password }).then((r) => r.data.data.user),
+    api.post('/erp/auth/login', { email, password }).then((r) => r.data.data),
+  adminVerifyOtp: (email, code) =>
+    api.post('/erp/auth/verify-otp', { email, code }).then((r) => r.data.data.user),
 
   listOrders: (params) =>
     api.get('/erp/commerce/orders', adminConfig({ params })).then((r) => r.data.data.items),

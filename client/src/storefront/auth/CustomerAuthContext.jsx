@@ -31,9 +31,23 @@ export function CustomerAuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const data = await authApi.login({ email, password })
-    tokenStore.set(data.tokens)
-    setUser(data.user)
-    return data.user
+    if (data?.requiresOtp) {
+      return data
+    }
+    if (data?.tokens) {
+      tokenStore.set(data.tokens)
+      setUser(data.user)
+    }
+    return data
+  }, [])
+
+  const completeLoginWithOtp = useCallback(async ({ email, code, purpose }) => {
+    const data = await authApi.verifyOtp({ email, code, purpose })
+    if (data?.tokens) {
+      tokenStore.set(data.tokens)
+      setUser(data.user)
+    }
+    return data
   }, [])
 
   const register = useCallback(async (payload) => {
@@ -66,12 +80,13 @@ export function CustomerAuthProvider({ children }) {
       loading,
       isAuthenticated: Boolean(user),
       login,
+      completeLoginWithOtp,
       register,
       logout,
       refreshUser,
       errorMessage: getErrorMessage,
     }),
-    [user, loading, login, register, logout, refreshUser],
+    [user, loading, login, completeLoginWithOtp, register, logout, refreshUser],
   )
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>
