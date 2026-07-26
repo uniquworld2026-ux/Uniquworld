@@ -1,0 +1,350 @@
+@import 'tailwindcss';
+
+/* ─── Design tokens (CSS variables) ─── */
+:root {
+  /* Shared brand — colorful premium atelier */
+  --hm-font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --hm-font-display: 'Fraunces', Georgia, serif;
+
+  /* Storefront light — soft blush canvas + jewel accents */
+  --hm-bg: #fff6f2;
+  --hm-bg-elevated: #ffffff;
+  --hm-bg-muted: #ffe8df;
+  --hm-surface: rgba(255, 255, 255, 0.78);
+  --hm-surface-solid: #ffffff;
+  --hm-border: rgba(92, 31, 46, 0.1);
+  --hm-radius-sm: 0.5rem;
+  --hm-radius-md: 0.875rem;
+  --hm-radius-lg: 1.25rem;
+  --hm-radius-xl: 1.75rem;
+  --hm-radius-2xl: 2.25rem;
+  --hm-border-strong: rgba(92, 31, 46, 0.18);
+  --hm-text: #24131a;
+  --hm-text-muted: #6d4a55;
+  --hm-text-subtle: #9a7380;
+  --hm-primary: #7a1f3d;
+  --hm-primary-hover: #5c1530;
+  --hm-accent: #e85d4c;
+  --hm-accent-soft: #ff9b88;
+  --hm-accent-muted: rgba(232, 93, 76, 0.14);
+  --hm-teal: #1f8a7a;
+  --hm-gold: #d4af37;
+  --hm-success: #15803d;
+  --hm-offer: #15803d;
+  --hm-offer-muted: rgba(21, 128, 61, 0.12);
+  --hm-star: #d4af37;
+  --hm-warning: #d4a017;
+  --hm-danger: #c2314a;
+  --hm-ring: rgba(232, 93, 76, 0.4);
+  --hm-shadow: rgba(92, 31, 46, 0.1);
+  --hm-overlay: rgba(36, 19, 26, 0.48);
+
+  /* Admin light */
+  --admin-bg: #f4f5f7;
+  --admin-bg-elevated: #ffffff;
+  --admin-bg-muted: #ebedf0;
+  --admin-sidebar: #1a1612;
+  --admin-sidebar-hover: #25201b;
+  --admin-sidebar-text: #e8dfd4;
+  --admin-sidebar-muted: #9a8b7c;
+  --admin-sidebar-active: #b8956c;
+  --admin-sidebar-active-bg: rgba(184, 149, 108, 0.12);
+  --admin-border: #e2e5ea;
+  --admin-text: #1a1d23;
+  --admin-text-muted: #6b7280;
+  --admin-primary: #4a3426;
+  --admin-accent: #b8956c;
+  --admin-success: #059669;
+  --admin-warning: #d97706;
+  --admin-danger: #dc2626;
+  --admin-info: #2563eb;
+  --admin-ring: rgba(184, 149, 108, 0.4);
+  --admin-shadow: rgba(26, 29, 35, 0.08);
+  --admin-sidebar-width: 272px;
+  --admin-sidebar-collapsed: 80px;
+  --admin-header-height: 64px;
+
+  /* Sticky header clearance: announcement + utility + menubar */
+  --hm-header-offset: 8.25rem;
+
+  color-scheme: light;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --hm-header-offset: 8.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --hm-header-offset: 9.25rem;
+  }
+}
+
+.dark {
+  --hm-bg: #140c10;
+  --hm-bg-elevated: #1e1218;
+  --hm-bg-muted: #2a1820;
+  --hm-surface: rgba(30, 18, 24, 0.82);
+  --hm-surface-solid: #1e1218;
+  --hm-border: rgba(255, 214, 204, 0.12);
+  --hm-border-strong: rgba(255, 214, 204, 0.2);
+  --hm-text: #fff1ec;
+  --hm-text-muted: #d2aeb8;
+  --hm-text-subtle: #a07f8c;
+  --hm-primary: #ffb4a4;
+  --hm-primary-hover: #ffd2c8;
+  --hm-accent: #ff7a68;
+  --hm-accent-soft: #ff9b88;
+  --hm-accent-muted: rgba(255, 122, 104, 0.18);
+  --hm-teal: #3db8a6;
+  --hm-gold: #e8c44a;
+  --hm-success: #4ade80;
+  --hm-offer: #4ade80;
+  --hm-offer-muted: rgba(74, 222, 128, 0.16);
+  --hm-star: #e8c44a;
+  --hm-warning: #e8c04a;
+  --hm-danger: #ff6b81;
+  --hm-ring: rgba(255, 122, 104, 0.4);
+  --hm-shadow: rgba(0, 0, 0, 0.4);
+  --hm-overlay: rgba(0, 0, 0, 0.62);
+
+  --admin-bg: #0f1115;
+  --admin-bg-elevated: #171a21;
+  --admin-bg-muted: #1e222b;
+  --admin-sidebar: #0b0d11;
+  --admin-sidebar-hover: #151920;
+  --admin-sidebar-text: #e8dfd4;
+  --admin-sidebar-muted: #8a7b6c;
+  --admin-sidebar-active: #c9a87a;
+  --admin-sidebar-active-bg: rgba(201, 168, 122, 0.14);
+  --admin-border: #2a303c;
+  --admin-text: #f3f4f6;
+  --admin-text-muted: #9ca3af;
+  --admin-primary: #e8dccc;
+  --admin-accent: #c9a87a;
+  --admin-success: #34d399;
+  --admin-warning: #fbbf24;
+  --admin-danger: #f87171;
+  --admin-info: #60a5fa;
+  --admin-ring: rgba(201, 168, 122, 0.35);
+  --admin-shadow: rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--hm-font-sans);
+  --font-display: var(--hm-font-display);
+
+  --radius-hm-sm: var(--hm-radius-sm);
+  --radius-hm-md: var(--hm-radius-md);
+  --radius-hm-lg: var(--hm-radius-lg);
+  --radius-hm-xl: var(--hm-radius-xl);
+  --radius-hm-2xl: var(--hm-radius-2xl);
+
+  --color-hm-bg: var(--hm-bg);
+  --color-hm-bg-elevated: var(--hm-bg-elevated);
+  --color-hm-elevated: var(--hm-bg-elevated);
+  --color-hm-bg-muted: var(--hm-bg-muted);
+  --color-hm-muted: var(--hm-bg-muted);
+  --color-hm-surface: var(--hm-surface);
+  --color-hm-surface-solid: var(--hm-surface-solid);
+  --color-hm-border: var(--hm-border);
+  --color-hm-border-strong: var(--hm-border-strong);
+  --color-hm-text: var(--hm-text);
+  --color-hm-text-muted: var(--hm-text-muted);
+  --color-hm-text-subtle: var(--hm-text-subtle);
+  --color-hm-primary: var(--hm-primary);
+  --color-hm-primary-hover: var(--hm-primary-hover);
+  --color-hm-accent: var(--hm-accent);
+  --color-hm-accent-soft: var(--hm-accent-soft);
+  --color-hm-accent-muted: var(--hm-accent-muted);
+  --color-hm-teal: var(--hm-teal);
+  --color-hm-gold: var(--hm-gold);
+  --color-hm-success: var(--hm-success);
+  --color-hm-offer: var(--hm-offer);
+  --color-hm-offer-muted: var(--hm-offer-muted);
+  --color-hm-star: var(--hm-star);
+  --color-hm-warning: var(--hm-warning);
+  --color-hm-danger: var(--hm-danger);
+  --color-hm-ring: var(--hm-ring);
+
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-elevated: var(--admin-bg-elevated);
+  --color-admin-muted: var(--admin-bg-muted);
+  --color-admin-sidebar: var(--admin-sidebar);
+  --color-admin-sidebar-hover: var(--admin-sidebar-hover);
+  --color-admin-sidebar-text: var(--admin-sidebar-text);
+  --color-admin-sidebar-muted: var(--admin-sidebar-muted);
+  --color-admin-sidebar-active: var(--admin-sidebar-active);
+  --color-admin-sidebar-active-bg: var(--admin-sidebar-active-bg);
+  --color-admin-border: var(--admin-border);
+  --color-admin-text: var(--admin-text);
+  --color-admin-text-muted: var(--admin-text-muted);
+  --color-admin-primary: var(--admin-primary);
+  --color-admin-accent: var(--admin-accent);
+  --color-admin-success: var(--admin-success);
+  --color-admin-warning: var(--admin-warning);
+  --color-admin-danger: var(--admin-danger);
+  --color-admin-info: var(--admin-info);
+  --color-admin-ring: var(--admin-ring);
+
+  --shadow-hm-soft: 0 4px 24px -4px var(--hm-shadow);
+  --shadow-hm-card: 0 10px 36px -10px var(--hm-shadow);
+  --shadow-hm-elevated: 0 22px 56px -18px var(--hm-shadow);
+  --shadow-admin: 0 1px 2px var(--admin-shadow), 0 4px 16px -4px var(--admin-shadow);
+}
+
+/* ─── Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--hm-header-offset);
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  max-width: 100%;
+  overflow-x: clip;
+  font-family: var(--hm-font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--hm-bg);
+  color: var(--hm-text);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+#root {
+  min-height: 100svh;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* Soft colorful atmosphere behind the shop */
+.hm-atmosphere {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(232, 93, 76, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(31, 138, 122, 0.14), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(212, 160, 23, 0.1), transparent 55%),
+    var(--hm-bg);
+}
+
+.hm-atmosphere::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(122, 31, 61, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 31, 61, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+@keyframes hm-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hm-animate-in {
+  animation: hm-fade-up 0.55s ease-out both;
+}
+
+.admin-shell {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: var(--hm-font-sans);
+}
+
+.admin-scrollbar,
+.admin-shell {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--admin-sidebar-muted) 50%, transparent) transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar,
+.admin-shell ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track,
+.admin-shell ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb,
+.admin-shell ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--admin-sidebar-muted) 50%, transparent);
+  border-radius: 999px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover,
+.admin-shell ::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-sidebar-muted);
+}
+
+.glass {
+  background: var(--hm-surface);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--hm-border);
+}
+
+.glass-strong {
+  background: var(--hm-surface-solid);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid var(--hm-border-strong);
+}
+
+.perspective-\[1200px\] {
+  perspective: 1200px;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--hm-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

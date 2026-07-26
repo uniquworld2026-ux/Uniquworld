@@ -1,0 +1,12 @@
+# If Netlify base directory is set to `client`, this file is used instead.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

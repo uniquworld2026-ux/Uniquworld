@@ -1,0 +1,14 @@
+# Netlify — Uniquworld client (Vite SPA)
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback: all routes → index.html (fixes Page not found on refresh)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
