@@ -43,6 +43,8 @@ import { SettingsPage } from '@/admin/features/settings/SettingsPage'
 import { RolesPage } from '@/admin/features/roles/RolesPage'
 import { AuditLogsPage } from '@/admin/features/audit/AuditLogsPage'
 import { DesignSystemPage } from '@/storefront/pages/DesignSystemPage'
+import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
+import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
 import { storefrontRouteTree } from '@/storefront/config/routes'
 import { adminFlatNav } from '@/admin/config/navigation'
 
@@ -144,9 +146,12 @@ export function AppRouter() {
             element={<AdminPlaceholderPage title={item.label} />}
           />
         ))}
+        <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<StorefrontLayout />}>
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   )
 }

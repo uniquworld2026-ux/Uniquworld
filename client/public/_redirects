@@ -1,1 +1,4 @@
+# SPA fallback — Hostinger / Netlify / Cloudflare Pages
+# Serves index.html for all routes so React Router handles them
+# (prevents Hostinger parked / default page on deep links & refresh)
 /*    /index.html   200

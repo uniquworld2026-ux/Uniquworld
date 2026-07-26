@@ -6,6 +6,7 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# SPA fallback (also mirrored in public/_redirects + public/.htaccess for Hostinger)
 [[redirects]]
   from = "/*"
   to = "/index.html"

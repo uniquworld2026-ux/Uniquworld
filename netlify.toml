@@ -8,6 +8,7 @@
   NODE_VERSION = "20"
 
 # SPA fallback: all routes → index.html (fixes Page not found on refresh)
+# Hostinger uploads: also ship dist/_redirects + dist/.htaccess from client/public/
 [[redirects]]
   from = "/*"
   to = "/index.html"

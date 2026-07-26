@@ -51,6 +51,7 @@ import {
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
 import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
+import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
 
 /** Planned leaf routes → lightweight placeholders */
 const plannedLeaves = [
@@ -253,5 +254,7 @@ export const storefrontRouteTree = (
         }
       />
     ))}
+
+    <Route path="*" element={<NotFoundPage />} />
   </Route>
 )

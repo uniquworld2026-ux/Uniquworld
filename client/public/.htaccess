@@ -1,0 +1,23 @@
+# Hostinger (Apache / LiteSpeed) — SPA + HTTPS
+# Place in public_html (Vite copies this from public/ into dist/)
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Force HTTPS (stops Hostinger parking / mixed redirects)
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Do not rewrite real files or directories (assets, _redirects, etc.)
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+
+  # All other routes → React app
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Optional: block directory listing
+Options -Indexes
