@@ -1,23 +1,26 @@
-# Hostinger (Apache / LiteSpeed) — SPA + HTTPS
-# Place in public_html (Vite copies this from public/ into dist/)
+# Hostinger Apache / LiteSpeed — required for /admin and all React routes
+# Upload this file to public_html (same folder as index.html)
+# Enable "Show hidden files" in File Manager to verify it exists
+
+Options -MultiViews -Indexes
+
+# If rewrite is unavailable, still serve the SPA on 404
+ErrorDocument 404 /index.html
+ErrorDocument 403 /index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # Force HTTPS (stops Hostinger parking / mixed redirects)
+  # Force HTTPS
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # Do not rewrite real files or directories (assets, _redirects, etc.)
   RewriteRule ^index\.html$ - [L]
+
+  # Only skip real files (JS/CSS/images). Do NOT skip directories —
+  # an empty "admin" folder on Hostinger would otherwise break /admin
   RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-
-  # All other routes → React app
-  RewriteRule . /index.html [L]
+  RewriteRule . /index.html [QSA,L]
 </IfModule>
-
-# Optional: block directory listing
-Options -Indexes
