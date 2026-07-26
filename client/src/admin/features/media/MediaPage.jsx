@@ -1,54 +1,14 @@
 import { useMemo, useState } from 'react'
 import { ImagePlus, Search, Trash2 } from 'lucide-react'
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { Button } from '@/shared/components/ui/Button'
 import { Modal } from '@/shared/components/ui/Modal'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { Input, Select } from '@/shared/components/forms/Field'
 import { Badge } from '@/shared/components/ui/Badge'
+import { AdminPageStats, buildPageStats } from '@/admin/components/crud/AdminPageStats'
 
-const seed = [
-  {
-    id: 'md_1',
-    name: 'Walnut tray hero',
-    type: 'image',
-    url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80',
-    sizeKb: 240,
-    updatedAt: '2026-07-10T10:00:00.000Z',
-    createdAt: '2026-03-12T10:00:00.000Z',
-  },
-  {
-    id: 'md_2',
-    name: 'Brass candles',
-    type: 'image',
-    url: 'https://images.unsplash.com/photo-1602874801006-e0c3f490f3c7?w=800&q=80',
-    sizeKb: 198,
-    updatedAt: '2026-06-18T10:00:00.000Z',
-    createdAt: '2026-02-20T10:00:00.000Z',
-  },
-  {
-    id: 'md_3',
-    name: 'Gift wrap detail',
-    type: 'image',
-    url: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=800&q=80',
-    sizeKb: 176,
-    updatedAt: '2026-05-22T10:00:00.000Z',
-    createdAt: '2026-01-08T10:00:00.000Z',
-  },
-  {
-    id: 'md_4',
-    name: 'Corporate hamper',
-    type: 'image',
-    url: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&q=80',
-    sizeKb: 265,
-    updatedAt: '2026-07-10T10:00:00.000Z',
-    createdAt: '2026-04-02T10:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_media_v1', seed, 'md')
-const hooks = createModuleHooks('media', store)
+const hooks = createErpHooks('media')
 
 export function MediaPage() {
   const { data = [], isLoading } = hooks.useList()
@@ -62,8 +22,40 @@ export function MediaPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return data
-    return data.filter((m) => m.name.toLowerCase().includes(q) || m.url.toLowerCase().includes(q))
+    return data.filter(
+      (m) =>
+        String(m.name || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(m.url || '')
+          .toLowerCase()
+          .includes(q),
+    )
   }, [data, query])
+
+  const pageStats = useMemo(() => {
+    const totalKb = data.reduce((sum, m) => sum + (Number(m.sizeKb) || 0), 0)
+    const base = buildPageStats(
+      data.map((m) => ({ ...m, status: m.type || 'image' })),
+      {
+        entityLabel: 'Assets',
+        statusOptions: [
+          { value: 'image', label: 'Images' },
+          { value: 'video', label: 'Videos' },
+          { value: 'file', label: 'Files' },
+        ],
+      },
+    )
+    return [
+      ...base.slice(0, 3),
+      {
+        label: 'Library size',
+        value: `${Math.round(totalKb)} KB`,
+        hint: 'Sum of asset sizes',
+        tone: 'accent',
+      },
+    ]
+  }, [data])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -91,6 +83,8 @@ export function MediaPage() {
           Add Media
         </Button>
       </div>
+
+      <AdminPageStats stats={pageStats} />
 
       <div className="rounded-2xl border border-admin-border bg-admin-elevated p-4 shadow-admin">
         <label className="relative block">

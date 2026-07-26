@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import { ArrowRight, Moon, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { Button, Skeleton } from '@/shared/components/ui'
 import { useTheme } from '@/shared/hooks/useTheme'
 
@@ -27,12 +26,6 @@ export function DesignSystemPage() {
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-          <Link to="/admin">
-            <Button variant="outline" size="sm">
-              Admin ERP
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
         </div>
       </header>
 

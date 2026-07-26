@@ -1,42 +1,7 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 
-const seed = [
-  {
-    id: 'nt_1',
-    title: 'Order shipped — HM-10471',
-    channel: 'email',
-    audience: 'Rahul Mehta',
-    status: 'sent',
-    scheduledAt: '2026-07-19T11:00:00.000Z',
-    updatedAt: '2026-07-19T11:05:00.000Z',
-    createdAt: '2026-07-19T10:00:00.000Z',
-  },
-  {
-    id: 'nt_2',
-    title: 'Diwali early access',
-    channel: 'push',
-    audience: 'All customers',
-    status: 'scheduled',
-    scheduledAt: '2026-08-01T09:00:00.000Z',
-    updatedAt: '2026-07-20T10:00:00.000Z',
-    createdAt: '2026-07-20T10:00:00.000Z',
-  },
-  {
-    id: 'nt_3',
-    title: 'Low stock alert — BC-091',
-    channel: 'in-app',
-    audience: 'Admins',
-    status: 'unread',
-    scheduledAt: '2026-07-17T08:00:00.000Z',
-    updatedAt: '2026-07-17T08:00:00.000Z',
-    createdAt: '2026-07-17T08:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_notifications_v1', seed, 'nt')
-const hooks = createModuleHooks('notifications', store)
+const hooks = createErpHooks('notifications')
 
 const defaults = {
   title: '',

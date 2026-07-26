@@ -1,11 +1,7 @@
-import { categorySeed, listCategories } from '@/admin/features/categories/categoryStore'
-import { listProducts } from '@/admin/features/products/productStore'
 import {
   averageRating,
-  ensureReviewsForProducts,
   listApprovedReviewsForProduct,
 } from '@/admin/features/reviews/reviewStore'
-import { catalogProducts as seedCatalog } from '@/storefront/data/catalog'
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1200&q=80'
@@ -143,28 +139,11 @@ export function mapAdminProduct(p) {
 }
 
 function readAdminProducts() {
-  try {
-    return listProducts().filter(isLiveProduct)
-  } catch {
-    return []
-  }
+  return []
 }
 
-/**
- * Active categories from Admin → Categories.
- * Falls back to seed so the storefront never looks empty.
- */
 function readAdminCategories() {
-  try {
-    const rows = listCategories()
-    const active = (Array.isArray(rows) ? rows : [])
-      .filter((c) => isPublishedCategory(c))
-      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
-    if (active.length > 0) return active
-  } catch {
-    /* fall through */
-  }
-  return categorySeed.filter((c) => isPublishedCategory(c))
+  return []
 }
 
 function isPublishedCategory(c) {
@@ -187,21 +166,28 @@ function withLiveReviews(product) {
 }
 
 /**
- * Active admin products for the storefront.
- * Falls back to static catalog seed if admin store is empty.
+ * Active admin products for the storefront — no static seed fallback.
+ * Prefer React Query hooks in useLiveCatalog for UI; this sync helper
+ * returns [] when local cache is empty (API-backed data lives in hooks).
  */
-export function getStorefrontProducts() {
-  const adminMapped = readAdminProducts().map(mapAdminProduct)
-  const base =
-    adminMapped.length > 0
-      ? adminMapped
-      : seedCatalog.map((p) => ({
-          ...p,
-          image: p.image || p.images?.[0],
-        }))
+let _catalogCache = []
+let _categoryCache = []
 
-  ensureReviewsForProducts(base)
-  return base.map(withLiveReviews)
+export function setLiveCatalogCache({ products, categories } = {}) {
+  if (Array.isArray(products)) _catalogCache = products
+  if (Array.isArray(categories)) _categoryCache = categories
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('hm-catalog-changed'))
+  }
+}
+
+export function getStorefrontProducts() {
+  if (_catalogCache.length) return _catalogCache
+  try {
+    return readAdminProducts().map(mapAdminProduct)
+  } catch {
+    return []
+  }
 }
 
 export function getStorefrontProduct(idOrSlug) {
@@ -235,13 +221,19 @@ export function getStorefrontRelated(product, limit = 4) {
 }
 
 /**
- * Dynamic categories from /admin/categories (with live product counts).
- * Categories with 0 products still appear.
- * productCount uses the same live-product rule as Admin → Categories.
+ * Dynamic categories from ERP catalog (with live product counts).
  */
 export function getStorefrontCategories() {
   const products = getStorefrontProducts()
-  const cats = readAdminCategories()
+  const cats = _categoryCache.length
+    ? _categoryCache
+    : (() => {
+        try {
+          return readAdminCategories()
+        } catch {
+          return []
+        }
+      })()
 
   return cats.map((c) => {
     const name = c.name
@@ -276,9 +268,11 @@ export function filterStorefrontCatalog({
   minPrice = 0,
   maxPrice = Infinity,
   onlyInStock = false,
+  products,
+  categories,
 } = {}) {
-  let list = [...getStorefrontProducts()]
-  const cats = readAdminCategories()
+  let list = [...(products || getStorefrontProducts())]
+  const cats = categories || getStorefrontCategories()
 
   if (category && category !== 'All') {
     list = list.filter((p) => productMatchesCategory(p, category, cats))
@@ -296,26 +290,22 @@ export function filterStorefrontCatalog({
         (p.shortDescription || '').toLowerCase().includes(q),
     )
   }
-  list = list.filter((p) => p.price >= minPrice && p.price <= maxPrice)
-  if (onlyInStock) list = list.filter((p) => p.stock > 0)
+  if (onlyInStock) {
+    list = list.filter((p) => Number(p.stock) > 0)
+  }
+  if (minPrice > 0) {
+    list = list.filter((p) => Number(p.price) >= minPrice)
+  }
+  if (maxPrice < Infinity) {
+    list = list.filter((p) => Number(p.price) <= maxPrice)
+  }
 
-  switch (sort) {
-    case 'price-asc':
-      list.sort((a, b) => a.price - b.price)
-      break
-    case 'price-desc':
-      list.sort((a, b) => b.price - a.price)
-      break
-    case 'rating':
-      list.sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      break
-    case 'newest':
-      list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      break
-    default:
-      list.sort(
-        (a, b) => Number(b.featured) - Number(a.featured) || (b.rating || 0) - (a.rating || 0),
-      )
+  if (sort === 'price-asc') list.sort((a, b) => a.price - b.price)
+  else if (sort === 'price-desc') list.sort((a, b) => b.price - a.price)
+  else if (sort === 'newest') {
+    list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  } else {
+    list.sort((a, b) => Number(b.featured) - Number(a.featured) || b.price - a.price)
   }
 
   return list

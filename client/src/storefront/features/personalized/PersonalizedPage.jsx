@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PageHero } from '@/storefront/components/layout/PageHero'
-import { getStorefrontProducts } from '@/shared/catalog/liveCatalog'
+import { useStorefrontProducts } from '@/shared/catalog/useLiveCatalog'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
@@ -75,7 +75,8 @@ export const personalizedTypes = [
 ]
 
 export function PersonalizedPage() {
-  const products = getStorefrontProducts().filter(
+  const catalog = useStorefrontProducts()
+  const products = catalog.filter(
     (p) => p.category === 'Personalized Gifts' || p.personalization?.customText,
   )
 

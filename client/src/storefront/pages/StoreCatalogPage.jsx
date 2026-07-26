@@ -22,25 +22,30 @@ export function StoreHubPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const products = items.map((p) => ({
-    id: p.id,
-    name: p.name,
-    price: Number(p.price),
-    compareAtPrice: p.compareAtPrice != null ? Number(p.compareAtPrice) : undefined,
-    image: p.imageUrl,
-    images: p.imageUrl ? [p.imageUrl] : [],
-    tag: p.category || 'Store',
-    slug: p.slug,
-    rating: 4.6,
-    reviewCount: 0,
-  }))
+  const products = items.map((p) => {
+    const gallery = Array.isArray(p.gallery) ? p.gallery.filter(Boolean) : []
+    const images = [...new Set([p.imageUrl, ...gallery].filter(Boolean))]
+    return {
+      id: p.id,
+      name: p.name,
+      price: Number(p.price),
+      compareAt: p.compareAtPrice != null ? Number(p.compareAtPrice) : undefined,
+      image: p.imageUrl || images[0],
+      images,
+      tag: p.category || 'Store',
+      slug: p.slug,
+      category: p.category,
+      rating: 4.6,
+      reviewCount: 0,
+    }
+  })
 
   return (
     <div>
       <PageHero
         eyebrow="Store & Wholesale"
         title="Store catalog"
-        description="Products uploaded from Admin → Store Products. Separate from the main gift catalog."
+        description="Curated wholesale and store products, separate from the main gift shop."
         actions={
           <Link to="/store/bulk">
             <Button variant="outline" size="sm">Bulk orders</Button>
@@ -53,7 +58,7 @@ export function StoreHubPage() {
         {!loading && !products.length ? (
           <div className="rounded-2xl border border-hm-border bg-hm-elevated p-10 text-center">
             <p className="text-sm text-hm-text-muted">
-              No published store products yet. Upload them in Admin → Catalog → Store Products.
+              No store products available right now. Please check back soon.
             </p>
           </div>
         ) : (

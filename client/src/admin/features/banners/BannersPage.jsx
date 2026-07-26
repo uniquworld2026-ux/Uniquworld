@@ -1,51 +1,13 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 
-const seed = [
-  {
-    id: 'bn_1',
-    title: 'Festive Atelier Edit',
-    placement: 'home-hero',
-    imageUrl: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=1200&q=80',
-    link: '/products',
-    sortOrder: 1,
-    status: 'active',
-    updatedAt: '2026-07-10T10:00:00.000Z',
-    createdAt: '2026-06-01T10:00:00.000Z',
-  },
-  {
-    id: 'bn_2',
-    title: 'Corporate Gifting Desk',
-    placement: 'home-secondary',
-    imageUrl: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1200&q=80',
-    link: '/corporate-gifts',
-    sortOrder: 2,
-    status: 'active',
-    updatedAt: '2026-07-08T10:00:00.000Z',
-    createdAt: '2026-06-05T10:00:00.000Z',
-  },
-  {
-    id: 'bn_3',
-    title: 'Monsoon Sale Strip',
-    placement: 'promo-strip',
-    imageUrl: '',
-    link: '/products?sale=1',
-    sortOrder: 3,
-    status: 'draft',
-    updatedAt: '2026-07-01T10:00:00.000Z',
-    createdAt: '2026-06-20T10:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_banners_v1', seed, 'bn')
-const hooks = createModuleHooks('banners', store)
+const hooks = createErpHooks('banners')
 
 const defaults = {
   title: '',
   placement: 'home-hero',
   imageUrl: '',
-  link: '',
+  linkUrl: '',
   sortOrder: 1,
   status: 'draft',
 }
@@ -64,7 +26,7 @@ const fields = [
     ],
   },
   { name: 'imageUrl', label: 'Image URL' },
-  { name: 'link', label: 'Link' },
+  { name: 'linkUrl', label: 'Link' },
   { name: 'sortOrder', label: 'Sort order', type: 'number' },
   {
     name: 'status',
@@ -102,7 +64,7 @@ const columns = [
     ),
   },
   {
-    accessorKey: 'link',
+    accessorKey: 'linkUrl',
     header: 'Link',
     cell: ({ getValue }) => <TextCell muted>{getValue() || '—'}</TextCell>,
   },

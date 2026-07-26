@@ -24,17 +24,19 @@ export function AdminLoginPage() {
     return <Navigate to={redirectTo} replace />
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setSubmitting(true)
     try {
-      const result = login(email, password)
+      const result = await login(email, password)
       if (!result.ok) {
         setError(result.error)
         return
       }
       navigate(redirectTo, { replace: true })
+    } catch (err) {
+      setError(err?.message || 'Sign in failed.')
     } finally {
       setSubmitting(false)
     }
@@ -55,7 +57,7 @@ export function AdminLoginPage() {
         <div className="rounded-2xl border border-admin-border bg-admin-elevated p-6 shadow-admin sm:p-8">
           <h1 className="text-xl font-semibold tracking-tight text-admin-text">Sign in</h1>
           <p className="mt-1 text-sm text-admin-text-muted">
-            Enter your admin email and password to continue.
+            Sign in to open the admin ERP (categories, products, orders, and more).
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>

@@ -16,10 +16,10 @@ import {
   getUnitPrice,
 } from '@/storefront/data/catalog'
 import {
-  getStorefrontProduct,
-  getStorefrontProducts,
-  getStorefrontRelated,
-} from '@/shared/catalog/liveCatalog'
+  useStorefrontProduct,
+  useStorefrontProducts,
+  useStorefrontRelated,
+} from '@/shared/catalog/useLiveCatalog'
 import { getStorefrontReviewBundle } from '@/admin/features/reviews/reviewStore'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { StarRating } from '@/storefront/components/product/StarRating'
@@ -39,7 +39,9 @@ export function ProductDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const product = getStorefrontProduct(id)
+  const product = useStorefrontProduct(id)
+  const allProducts = useStorefrontProducts()
+  const related = useStorefrontRelated(product)
 
   const [activeImage, setActiveImage] = useState(0)
   const [lensZoom, setLensZoom] = useState(false)
@@ -141,7 +143,6 @@ export function ProductDetailsPage() {
       : product?.shippingNote || 'Dispatches in 1–2 days'
 
   const unitPrice = displayPrice
-  const related = product ? getStorefrontRelated(product) : []
   const reviewBundle = useMemo(() => {
     if (!product) return { reviews: [], rating: undefined, reviewCount: 0 }
     return getStorefrontReviewBundle(product)
@@ -153,13 +154,12 @@ export function ProductDetailsPage() {
   const displayReviewCount = reviewBundle.reviewCount || product?.reviewCount || 0
   const recentlyViewed = useMemo(() => {
     if (!product) return []
-    const all = getStorefrontProducts()
     return getRecentlyViewedIds()
       .filter((rid) => rid !== product.id)
-      .map((rid) => all.find((p) => p.id === rid))
+      .map((rid) => allProducts.find((p) => p.id === rid))
       .filter(Boolean)
       .slice(0, 4)
-  }, [product])
+  }, [product, allProducts])
 
   if (!product) {
     return (

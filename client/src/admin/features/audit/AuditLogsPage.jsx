@@ -1,60 +1,44 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, TextCell } from '@/admin/components/crud/AdminCrudPage'
 import { Badge } from '@/shared/components/ui/Badge'
 
-const seed = [
+const hooks = createErpHooks('audit-logs')
+
+const defaults = {
+  actor: '',
+  action: '',
+  entity: '',
+  entityId: '',
+  details: '',
+  status: 'success',
+}
+
+const fields = [
+  { name: 'actor', label: 'Actor' },
+  { name: 'action', label: 'Action', required: true },
+  { name: 'entity', label: 'Entity' },
+  { name: 'entityId', label: 'Entity ID' },
+  { name: 'details', label: 'Details', type: 'textarea' },
   {
-    id: 'log_1',
-    actor: 'admin@uniquworld.example',
-    action: 'product.update',
-    entity: 'Walnut Serving Tray',
-    ip: '103.21.44.12',
-    status: 'success',
-    updatedAt: '2026-07-21T14:22:00.000Z',
-    createdAt: '2026-07-21T14:22:00.000Z',
-  },
-  {
-    id: 'log_2',
-    actor: 'ops@uniquworld.example',
-    action: 'order.status',
-    entity: 'HM-10471',
-    ip: '103.21.44.18',
-    status: 'success',
-    updatedAt: '2026-07-21T11:05:00.000Z',
-    createdAt: '2026-07-21T11:05:00.000Z',
-  },
-  {
-    id: 'log_3',
-    actor: 'admin@uniquworld.example',
-    action: 'coupon.create',
-    entity: 'WELCOME10',
-    ip: '103.21.44.12',
-    status: 'success',
-    updatedAt: '2026-07-20T09:40:00.000Z',
-    createdAt: '2026-07-20T09:40:00.000Z',
-  },
-  {
-    id: 'log_4',
-    actor: 'viewer@uniquworld.example',
-    action: 'settings.update',
-    entity: 'Store settings',
-    ip: '49.37.12.88',
-    status: 'denied',
-    updatedAt: '2026-07-19T16:12:00.000Z',
-    createdAt: '2026-07-19T16:12:00.000Z',
+    name: 'status',
+    label: 'Result',
+    type: 'select',
+    options: [
+      { value: 'success', label: 'Success' },
+      { value: 'denied', label: 'Denied' },
+      { value: 'info', label: 'Info' },
+    ],
   },
 ]
-
-const store = createLocalStore('hm_admin_audit_v1', seed, 'log')
-const hooks = createModuleHooks('audit-logs', store)
 
 const columns = [
   {
     accessorKey: 'createdAt',
     header: 'When',
     cell: ({ getValue }) => (
-      <TextCell muted>{new Date(getValue()).toLocaleString('en-IN')}</TextCell>
+      <TextCell muted>
+        {getValue() ? new Date(getValue()).toLocaleString('en-IN') : '—'}
+      </TextCell>
     ),
   },
   {
@@ -75,7 +59,9 @@ const columns = [
   {
     accessorKey: 'ip',
     header: 'IP',
-    cell: ({ getValue }) => <TextCell muted>{getValue()}</TextCell>,
+    cell: ({ row }) => (
+      <TextCell muted>{row.original.ip || row.original.entityId || '—'}</TextCell>
+    ),
   },
   {
     accessorKey: 'status',
@@ -88,6 +74,9 @@ const columns = [
 
 export function AuditLogsPage() {
   const { data = [], isLoading } = hooks.useList()
+  const createMutation = hooks.useCreate()
+  const updateMutation = hooks.useUpdate()
+  const deleteMutation = hooks.useRemove()
 
   return (
     <AdminCrudPage
@@ -95,9 +84,12 @@ export function AuditLogsPage() {
       description="Immutable trail of admin actions across the console."
       data={data}
       isLoading={isLoading}
+      createMutation={createMutation}
+      updateMutation={updateMutation}
+      deleteMutation={deleteMutation}
       columns={columns}
-      fields={[]}
-      defaults={{}}
+      fields={fields}
+      defaults={defaults}
       searchPlaceholder="Search actors, actions, entities…"
       readOnly
       statusFilter={{
@@ -106,6 +98,7 @@ export function AuditLogsPage() {
         options: [
           { value: 'success', label: 'Success' },
           { value: 'denied', label: 'Denied' },
+          { value: 'info', label: 'Info' },
         ],
       }}
     />

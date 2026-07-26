@@ -1,20 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { useMemo, useState } from 'react'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
-import {
-  createPersonalizedOrder,
-  listPersonalizedOrders,
-  personalizedOrdersStore,
-} from './personalizedOrdersStore'
 
-const hooks = createModuleHooks('personalized-orders', {
-  list: listPersonalizedOrders,
-  getById: (id) => personalizedOrdersStore.getById(id),
-  create: createPersonalizedOrder,
-  update: (id, data) => personalizedOrdersStore.update(id, data),
-  remove: (id) => personalizedOrdersStore.remove(id),
-})
+const hooks = createErpHooks('personalized-orders')
 
 const defaults = {
   orderRef: '',
@@ -105,21 +93,53 @@ const columns = [
   },
 ]
 
+function fromErpRow(row) {
+  const customization = row.customization || ''
+  return {
+    ...row,
+    customer: row.customerName || row.customer || '',
+    product: row.productName || row.product || '',
+    customText: row.customText || customization,
+    personalization: row.personalization || customization,
+    photoName: row.photoName || '',
+    photoDataUrl: row.photoDataUrl || '',
+  }
+}
+
+function toErpPayload(payload) {
+  return {
+    orderRef: payload.orderRef,
+    customerName: payload.customer || payload.customerName || 'Guest',
+    productName: payload.product || payload.productName || '',
+    customization: payload.customText || payload.personalization || payload.customization || '',
+    notes: [payload.photoName ? `Photo: ${payload.photoName}` : '', payload.notes]
+      .filter(Boolean)
+      .join('\n'),
+    status: payload.status || 'pending',
+    email: payload.email || '',
+    totalAmount: Number(payload.totalAmount) || 0,
+  }
+}
+
 export function PersonalizedOrdersPage() {
-  const qc = useQueryClient()
-  const { data = [], isLoading } = hooks.useList()
+  const { data: raw = [], isLoading } = hooks.useList()
   const createMutation = hooks.useCreate()
   const updateMutation = hooks.useUpdate()
   const deleteMutation = hooks.useRemove()
   const [productFilter, setProductFilter] = useState('all')
 
-  useEffect(() => {
-    const onChange = () => {
-      qc.invalidateQueries({ queryKey: ['personalized-orders'] })
-    }
-    window.addEventListener('hm-catalog-changed', onChange)
-    return () => window.removeEventListener('hm-catalog-changed', onChange)
-  }, [qc])
+  const data = useMemo(() => raw.map(fromErpRow), [raw])
+
+  const createWrapped = {
+    ...createMutation,
+    mutateAsync: async (payload) => createMutation.mutateAsync(toErpPayload(payload)),
+  }
+
+  const updateWrapped = {
+    ...updateMutation,
+    mutateAsync: async ({ id, data: row }) =>
+      updateMutation.mutateAsync({ id, data: toErpPayload(row) }),
+  }
 
   const productOptions = useMemo(() => {
     const map = new Map()
@@ -180,8 +200,8 @@ export function PersonalizedOrdersPage() {
         addLabel="Add Order"
         data={filteredData}
         isLoading={isLoading}
-        createMutation={createMutation}
-        updateMutation={updateMutation}
+        createMutation={createWrapped}
+        updateMutation={updateWrapped}
         deleteMutation={deleteMutation}
         columns={columns}
         fields={fields}
@@ -202,5 +222,3 @@ export function PersonalizedOrdersPage() {
     </div>
   )
 }
-
-export { createPersonalizedOrder }

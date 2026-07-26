@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { createAdminClient, createContextClient } = require('@supabase/server/core');
 const config = require('./index');
 const logger = require('../utils/logger');
 
@@ -13,9 +14,20 @@ const assertConfigured = () => {
   return true;
 };
 
+const envOverride = () => ({
+  url: config.supabase.url,
+  publishableKeys: config.supabase.publishableKey
+    ? { default: config.supabase.publishableKey }
+    : {},
+  secretKeys: config.supabase.secretKey
+    ? { default: config.supabase.secretKey }
+    : {},
+  jwksUrl: config.supabase.jwksUrl || undefined,
+});
+
 /**
  * Public / publishable client (browser-safe key).
- * Use for Storage public reads and Auth helpers.
+ * Built via @supabase/server so env keys match the new API key format.
  */
 const getSupabaseClient = () => {
   if (supabasePublic) return supabasePublic;
@@ -24,16 +36,23 @@ const getSupabaseClient = () => {
     return null;
   }
 
-  supabasePublic = createClient(config.supabase.url, config.supabase.publishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  try {
+    supabasePublic = createContextClient({ env: envOverride() });
+  } catch (err) {
+    logger.warn('createContextClient failed, falling back to supabase-js', {
+      message: err.message,
+    });
+    supabasePublic = createClient(config.supabase.url, config.supabase.publishableKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
 
   return supabasePublic;
 };
 
 /**
  * Secret / service client (server-only).
- * Use for Storage uploads, admin Auth, and privileged operations.
+ * Uses @supabase/server createAdminClient (bypasses RLS).
  */
 const getSupabaseAdmin = () => {
   if (supabaseAdmin) return supabaseAdmin;
@@ -42,9 +61,16 @@ const getSupabaseAdmin = () => {
     return null;
   }
 
-  supabaseAdmin = createClient(config.supabase.url, config.supabase.secretKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  try {
+    supabaseAdmin = createAdminClient({ env: envOverride() });
+  } catch (err) {
+    logger.warn('createAdminClient failed, falling back to supabase-js', {
+      message: err.message,
+    });
+    supabaseAdmin = createClient(config.supabase.url, config.supabase.secretKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
 
   return supabaseAdmin;
 };

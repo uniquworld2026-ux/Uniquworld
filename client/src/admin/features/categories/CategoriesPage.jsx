@@ -1,18 +1,9 @@
-import { useRef, useState, useMemo, useSyncExternalStore } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
-import {
-  bulkImportCategories,
-  createCategory,
-  categoryImportHeaders,
-  categoryImportSampleRows,
-  deleteCategory,
-  getCategoryById,
-  listCategories,
-  updateCategory,
-} from '@/admin/features/categories/categoryStore'
-import { listProducts } from '@/admin/features/products/productStore'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
+import { createCategory } from '@/admin/features/categories/categoryStore'
+import { useProducts } from '@/admin/features/products/useProducts'
 import {
   countAllProductsInCategory,
   countLiveProductsInCategory,
@@ -21,56 +12,25 @@ import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/Ad
 import { downloadCsv, parseCsv, readTextFile } from '@/admin/lib/bulkCsv'
 import { Button } from '@/shared/components/ui/Button'
 
-const store = {
-  list: listCategories,
-  getById: getCategoryById,
-  create: createCategory,
-  update: updateCategory,
-  remove: deleteCategory,
-}
+const hooks = createErpHooks('categories')
 
-const hooks = createModuleHooks('categories', store)
+const categoryImportHeaders = [
+  { key: 'name', label: 'name' },
+  { key: 'slug', label: 'slug' },
+  { key: 'description', label: 'description' },
+  { key: 'status', label: 'status' },
+]
 
-const PRODUCT_KEY = 'hm_admin_products_v1'
-let productsCache = null
-
-function invalidateProductsCache() {
-  productsCache = null
-}
-
-function getProductsSnapshot() {
-  if (!productsCache) {
-    try {
-      productsCache = listProducts()
-    } catch {
-      productsCache = []
-    }
-  }
-  return productsCache
-}
-
-function subscribeProducts(callback) {
-  const onChange = () => {
-    invalidateProductsCache()
-    callback()
-  }
-  const onStorage = (e) => {
-    if (!e.key || e.key === PRODUCT_KEY) onChange()
-  }
-  window.addEventListener('storage', onStorage)
-  window.addEventListener('hm-catalog-changed', onChange)
-  return () => {
-    window.removeEventListener('storage', onStorage)
-    window.removeEventListener('hm-catalog-changed', onChange)
-  }
-}
+const categoryImportSampleRows = [
+  { name: 'Gifts', slug: 'gifts', description: 'Gift catalogue', status: 'published' },
+]
 
 const defaults = {
   name: '',
   slug: '',
   description: '',
   status: 'published',
-  productCount: 0,
+  sortOrder: 0,
   imageUrl: '',
 }
 
@@ -79,6 +39,7 @@ const fields = [
   { name: 'slug', label: 'Slug', required: true, autoFrom: 'name' },
   { name: 'description', label: 'Description', type: 'textarea' },
   { name: 'imageUrl', label: 'Image', type: 'image' },
+  { name: 'sortOrder', label: 'Sort order', type: 'number' },
   {
     name: 'status',
     label: 'Status',
@@ -97,7 +58,7 @@ export function CategoriesPage() {
   const createMutation = hooks.useCreate()
   const updateMutation = hooks.useUpdate()
   const deleteMutation = hooks.useRemove()
-  const products = useSyncExternalStore(subscribeProducts, getProductsSnapshot, getProductsSnapshot)
+  const { data: products = [] } = useProducts()
   const inputRef = useRef(null)
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
@@ -168,16 +129,14 @@ export function CategoriesPage() {
     setImportError('')
     try {
       const text = await readTextFile(file)
-      const rows = parseCsv(text)
-      if (rows.length === 0) throw new Error('The CSV file is empty.')
-      rows.forEach((row, index) => {
-        if (!row.name || !row.slug) {
-          throw new Error(`Row ${index + 2}: name and slug are required.`)
-        }
-      })
-      bulkImportCategories(rows)
+      const csvRows = parseCsv(text)
+      if (csvRows.length === 0) throw new Error('The CSV file is empty.')
+      for (const [index, row] of csvRows.entries()) {
+        if (!row.name) throw new Error(`Row ${index + 2}: name is required.`)
+        await createCategory(row)
+      }
       await qc.invalidateQueries({ queryKey: hooks.keys.all })
-      setImportMessage(`Imported ${rows.length} categor${rows.length === 1 ? 'y' : 'ies'}.`)
+      setImportMessage(`Imported ${csvRows.length} categor${csvRows.length === 1 ? 'y' : 'ies'}.`)
     } catch (error) {
       setImportError(error instanceof Error ? error.message : 'Import failed.')
     }
@@ -186,8 +145,13 @@ export function CategoriesPage() {
   return (
     <AdminCrudPage
       title="Category Management"
-      description={importError || importMessage || undefined}
+      description={
+        importError ||
+        importMessage ||
+        'Live categories from the ERP database — used by Product Management and the storefront.'
+      }
       addLabel="Add Category"
+      entityLabel="Categories"
       data={rows}
       isLoading={isLoading}
       createMutation={createMutation}
@@ -211,16 +175,17 @@ export function CategoriesPage() {
           <Button
             variant="outline"
             size="sm"
+            className="h-9"
             onClick={() =>
               downloadCsv('categories-sample-template.csv', categoryImportSampleRows, categoryImportHeaders)
             }
           >
             <Download className="h-4 w-4" />
-            Sample Template
+            Sample
           </Button>
-          <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
+          <Button variant="outline" size="sm" className="h-9" onClick={() => inputRef.current?.click()}>
             <Upload className="h-4 w-4" />
-            Import CSV
+            Import
           </Button>
         </>
       }

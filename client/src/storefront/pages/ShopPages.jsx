@@ -16,7 +16,7 @@ export function CategoriesPage() {
       <PageHero
         eyebrow="Shop"
         title="Shop by category"
-        description="Browse collections managed from the Uniquworld catalog."
+        description="Browse Uniquworld gift collections."
         actions={
           <Link to="/products">
             <Button variant="primary">View all products</Button>
@@ -27,7 +27,7 @@ export function CategoriesPage() {
       <div className="mx-auto max-w-7xl space-y-14 px-5 py-12 sm:px-8">
         {categories.length === 0 ? (
           <p className="py-16 text-center text-sm text-hm-text-muted">
-            No active categories yet. Add them in Admin → Categories.
+            No active categories yet. Check back soon.
           </p>
         ) : null}
 

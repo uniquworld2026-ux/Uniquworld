@@ -1,17 +1,9 @@
-import { useEffect, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { useMemo } from 'react'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
-import { listProducts } from '@/admin/features/products/productStore'
-import { createReview, reviewsStore } from '@/admin/features/reviews/reviewStore'
 
-const hooks = createModuleHooks('reviews', {
-  list: () => reviewsStore.list(),
-  getById: (id) => reviewsStore.getById(id),
-  create: (payload) => createReview(payload),
-  update: (id, data) => reviewsStore.update(id, data),
-  remove: (id) => reviewsStore.remove(id),
-})
+const hooks = createErpHooks('reviews')
+const productHooks = createErpHooks('products')
 
 const defaults = {
   product: '',
@@ -52,33 +44,44 @@ const columns = [
   },
 ]
 
+function fromErpRow(row) {
+  return {
+    ...row,
+    product: row.productName || row.product || '',
+    customer: row.author || row.customer || '',
+    comment: row.body || row.comment || '',
+  }
+}
+
+function toErpPayload(payload, products = []) {
+  const product = products.find((p) => p.id === payload.productId)
+  return {
+    productId: payload.productId || product?.id || '',
+    productName: product?.name || payload.product || payload.productName || '',
+    author: payload.customer || payload.author || '',
+    rating: Number(payload.rating) || 5,
+    title: payload.title || '',
+    body: payload.comment || payload.body || '',
+    status: payload.status || 'pending',
+  }
+}
+
 export function ReviewsPage() {
-  const qc = useQueryClient()
-  const { data = [], isLoading } = hooks.useList()
+  const { data: raw = [], isLoading } = hooks.useList()
+  const { data: products = [] } = productHooks.useList()
   const createMutation = hooks.useCreate()
   const updateMutation = hooks.useUpdate()
   const deleteMutation = hooks.useRemove()
 
-  useEffect(() => {
-    const onChange = () => {
-      qc.invalidateQueries({ queryKey: ['reviews'] })
-    }
-    window.addEventListener('hm-catalog-changed', onChange)
-    return () => window.removeEventListener('hm-catalog-changed', onChange)
-  }, [qc])
+  const data = useMemo(() => raw.map(fromErpRow), [raw])
 
-  const productOptions = useMemo(() => {
-    try {
-      return listProducts()
-        .map((p) => ({
-          value: p.id,
-          label: p.name,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label))
-    } catch {
-      return []
-    }
-  }, [data])
+  const productOptions = useMemo(
+    () =>
+      [...products]
+        .map((p) => ({ value: p.id, label: p.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [products],
+  )
 
   const fields = useMemo(
     () => [
@@ -108,29 +111,14 @@ export function ReviewsPage() {
 
   const wrappedCreate = {
     ...createMutation,
-    mutateAsync: async (payload) => {
-      const product = listProducts().find((p) => p.id === payload.productId)
-      return createMutation.mutateAsync({
-        ...payload,
-        productId: payload.productId || product?.id || '',
-        product: product?.name || payload.product || '',
-      })
-    },
+    mutateAsync: async (payload) =>
+      createMutation.mutateAsync(toErpPayload(payload, products)),
   }
 
   const wrappedUpdate = {
     ...updateMutation,
-    mutateAsync: async ({ id, data }) => {
-      const product = listProducts().find((p) => p.id === data.productId)
-      return updateMutation.mutateAsync({
-        id,
-        data: {
-          ...data,
-          productId: data.productId || product?.id || '',
-          product: product?.name || data.product || '',
-        },
-      })
-    },
+    mutateAsync: async ({ id, data: row }) =>
+      updateMutation.mutateAsync({ id, data: toErpPayload(row, products) }),
   }
 
   return (

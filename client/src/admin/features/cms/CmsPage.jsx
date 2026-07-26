@@ -1,44 +1,7 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 
-const seed = [
-  {
-    id: 'cms_1',
-    title: 'About Uniquworld',
-    slug: 'about',
-    status: 'published',
-    updatedAt: '2026-07-01T10:00:00.000Z',
-    createdAt: '2025-12-01T10:00:00.000Z',
-  },
-  {
-    id: 'cms_2',
-    title: 'Shipping & Returns',
-    slug: 'shipping-returns',
-    status: 'published',
-    updatedAt: '2026-06-12T10:00:00.000Z',
-    createdAt: '2025-12-01T10:00:00.000Z',
-  },
-  {
-    id: 'cms_3',
-    title: 'Corporate Gifting Guide',
-    slug: 'corporate-guide',
-    status: 'draft',
-    updatedAt: '2026-07-15T10:00:00.000Z',
-    createdAt: '2026-07-10T10:00:00.000Z',
-  },
-  {
-    id: 'cms_4',
-    title: 'FAQ',
-    slug: 'faq',
-    status: 'published',
-    updatedAt: '2026-05-20T10:00:00.000Z',
-    createdAt: '2025-12-01T10:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_cms_v1', seed, 'cms')
-const hooks = createModuleHooks('cms', store)
+const hooks = createErpHooks('cms')
 
 const defaults = {
   title: '',
@@ -78,7 +41,9 @@ const columns = [
     accessorKey: 'updatedAt',
     header: 'Updated',
     cell: ({ getValue }) => (
-      <TextCell muted>{new Date(getValue()).toLocaleDateString('en-IN')}</TextCell>
+      <TextCell muted>
+        {getValue() ? new Date(getValue()).toLocaleDateString('en-IN') : '—'}
+      </TextCell>
     ),
   },
   {

@@ -19,6 +19,7 @@ import {
 } from '@/admin/features/products/productStore'
 import { useDeleteProduct, useProducts } from '@/admin/features/products/useProducts'
 import { downloadCsv, parseCsv, readTextFile } from '@/admin/lib/bulkCsv'
+import { AdminPageStats, buildPageStats } from '@/admin/components/crud/AdminPageStats'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
 import { Modal } from '@/shared/components/ui/Modal'
@@ -55,6 +56,19 @@ export function ProductsPage() {
     }
     return data.filter((p) => p.status === statusFilter)
   }, [data, statusFilter])
+
+  const pageStats = useMemo(
+    () =>
+      buildPageStats(data, {
+        entityLabel: 'Products',
+        statusOptions: [
+          { value: 'published', label: 'Published' },
+          { value: 'draft', label: 'Draft' },
+          { value: 'archived', label: 'Archived' },
+        ],
+      }),
+    [data],
+  )
 
   const columns = useMemo(
     () => [
@@ -211,19 +225,19 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1">
           <h2 className="text-xl font-semibold tracking-tight text-admin-text sm:text-2xl">
             Product Management
           </h2>
-          <p className="mt-1 text-sm text-admin-text-muted">
-            Create, edit, and manage catalog inventory for Uniquworld. Import CSV to create or
-            update by id / SKU / slug.
+          <p className="mt-1 max-w-xl text-sm text-admin-text-muted">
+            Create, edit, and manage catalog inventory. Import CSV to create or update by id / SKU /
+            slug.
           </p>
           {importMessage ? <p className="mt-1 text-xs text-admin-success">{importMessage}</p> : null}
           {importError ? <p className="mt-1 text-xs text-admin-danger">{importError}</p> : null}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-nowrap">
           <input
             ref={inputRef}
             type="file"
@@ -237,35 +251,45 @@ export function ProductsPage() {
           <Button
             variant="outline"
             size="sm"
+            className="h-9 whitespace-nowrap"
             onClick={() =>
               downloadCsv('products-sample-template.csv', productImportSampleRows, productImportHeaders)
             }
           >
             <Download className="h-4 w-4" />
-            Sample Template
+            Sample
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              downloadCsv('products-export.csv', productsToCsvRows(data), productImportHeaders)
-            }
+            className="h-9 whitespace-nowrap"
+            onClick={() => inputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 whitespace-nowrap"
+            onClick={() => downloadCsv('products-export.csv', productsToCsvRows(data), productImportHeaders)}
           >
             <Download className="h-4 w-4" />
-            Export CSV
+            Export
           </Button>
-          <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-            <Upload className="h-4 w-4" />
-            Bulk Update / Import
+          <Button
+            variant="accent"
+            size="sm"
+            className="h-9 whitespace-nowrap"
+            onClick={() => navigate('/admin/products/new')}
+          >
+            <Plus className="h-4 w-4" />
+            Add product
           </Button>
-          <Link to="/admin/products/new">
-            <Button variant="accent" size="sm">
-              <Plus className="h-4 w-4" />
-              Add Product
-            </Button>
-          </Link>
         </div>
       </div>
+
+      <AdminPageStats stats={pageStats} />
 
       <div className="flex flex-col gap-3 rounded-2xl border border-admin-border bg-admin-elevated p-4 shadow-admin sm:flex-row sm:items-center">
         <label className="relative block flex-1">

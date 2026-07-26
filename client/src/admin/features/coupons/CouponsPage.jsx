@@ -1,51 +1,7 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 
-const seed = [
-  {
-    id: 'cp_1',
-    code: 'WELCOME10',
-    type: 'percent',
-    value: 10,
-    minOrder: 999,
-    usageLimit: 500,
-    used: 128,
-    expiresAt: '2026-12-31',
-    status: 'active',
-    updatedAt: '2026-07-01T10:00:00.000Z',
-    createdAt: '2026-01-01T10:00:00.000Z',
-  },
-  {
-    id: 'cp_2',
-    code: 'CORP500',
-    type: 'flat',
-    value: 500,
-    minOrder: 5000,
-    usageLimit: 100,
-    used: 42,
-    expiresAt: '2026-09-30',
-    status: 'active',
-    updatedAt: '2026-06-15T10:00:00.000Z',
-    createdAt: '2026-03-01T10:00:00.000Z',
-  },
-  {
-    id: 'cp_3',
-    code: 'DIWALI25',
-    type: 'percent',
-    value: 25,
-    minOrder: 2000,
-    usageLimit: 200,
-    used: 200,
-    expiresAt: '2025-11-15',
-    status: 'archived',
-    updatedAt: '2025-11-16T10:00:00.000Z',
-    createdAt: '2025-10-01T10:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_coupons_v1', seed, 'cp')
-const hooks = createModuleHooks('coupons', store)
+const hooks = createErpHooks('coupons')
 
 const defaults = {
   code: '',

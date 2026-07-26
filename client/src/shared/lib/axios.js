@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { appConfig } from '@/config/appConfig'
 
 const ACCESS_KEY = 'uw_access_token'
 const REFRESH_KEY = 'uw_refresh_token'
@@ -19,7 +20,7 @@ export const tokenStore = {
 }
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+  baseURL: appConfig.apiUrl,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 })

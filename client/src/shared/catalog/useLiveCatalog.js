@@ -1,67 +1,67 @@
-import { useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { catalogPublicApi } from '@/admin/lib/erpApi'
 import {
-  getStorefrontCategories,
-  getStorefrontProducts,
   filterStorefrontCatalog,
+  isLiveProduct,
+  mapAdminProduct,
+  setLiveCatalogCache,
 } from '@/shared/catalog/liveCatalog'
 
-const PRODUCT_KEY = 'hm_admin_products_v1'
-const CATEGORY_KEY = 'hm_admin_categories_v1'
-
-/** Cached snapshots — getSnapshot must return the same ref when data is unchanged */
-let productsCache = null
-let categoriesCache = null
-let categoryNamesCache = null
-
-function invalidateCache() {
-  productsCache = null
-  categoriesCache = null
-  categoryNamesCache = null
-}
-
-function getProductsSnapshot() {
-  if (!productsCache) productsCache = getStorefrontProducts()
-  return productsCache
-}
-
-function getCategoriesSnapshot() {
-  if (!categoriesCache) categoriesCache = getStorefrontCategories()
-  return categoriesCache
-}
-
-function getCategoryNamesSnapshot() {
-  if (!categoryNamesCache) {
-    categoryNamesCache = ['All', ...getCategoriesSnapshot().map((c) => c.name)]
-  }
-  return categoryNamesCache
-}
-
-function subscribe(callback) {
-  const onChange = () => {
-    invalidateCache()
-    callback()
-  }
-  const onStorage = (e) => {
-    if (!e.key || e.key === PRODUCT_KEY || e.key === CATEGORY_KEY) onChange()
-  }
-  window.addEventListener('storage', onStorage)
-  window.addEventListener('hm-catalog-changed', onChange)
-  return () => {
-    window.removeEventListener('storage', onStorage)
-    window.removeEventListener('hm-catalog-changed', onChange)
+function mapCategory(c) {
+  return {
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    description: c.description || '',
+    imageUrl: c.imageUrl || '',
+    status: c.status || 'published',
   }
 }
 
 export function useStorefrontCategories() {
-  return useSyncExternalStore(subscribe, getCategoriesSnapshot, getCategoriesSnapshot)
+  const { data = [] } = useQuery({
+    queryKey: ['catalog', 'categories'],
+    queryFn: () => catalogPublicApi.listCategories(),
+    staleTime: 30_000,
+  })
+  const categories = useMemo(
+    () =>
+      data
+        .map(mapCategory)
+        .filter((c) => !c.status || c.status === 'published' || c.status === 'active')
+        .sort((a, b) => String(a.name).localeCompare(String(b.name))),
+    [data],
+  )
+
+  useEffect(() => {
+    setLiveCatalogCache({ categories })
+  }, [categories])
+
+  return categories
 }
 
 export function useStorefrontProducts() {
-  return useSyncExternalStore(subscribe, getProductsSnapshot, getProductsSnapshot)
+  const { data = [] } = useQuery({
+    queryKey: ['catalog', 'products'],
+    queryFn: () => catalogPublicApi.listProducts(),
+    staleTime: 30_000,
+  })
+  const products = useMemo(
+    () => data.filter(isLiveProduct).map(mapAdminProduct),
+    [data],
+  )
+
+  useEffect(() => {
+    setLiveCatalogCache({ products })
+  }, [products])
+
+  return products
 }
 
 export function useStorefrontCategoryNames() {
-  return useSyncExternalStore(subscribe, getCategoryNamesSnapshot, getCategoryNamesSnapshot)
+  const categories = useStorefrontCategories()
+  return useMemo(() => ['All', ...categories.map((c) => c.name)], [categories])
 }
 
 export function useStorefrontProduct(idOrSlug) {
@@ -84,6 +84,7 @@ export function useStorefrontRelated(product, limit = 4) {
 
 export function useFilteredStorefrontCatalog(filters) {
   const products = useStorefrontProducts()
+  const categories = useStorefrontCategories()
   const {
     search = '',
     category = 'All',
@@ -104,9 +105,9 @@ export function useFilteredStorefrontCatalog(filters) {
         minPrice,
         maxPrice,
         onlyInStock,
+        products,
+        categories,
       }),
-    // products identity changes only when catalog invalidates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [products, search, category, occasion, sort, minPrice, maxPrice, onlyInStock],
+    [products, categories, search, category, occasion, sort, minPrice, maxPrice, onlyInStock],
   )
 }

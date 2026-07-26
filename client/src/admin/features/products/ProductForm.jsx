@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import {
   PRODUCT_STATUSES,
   PRODUCT_STATUS_LABELS,
@@ -36,7 +37,11 @@ export function ProductForm({
   isSubmitting = false,
 }) {
   const isCreate = !initialValues?.id
-  const categories = listCategories()
+  const { data: categoryRows = [] } = useQuery({
+    queryKey: ['erp', 'categories'],
+    queryFn: listCategories,
+  })
+  const categories = categoryRows
     .filter((c) => !c.status || c.status === 'published' || c.status === 'active')
     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
 

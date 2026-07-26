@@ -11,10 +11,17 @@ import {
 } from '@/admin/features/products/ProductFormPages'
 import { CategoriesPage as AdminCategoriesPage } from '@/admin/features/categories/CategoriesPage'
 import { PurchasesPage } from '@/admin/features/purchases/PurchasesPage'
+import { SuppliersPage } from '@/admin/features/purchases/SuppliersPage'
 import { VendorsPage } from '@/admin/features/vendors/VendorsPage'
+import { VendorServicesPage } from '@/admin/features/vendors/VendorServicesPage'
 import { InventoryPage } from '@/admin/features/inventory/InventoryPage'
+import { FulfillmentPage } from '@/admin/features/inventory/FulfillmentPage'
 import { StoresPage } from '@/admin/features/stores/StoresPage'
 import { StoreProductsPage } from '@/admin/features/stores/StoreProductsPage'
+import {
+  StoreProductCreatePage,
+  StoreProductEditPage,
+} from '@/admin/features/stores/StoreProductFormPages'
 import { OrdersPage } from '@/admin/features/orders/OrdersPage'
 import { PaymentsPage } from '@/admin/features/payments/PaymentsPage'
 import { ShippingPage } from '@/admin/features/shipping/ShippingPage'
@@ -28,6 +35,7 @@ import { CouponsPage } from '@/admin/features/coupons/CouponsPage'
 import { BannersPage } from '@/admin/features/banners/BannersPage'
 import { MediaPage } from '@/admin/features/media/MediaPage'
 import { CmsPage } from '@/admin/features/cms/CmsPage'
+import { BlogPage } from '@/admin/features/blog/BlogPage'
 import { NotificationsPage } from '@/admin/features/notifications/NotificationsPage'
 import { ReportsPage } from '@/admin/features/reports/ReportsPage'
 import { AnalyticsPage } from '@/admin/features/analytics/AnalyticsPage'
@@ -43,10 +51,14 @@ const implementedAdminPaths = new Set([
   '/admin/products',
   '/admin/categories',
   '/admin/purchases',
+  '/admin/suppliers',
   '/admin/vendors',
+  '/admin/vendor-services',
   '/admin/inventory',
+  '/admin/fulfillment',
   '/admin/stores',
   '/admin/store-products',
+  '/admin/store-products/new',
   '/admin/orders',
   '/admin/payments',
   '/admin/shipping',
@@ -60,6 +72,7 @@ const implementedAdminPaths = new Set([
   '/admin/banners',
   '/admin/media',
   '/admin/cms',
+  '/admin/blog',
   '/admin/notifications',
   '/admin/reports',
   '/admin/analytics',
@@ -95,10 +108,15 @@ export function AppRouter() {
         <Route path="products/:id/edit" element={<ProductEditPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="purchases" element={<PurchasesPage />} />
+        <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="vendors" element={<VendorsPage />} />
+        <Route path="vendor-services" element={<VendorServicesPage />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="fulfillment" element={<FulfillmentPage />} />
         <Route path="stores" element={<StoresPage />} />
         <Route path="store-products" element={<StoreProductsPage />} />
+        <Route path="store-products/new" element={<StoreProductCreatePage />} />
+        <Route path="store-products/:id/edit" element={<StoreProductEditPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="shipping" element={<ShippingPage />} />
@@ -112,6 +130,7 @@ export function AppRouter() {
         <Route path="banners" element={<BannersPage />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="cms" element={<CmsPage />} />
+        <Route path="blog" element={<BlogPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />

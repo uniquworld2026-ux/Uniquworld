@@ -49,6 +49,7 @@ import {
   TrackOrderPage,
 } from '@/storefront/pages/ModuleHubPages'
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
+import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
 
 /** Planned leaf routes → lightweight placeholders */
@@ -196,6 +197,7 @@ export const storefrontRouteTree = (
     <Route path="surprise/local" element={<LocalSurprisePage />} />
     <Route path="surprise/digital" element={<DigitalSurprisePage />} />
     <Route path="store" element={<StoreHubPage />} />
+    <Route path="store/p/:slug" element={<StoreProductDetailsPage />} />
     <Route path="store/bulk" element={<BulkOrdersPage />} />
     <Route path="discover" element={<DiscoverHubPage />} />
     <Route path="gift-ideas" element={<GiftIdeasPage />} />

@@ -6,10 +6,11 @@ import { StarRating } from '@/storefront/components/product/StarRating'
 import { cn } from '@/shared/utils/cn'
 
 /** Simple product card — responsive for 2-col mobile grids */
-export function ProductCard({ product, className }) {
+export function ProductCard({ product, className, href }) {
   const navigate = useNavigate()
   const { addItem } = useCart()
   const image = product.image || product.images?.[0]
+  const detailHref = href || `/products/${product.id}`
 
   function handleAdd(e) {
     e.preventDefault()
@@ -31,7 +32,7 @@ export function ProductCard({ product, className }) {
       )}
     >
       <Link
-        to={`/products/${product.id}`}
+        to={detailHref}
         className="relative block aspect-[5/4] shrink-0 overflow-hidden bg-gradient-to-br from-hm-muted to-white"
       >
         <img
@@ -61,7 +62,7 @@ export function ProductCard({ product, className }) {
 
       <div className="flex flex-1 flex-col p-3 sm:p-5">
         <div className="min-w-0">
-          <Link to={`/products/${product.id}`}>
+          <Link to={detailHref}>
             <h3 className="line-clamp-2 text-sm font-medium leading-snug text-hm-text hover:text-hm-primary sm:min-h-[2.75rem] sm:text-[1.05rem]">
               {product.name}
             </h3>

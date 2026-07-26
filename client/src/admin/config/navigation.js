@@ -27,6 +27,9 @@ import {
   ShoppingBag,
   UserCog,
   Boxes,
+  Contact,
+  Wrench,
+  ClipboardCheck,
 } from 'lucide-react'
 
 /**
@@ -65,21 +68,39 @@ export const adminNavigation = [
       },
       {
         id: 'purchases',
-        label: 'Purchase & Supplier',
+        label: 'Purchase Management',
         path: '/admin/purchases',
         icon: ShoppingBag,
       },
       {
+        id: 'suppliers',
+        label: 'Supplier Management',
+        path: '/admin/suppliers',
+        icon: Contact,
+      },
+      {
         id: 'vendors',
-        label: 'Vendor & Service',
+        label: 'Vendor Management',
         path: '/admin/vendors',
         icon: Handshake,
       },
       {
+        id: 'vendor-services',
+        label: 'Service Management',
+        path: '/admin/vendor-services',
+        icon: Wrench,
+      },
+      {
         id: 'inventory',
-        label: 'Inventory & Fulfillment',
+        label: 'Inventory Management',
         path: '/admin/inventory',
         icon: Warehouse,
+      },
+      {
+        id: 'fulfillment',
+        label: 'Office Fulfillment',
+        path: '/admin/fulfillment',
+        icon: ClipboardCheck,
       },
       {
         id: 'stores',
@@ -96,8 +117,8 @@ export const adminNavigation = [
     ],
   },
   {
-    id: 'commerce',
-    label: 'Commerce',
+    id: 'erp',
+    label: 'ERP',
     items: [
       {
         id: 'orders',
@@ -123,6 +144,18 @@ export const adminNavigation = [
         path: '/admin/customers',
         icon: Users,
       },
+      {
+        id: 'admin-users',
+        label: 'Admin User Management',
+        path: '/admin/admin-users',
+        icon: UserCog,
+      },
+    ],
+  },
+  {
+    id: 'commerce',
+    label: 'Commerce',
+    items: [
       {
         id: 'corporate',
         label: 'Corporate Enquiries',
@@ -213,12 +246,6 @@ export const adminNavigation = [
     id: 'system',
     label: 'System',
     items: [
-      {
-        id: 'admin-users',
-        label: 'Admin User Management',
-        path: '/admin/admin-users',
-        icon: UserCog,
-      },
       {
         id: 'settings',
         label: 'Settings',

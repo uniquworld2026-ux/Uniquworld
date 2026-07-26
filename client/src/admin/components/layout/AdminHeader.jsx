@@ -88,15 +88,23 @@ export function AdminHeader({ title = 'Dashboard', subtitle }) {
         </button>
 
         <div className="ml-1 flex items-center gap-2.5 rounded-xl border border-admin-border bg-admin-bg py-1 pl-1 pr-2.5 sm:pr-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-admin-primary text-xs font-semibold text-admin-elevated">
-            {initials}
-          </div>
+          {session?.avatarUrl ? (
+            <img
+              src={session.avatarUrl}
+              alt=""
+              className="h-8 w-8 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-admin-primary text-xs font-semibold text-admin-elevated">
+              {initials}
+            </div>
+          )}
           <div className="hidden min-w-0 sm:block">
             <p className="truncate text-xs font-semibold text-admin-text">
               {session?.name || 'Admin'}
             </p>
             <p className="truncate text-[10px] text-admin-text-muted">
-              {session?.email || ''}
+              {session?.role || session?.email || ''}
             </p>
           </div>
         </div>

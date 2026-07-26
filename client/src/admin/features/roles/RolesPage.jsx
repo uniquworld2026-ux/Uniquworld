@@ -1,52 +1,8 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { useMemo } from 'react'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 
-const seed = [
-  {
-    id: 'role_1',
-    name: 'Super Admin',
-    description: 'Full access to all modules',
-    permissions: 'all',
-    users: 2,
-    status: 'active',
-    updatedAt: '2026-01-01T10:00:00.000Z',
-    createdAt: '2026-01-01T10:00:00.000Z',
-  },
-  {
-    id: 'role_2',
-    name: 'Catalog Manager',
-    description: 'Products, categories, inventory, media',
-    permissions: 'catalog',
-    users: 4,
-    status: 'active',
-    updatedAt: '2026-03-12T10:00:00.000Z',
-    createdAt: '2026-01-01T10:00:00.000Z',
-  },
-  {
-    id: 'role_3',
-    name: 'Order Desk',
-    description: 'Orders, customers, personalized requests',
-    permissions: 'commerce',
-    users: 6,
-    status: 'active',
-    updatedAt: '2026-04-02T10:00:00.000Z',
-    createdAt: '2026-01-01T10:00:00.000Z',
-  },
-  {
-    id: 'role_4',
-    name: 'Viewer',
-    description: 'Read-only dashboards and reports',
-    permissions: 'read',
-    users: 3,
-    status: 'inactive',
-    updatedAt: '2026-05-20T10:00:00.000Z',
-    createdAt: '2026-02-01T10:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_roles_v1', seed, 'role')
-const hooks = createModuleHooks('roles', store)
+const hooks = createErpHooks('roles')
 
 const defaults = {
   name: '',
@@ -83,6 +39,32 @@ const fields = [
   },
 ]
 
+function formatPermissions(value) {
+  if (Array.isArray(value)) return value.join(', ') || '—'
+  if (value == null || value === '') return '—'
+  return String(value)
+}
+
+function permissionsForForm(value) {
+  if (Array.isArray(value)) return value[0] || 'read'
+  if (typeof value === 'string' && value.trim()) return value
+  return 'read'
+}
+
+function toPermissionsPayload(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) return parsed
+    } catch {
+      /* single permission slug */
+    }
+    return [value]
+  }
+  return []
+}
+
 const columns = [
   {
     accessorKey: 'name',
@@ -97,12 +79,12 @@ const columns = [
   {
     accessorKey: 'permissions',
     header: 'Permissions',
-    cell: ({ getValue }) => <TextCell muted>{getValue()}</TextCell>,
+    cell: ({ getValue }) => <TextCell muted>{formatPermissions(getValue())}</TextCell>,
   },
   {
     accessorKey: 'users',
     header: 'Users',
-    cell: ({ getValue }) => <TextCell muted>{getValue()}</TextCell>,
+    cell: ({ getValue }) => <TextCell muted>{getValue() ?? 0}</TextCell>,
   },
   {
     accessorKey: 'status',
@@ -112,10 +94,49 @@ const columns = [
 ]
 
 export function RolesPage() {
-  const { data = [], isLoading } = hooks.useList()
+  const { data: raw = [], isLoading } = hooks.useList()
   const createMutation = hooks.useCreate()
   const updateMutation = hooks.useUpdate()
   const deleteMutation = hooks.useRemove()
+
+  const data = useMemo(
+    () =>
+      raw.map((row) => ({
+        ...row,
+        permissions: permissionsForForm(row.permissions),
+        users: row.users ?? 0,
+      })),
+    [raw],
+  )
+
+  const createWrapped = {
+    ...createMutation,
+    mutateAsync: async (payload) =>
+      createMutation.mutateAsync({
+        name: payload.name,
+        description: payload.description || '',
+        permissions: toPermissionsPayload(payload.permissions),
+        slug: String(payload.name || '')
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, '_'),
+        status: payload.status || 'active',
+      }),
+  }
+
+  const updateWrapped = {
+    ...updateMutation,
+    mutateAsync: async ({ id, data: row }) =>
+      updateMutation.mutateAsync({
+        id,
+        data: {
+          name: row.name,
+          description: row.description || '',
+          permissions: toPermissionsPayload(row.permissions),
+          status: row.status || 'active',
+        },
+      }),
+  }
 
   return (
     <AdminCrudPage
@@ -124,8 +145,8 @@ export function RolesPage() {
       addLabel="Add Role"
       data={data}
       isLoading={isLoading}
-      createMutation={createMutation}
-      updateMutation={updateMutation}
+      createMutation={createWrapped}
+      updateMutation={updateWrapped}
       deleteMutation={deleteMutation}
       columns={columns}
       fields={fields}

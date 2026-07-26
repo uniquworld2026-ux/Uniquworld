@@ -14,6 +14,7 @@ import { Modal } from '@/shared/components/ui/Modal'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { Input, Select, Textarea, Checkbox } from '@/shared/components/forms/Field'
 import { ImageUploadField } from '@/shared/components/forms/ImageUploadField'
+import { AdminPageStats, buildPageStats } from '@/admin/components/crud/AdminPageStats'
 import { statusTone } from '@/admin/lib/statusTone'
 import { cn } from '@/shared/utils/cn'
 
@@ -46,6 +47,9 @@ function slugify(value) {
  * @param {(row: object) => string} [props.getRowLabel]
  * @param {boolean} [props.readOnly]
  * @param {import('react').ReactNode} [props.headerActions]
+ * @param {import('@/admin/components/crud/AdminPageStats').AdminStat[]} [props.stats] - optional override; auto-builds ≥4 from data
+ * @param {string} [props.entityLabel] - used in auto stats (e.g. "Orders")
+ * @param {boolean} [props.showStats=true]
  */
 export function AdminCrudPage({
   title,
@@ -64,6 +68,9 @@ export function AdminCrudPage({
   getRowLabel = (row) => row.name || row.title || row.code || row.id,
   readOnly = false,
   headerActions = null,
+  stats: statsProp = null,
+  entityLabel,
+  showStats = true,
 }) {
   const [globalFilter, setGlobalFilter] = useState('')
   const [filterValue, setFilterValue] = useState('all')
@@ -77,6 +84,15 @@ export function AdminCrudPage({
     if (!statusFilter || filterValue === 'all') return data
     return data.filter((row) => row[statusFilter.key] === filterValue)
   }, [data, filterValue, statusFilter])
+
+  const autoStats = useMemo(() => {
+    if (statsProp?.length) return statsProp
+    return buildPageStats(data, {
+      statusKey: statusFilter?.key || 'status',
+      statusOptions: statusFilter?.options,
+      entityLabel: entityLabel || title?.replace(/ Management$/i, '') || 'Records',
+    })
+  }, [data, statsProp, statusFilter, entityLabel, title])
 
   const columns = useMemo(() => {
     const cols = [...columnDefs]
@@ -201,6 +217,8 @@ export function AdminCrudPage({
           ) : null}
         </div>
       </div>
+
+      {showStats ? <AdminPageStats stats={autoStats} /> : null}
 
       <div className="flex flex-col gap-3 rounded-2xl border border-admin-border bg-admin-elevated p-4 shadow-admin sm:flex-row sm:items-center">
         <label className="relative block flex-1">

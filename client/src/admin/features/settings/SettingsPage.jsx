@@ -1,33 +1,74 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Bell, Globe2, Mail, Store } from 'lucide-react'
 import { Button } from '@/shared/components/ui/Button'
 import { Input, Select, Textarea, Checkbox } from '@/shared/components/forms/Field'
+import { AdminPageStats } from '@/admin/components/crud/AdminPageStats'
+import { erpApi } from '@/admin/lib/erpApi'
 
-const STORAGE_KEY = 'hm_admin_settings_v1'
-
-const defaults = {
-  storeName: 'Uniquworld',
-  supportEmail: 'hello@uniquworld.example',
-  phone: '+91 44 4000 1200',
-  currency: 'INR',
-  timezone: 'Asia/Kolkata',
-  lowStockAlert: true,
-  orderEmails: true,
-  address: '12 Atelier Lane, Chennai 600004',
-  taxNote: 'GST included where applicable.',
+const emptyForm = {
+  storeName: '',
+  supportEmail: '',
+  phone: '',
+  currency: '',
+  timezone: '',
+  lowStockAlert: false,
+  orderEmails: false,
+  address: '',
+  taxNote: '',
 }
 
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...defaults, ...JSON.parse(raw) } : { ...defaults }
-  } catch {
-    return { ...defaults }
+function asFormValue(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...emptyForm }
+  return {
+    ...emptyForm,
+    ...value,
+    lowStockAlert: Boolean(value.lowStockAlert),
+    orderEmails: Boolean(value.orderEmails),
   }
 }
 
 export function SettingsPage() {
-  const [form, setForm] = useState(loadSettings)
+  const qc = useQueryClient()
+  const [form, setForm] = useState(emptyForm)
   const [saved, setSaved] = useState(false)
+
+  const settingsQuery = useQuery({
+    queryKey: ['erp', 'settings'],
+    queryFn: () => erpApi.list('settings'),
+  })
+
+  const storeDoc = (settingsQuery.data || []).find((item) => item.key === 'store')
+  const storeDocId = storeDoc?.id
+  const storeValue = storeDoc?.value
+
+  useEffect(() => {
+    if (!settingsQuery.isSuccess) return
+    setForm(asFormValue(storeValue))
+  }, [settingsQuery.isSuccess, storeDocId, storeValue])
+
+  const saveMutation = useMutation({
+    mutationFn: async (nextForm) => {
+      if (storeDoc?.id) {
+        return erpApi.update('settings', storeDoc.id, {
+          key: 'store',
+          label: 'Store settings',
+          value: nextForm,
+          status: 'active',
+        })
+      }
+      return erpApi.create('settings', {
+        key: 'store',
+        label: 'Store settings',
+        value: nextForm,
+        status: 'active',
+      })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['erp', 'settings'] })
+      setSaved(true)
+    },
+  })
 
   function setField(name, value) {
     setSaved(false)
@@ -36,8 +77,7 @@ export function SettingsPage() {
 
   function handleSave(e) {
     e.preventDefault()
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(form))
-    setSaved(true)
+    saveMutation.mutate(form)
   }
 
   return (
@@ -50,6 +90,39 @@ export function SettingsPage() {
           Configure store identity, alerts, and regional defaults.
         </p>
       </div>
+
+      <AdminPageStats
+        stats={[
+          {
+            label: 'Store name',
+            value: form.storeName ? 'Set' : 'Missing',
+            hint: form.storeName || 'Required',
+            tone: form.storeName ? 'success' : 'warning',
+            icon: Store,
+          },
+          {
+            label: 'Support email',
+            value: form.supportEmail ? 'Set' : 'Missing',
+            hint: form.supportEmail || 'Required',
+            tone: form.supportEmail ? 'success' : 'warning',
+            icon: Mail,
+          },
+          {
+            label: 'Region',
+            value: form.currency || '—',
+            hint: form.timezone || 'Not set',
+            tone: 'accent',
+            icon: Globe2,
+          },
+          {
+            label: 'Alerts',
+            value: [form.lowStockAlert, form.orderEmails].filter(Boolean).length,
+            hint: 'Active notification toggles',
+            tone: 'default',
+            icon: Bell,
+          },
+        ]}
+      />
 
       <form onSubmit={handleSave} className="space-y-4">
         <section className="rounded-2xl border border-admin-border bg-admin-elevated p-5 shadow-admin">
@@ -76,6 +149,7 @@ export function SettingsPage() {
               value={form.currency}
               onChange={(e) => setField('currency', e.target.value)}
             >
+              <option value="">Select currency</option>
               <option value="INR">INR</option>
               <option value="USD">USD</option>
               <option value="AED">AED</option>
@@ -85,6 +159,7 @@ export function SettingsPage() {
               value={form.timezone}
               onChange={(e) => setField('timezone', e.target.value)}
             >
+              <option value="">Select timezone</option>
               <option value="Asia/Kolkata">Asia/Kolkata</option>
               <option value="Asia/Dubai">Asia/Dubai</option>
               <option value="UTC">UTC</option>
@@ -125,11 +200,16 @@ export function SettingsPage() {
         </section>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" variant="accent" size="sm">
+          <Button type="submit" variant="accent" size="sm" loading={saveMutation.isPending}>
             Save settings
           </Button>
           {saved ? (
-            <span className="text-sm text-admin-success">Settings saved locally.</span>
+            <span className="text-sm text-admin-success">Settings saved.</span>
+          ) : null}
+          {saveMutation.isError ? (
+            <span className="text-sm text-admin-danger">
+              {saveMutation.error?.message || 'Failed to save settings.'}
+            </span>
           ) : null}
         </div>
       </form>

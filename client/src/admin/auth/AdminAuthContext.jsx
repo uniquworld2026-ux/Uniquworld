@@ -10,8 +10,8 @@ const AdminAuthContext = createContext(null)
 export function AdminAuthProvider({ children }) {
   const [session, setSession] = useState(() => readAdminSession())
 
-  const login = useCallback((email, password) => {
-    const result = authenticateAdmin(email, password)
+  const login = useCallback(async (email, password) => {
+    const result = await authenticateAdmin(email, password)
     if (result.ok) {
       setSession(result.session)
     }

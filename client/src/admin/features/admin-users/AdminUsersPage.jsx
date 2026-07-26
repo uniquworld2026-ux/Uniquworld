@@ -10,15 +10,42 @@ export function AdminUsersPage() {
   const updateMutation = hooks.useUpdate()
   const deleteMutation = hooks.useRemove()
 
+  const createWrapped = {
+    ...createMutation,
+    mutateAsync: async (payload) => {
+      if (!payload.password || String(payload.password).length < 6) {
+        throw new Error('Password is required (min 6 characters) to create a login.')
+      }
+      return createMutation.mutateAsync({
+        ...payload,
+        email: String(payload.email || '').trim().toLowerCase(),
+      })
+    },
+  }
+
+  const updateWrapped = {
+    ...updateMutation,
+    mutateAsync: async ({ id, data }) => {
+      const body = {
+        ...data,
+        email: String(data.email || '').trim().toLowerCase(),
+      }
+      // Empty password on edit = keep existing password
+      if (!body.password) delete body.password
+      return updateMutation.mutateAsync({ id, data: body })
+    },
+  }
+
   return (
     <AdminCrudPage
       title="Admin User Management"
-      description="Internal ERP users — admins, ops, and warehouse staff."
+      description="Create ERP staff with profile photo, email, and password — those credentials sign in at /admin/login."
       addLabel="Add admin user"
+      entityLabel="Admin users"
       data={data}
       isLoading={isLoading}
-      createMutation={createMutation}
-      updateMutation={updateMutation}
+      createMutation={createWrapped}
+      updateMutation={updateWrapped}
       deleteMutation={deleteMutation}
       columns={[
         {
@@ -26,7 +53,15 @@ export function AdminUsersPage() {
           header: 'User',
           cell: ({ row }) => (
             <div className="flex items-center gap-3">
-              <Avatar name={row.original.name} size="sm" />
+              {row.original.avatarUrl ? (
+                <img
+                  src={row.original.avatarUrl}
+                  alt=""
+                  className="h-9 w-9 rounded-full object-cover ring-1 ring-admin-border"
+                />
+              ) : (
+                <Avatar name={row.original.name} size="sm" />
+              )}
               <div>
                 <TextCell>{row.original.name}</TextCell>
                 <p className="text-xs text-admin-text-muted">{row.original.email}</p>
@@ -40,8 +75,15 @@ export function AdminUsersPage() {
         { accessorKey: 'status', header: 'Status', cell: ({ getValue }) => <StatusBadge value={getValue()} /> },
       ]}
       fields={[
+        { name: 'avatarUrl', label: 'Profile image', type: 'image' },
         { name: 'name', label: 'Full name', required: true },
-        { name: 'email', label: 'Email', type: 'email', required: true },
+        { name: 'email', label: 'Login email', type: 'email', required: true },
+        {
+          name: 'password',
+          label: 'Login password',
+          type: 'password',
+          placeholder: 'Min 6 characters (leave blank on edit to keep)',
+        },
         { name: 'phone', label: 'Phone' },
         {
           name: 'roleSlug',
@@ -67,14 +109,24 @@ export function AdminUsersPage() {
         },
       ]}
       defaults={{
+        avatarUrl: '',
         name: '',
         email: '',
+        password: '',
         phone: '',
         roleSlug: 'admin',
         department: '',
         status: 'active',
       }}
       searchPlaceholder="Search admin users…"
+      statusFilter={{
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      }}
     />
   )
 }

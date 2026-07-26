@@ -1,17 +1,7 @@
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
-import {
-  corporateEnquiriesStore,
-  createCorporateEnquiry,
-} from '@/admin/features/corporate/corporateEnquiriesStore'
 
-const hooks = createModuleHooks('corporate-enquiries', {
-  list: () => corporateEnquiriesStore.list(),
-  getById: (id) => corporateEnquiriesStore.getById(id),
-  create: createCorporateEnquiry,
-  update: (id, data) => corporateEnquiriesStore.update(id, data),
-  remove: (id) => corporateEnquiriesStore.remove(id),
-})
+const hooks = createErpHooks('corporate-enquiries')
 
 const defaults = {
   company: '',

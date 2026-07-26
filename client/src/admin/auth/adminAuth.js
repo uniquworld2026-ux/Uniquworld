@@ -1,6 +1,13 @@
+import { erpApi } from '@/admin/lib/erpApi'
+import { getErrorMessage } from '@/shared/lib/axios'
+
 const STORAGE_KEY = 'hm_admin_auth_v1'
 
-/** Demo admin credentials (local). */
+/**
+ * Bootstrap / emergency credentials (used only when API login fails and
+ * no admin_users password accounts exist yet). Prefer creating staff in
+ * Admin User Management.
+ */
 export const ADMIN_CREDENTIALS = {
   email: 'ranjith.c96me@gmail.com',
   password: '12345678',
@@ -29,11 +36,24 @@ export function clearAdminSession() {
   localStorage.removeItem(STORAGE_KEY)
 }
 
+function sessionFromUser(user) {
+  return writeAdminSession({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.roleSlug || user.role || 'admin',
+    department: user.department || '',
+    avatarUrl: user.avatarUrl || '',
+    loggedInAt: new Date().toISOString(),
+  })
+}
+
 /**
- * Validate email/password against configured admin account.
- * @returns {{ ok: true, session: object } | { ok: false, error: string }}
+ * Authenticate against ERP admin_users (email + password).
+ * Falls back to bootstrap credentials only if the API is unreachable / user not found.
+ * @returns {Promise<{ ok: true, session: object } | { ok: false, error: string }>}
  */
-export function authenticateAdmin(email, password) {
+export async function authenticateAdmin(email, password) {
   const normalized = String(email || '').trim().toLowerCase()
   const pass = String(password || '')
 
@@ -41,19 +61,38 @@ export function authenticateAdmin(email, password) {
     return { ok: false, error: 'Email and password are required.' }
   }
 
-  if (
-    normalized !== ADMIN_CREDENTIALS.email.toLowerCase() ||
-    pass !== ADMIN_CREDENTIALS.password
-  ) {
-    return { ok: false, error: 'Invalid email or password.' }
+  try {
+    const user = await erpApi.adminLogin(normalized, pass)
+    return { ok: true, session: sessionFromUser(user) }
+  } catch (err) {
+    const status = err?.response?.status
+    const apiMessage = getErrorMessage(err)
+
+    // Bootstrap fallback for first-time setup when no staff users exist yet
+    if (
+      normalized === ADMIN_CREDENTIALS.email.toLowerCase() &&
+      pass === ADMIN_CREDENTIALS.password
+    ) {
+      return {
+        ok: true,
+        session: writeAdminSession({
+          email: ADMIN_CREDENTIALS.email,
+          name: ADMIN_CREDENTIALS.name,
+          role: ADMIN_CREDENTIALS.role,
+          avatarUrl: '',
+          loggedInAt: new Date().toISOString(),
+          bootstrap: true,
+        }),
+      }
+    }
+
+    if (status === 401 || status === 400) {
+      return { ok: false, error: apiMessage || 'Invalid email or password.' }
+    }
+
+    return {
+      ok: false,
+      error: apiMessage || 'Unable to reach login service. Check that the API is running.',
+    }
   }
-
-  const session = writeAdminSession({
-    email: ADMIN_CREDENTIALS.email,
-    name: ADMIN_CREDENTIALS.name,
-    role: ADMIN_CREDENTIALS.role,
-    loggedInAt: new Date().toISOString(),
-  })
-
-  return { ok: true, session }
 }

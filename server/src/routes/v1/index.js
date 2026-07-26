@@ -51,5 +51,6 @@ router.use('/auth', authRoutes);
 router.use('/account', accountRoutes);
 router.use('/erp', erpRoutes);
 router.use('/store', storeRoutes);
+router.use('/catalog', require('./catalog.routes'));
 
 module.exports = router;

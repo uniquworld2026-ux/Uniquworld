@@ -1,42 +1,13 @@
+import { useQuery } from '@tanstack/react-query'
+import { Activity, Package, Percent, ShoppingBag, Users, Wallet } from 'lucide-react'
 import { Line, Bar } from 'react-chartjs-2'
 import '@/admin/components/widgets/chartSetup'
 import { chartDefaults, getChartColors } from '@/admin/components/widgets/chartSetup'
+import { AdminPageStats } from '@/admin/components/crud/AdminPageStats'
+import { erpApi } from '@/admin/lib/erpApi'
 import { formatCurrency } from '@/shared/lib/utils'
 
 const colors = getChartColors(false)
-
-const kpis = [
-  { label: 'Sessions', value: '48.2k', change: '+12%' },
-  { label: 'Conversion', value: '3.4%', change: '+0.4%' },
-  { label: 'Revenue', value: formatCurrency(428900), change: '+18%' },
-  { label: 'Avg. order', value: formatCurrency(2460), change: '+6%' },
-]
-
-const trafficData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  datasets: [
-    {
-      label: 'Sessions',
-      data: [5200, 6100, 5800, 7200, 6900, 8400, 7600],
-      borderColor: colors.accent,
-      backgroundColor: colors.accentSoft,
-      fill: true,
-      tension: 0.35,
-    },
-  ],
-}
-
-const categoryData = {
-  labels: ['Home Décor', 'Corporate', 'Personalized', 'Jewellery'],
-  datasets: [
-    {
-      label: 'Orders',
-      data: [186, 94, 128, 42],
-      backgroundColor: [colors.success, colors.accent, colors.info, colors.warning],
-      borderRadius: 8,
-    },
-  ],
-}
 
 const chartOptions = {
   ...chartDefaults,
@@ -48,6 +19,94 @@ const chartOptions = {
 }
 
 export function AnalyticsPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['erp', 'dashboard'],
+    queryFn: () => erpApi.dashboard(),
+  })
+  const ordersQuery = useQuery({
+    queryKey: ['erp', 'commerce', 'orders'],
+    queryFn: () => erpApi.listOrders({ limit: 100 }),
+  })
+
+  const kpis = data?.kpis || {}
+  const orders = ordersQuery.data || []
+
+  const byDay = {}
+  orders.forEach((o) => {
+    const day = new Date(o.createdAt || o.updatedAt || Date.now()).toLocaleDateString('en-IN', {
+      weekday: 'short',
+    })
+    byDay[day] = (byDay[day] || 0) + 1
+  })
+  const dayLabels = Object.keys(byDay)
+  const dayValues = Object.values(byDay)
+
+  const statusCounts = {}
+  orders.forEach((o) => {
+    const s = o.status || 'pending'
+    statusCounts[s] = (statusCounts[s] || 0) + 1
+  })
+
+  const trafficData = {
+    labels: dayLabels.length ? dayLabels : ['—'],
+    datasets: [
+      {
+        label: 'Orders',
+        data: dayValues.length ? dayValues : [0],
+        borderColor: colors.accent,
+        backgroundColor: colors.accentSoft,
+        fill: true,
+        tension: 0.35,
+      },
+    ],
+  }
+
+  const categoryData = {
+    labels: Object.keys(statusCounts).length ? Object.keys(statusCounts) : ['none'],
+    datasets: [
+      {
+        label: 'Orders',
+        data: Object.keys(statusCounts).length ? Object.values(statusCounts) : [0],
+        backgroundColor: [colors.success, colors.accent, colors.info, colors.warning, colors.danger],
+        borderRadius: 8,
+      },
+    ],
+  }
+
+  const avgOrder =
+    kpis.orders > 0 ? Number(kpis.revenue || 0) / Number(kpis.orders) : 0
+
+  const stats = [
+    {
+      label: 'Orders',
+      value: isLoading ? '…' : kpis.orders ?? 0,
+      hint: 'Live from ERP',
+      tone: 'accent',
+      icon: ShoppingBag,
+    },
+    {
+      label: 'Revenue',
+      value: isLoading ? '…' : formatCurrency(kpis.revenue || 0),
+      hint: 'Order totals',
+      tone: 'success',
+      icon: Wallet,
+    },
+    {
+      label: 'Customers',
+      value: isLoading ? '…' : kpis.customers ?? 0,
+      hint: 'Registered',
+      tone: 'default',
+      icon: Users,
+    },
+    {
+      label: 'Avg. order',
+      value: isLoading ? '…' : formatCurrency(avgOrder),
+      hint: 'Revenue / orders',
+      tone: 'accent',
+      icon: Percent,
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div>
@@ -55,38 +114,37 @@ export function AnalyticsPage() {
           Analytics
         </h2>
         <p className="mt-1 text-sm text-admin-text-muted">
-          Storefront performance for the last 7 days.
+          Live ERP metrics — orders, revenue, and customers from the database.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-admin-border bg-admin-elevated p-4 shadow-admin"
-          >
-            <p className="text-xs font-medium uppercase tracking-wider text-admin-text-muted">
-              {kpi.label}
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-admin-text">{kpi.value}</p>
-            <p className="mt-1 text-xs text-admin-success">{kpi.change} vs prior week</p>
-          </div>
-        ))}
-      </div>
+      <AdminPageStats stats={stats} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-admin-border bg-admin-elevated p-5 shadow-admin">
-          <h3 className="text-sm font-semibold text-admin-text">Traffic</h3>
+          <h3 className="text-sm font-semibold text-admin-text">Orders by day</h3>
           <div className="mt-4 h-64">
             <Line data={trafficData} options={chartOptions} />
           </div>
         </div>
         <div className="rounded-2xl border border-admin-border bg-admin-elevated p-5 shadow-admin">
-          <h3 className="text-sm font-semibold text-admin-text">Orders by category</h3>
+          <h3 className="text-sm font-semibold text-admin-text">Orders by status</h3>
           <div className="mt-4 h-64">
             <Bar data={categoryData} options={chartOptions} />
           </div>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-admin-border bg-admin-elevated p-5 shadow-admin">
+        <div className="flex items-center gap-2 text-sm text-admin-text-muted">
+          <Package className="h-4 w-4" />
+          Catalog products: {kpis.products ?? 0} · Store channel: {kpis.storeProducts ?? 0} ·
+          Shipments: {kpis.shipments ?? 0}
+        </div>
+        <p className="mt-2 inline-flex items-center gap-1 text-xs text-admin-text-muted">
+          <Activity className="h-3.5 w-3.5" />
+          Charts refresh from live order records.
+        </p>
       </div>
     </div>
   )

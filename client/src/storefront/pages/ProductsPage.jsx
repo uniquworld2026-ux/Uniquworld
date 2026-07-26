@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Filter, Search, SlidersHorizontal, X } from 'lucide-react'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
@@ -91,12 +91,7 @@ export function ProductsPage() {
           Category
         </p>
         {categories.length === 0 ? (
-          <p className="mt-3 text-sm text-hm-text-muted">
-            No categories yet.{' '}
-            <Link to="/admin/categories" className="font-medium text-hm-accent hover:underline">
-              Add in Admin
-            </Link>
-          </p>
+          <p className="mt-3 text-sm text-hm-text-muted">Categories will appear here soon.</p>
         ) : (
           <div className="mt-3 flex flex-col gap-1.5">
             <button
@@ -216,16 +211,13 @@ export function ProductsPage() {
               </p>
               <p className="mx-auto mt-2 max-w-sm text-sm text-hm-text-muted">
                 {categoryFilter !== 'All' && totalInCategory === 0
-                  ? 'Add products in Admin and set status to Active for this category.'
-                  : 'Only active products appear here. Draft or archived items stay in Admin.'}
+                  ? 'Nothing in this collection right now. Try another category or view all gifts.'
+                  : 'Try clearing filters or browse another category.'}
               </p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Button variant="primary" onClick={() => patch({ search: '', category: 'All' })}>
                   View all gifts
                 </Button>
-                <Link to="/admin/products">
-                  <Button variant="outline">Manage products</Button>
-                </Link>
               </div>
             </div>
           ) : (

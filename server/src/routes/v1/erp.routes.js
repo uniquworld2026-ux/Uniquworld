@@ -25,12 +25,18 @@ const requireAdminAccess = (req, res, next) => {
 };
 
 router.get('/modules', requireAdminAccess, erpController.listModules);
+router.get('/dashboard', requireAdminAccess, erpController.dashboardSummary);
+
+/** Public ERP staff login (admin_users email + password) */
+router.post('/auth/login', erpController.adminLogin);
 
 router.get('/commerce/orders', requireAdminAccess, erpController.listOrders);
 router.patch('/commerce/orders/:id', requireAdminAccess, erpController.updateOrderStatus);
 router.get('/commerce/payments', requireAdminAccess, erpController.listPayments);
 router.get('/commerce/shipments', requireAdminAccess, erpController.listShipments);
+router.post('/commerce/shipments', requireAdminAccess, erpController.createShipment);
 router.patch('/commerce/shipments/:id', requireAdminAccess, erpController.updateShipment);
+router.delete('/commerce/shipments/:id', requireAdminAccess, erpController.deleteShipment);
 router.get('/commerce/customers', requireAdminAccess, erpController.listCustomers);
 
 router.get('/:module', requireAdminAccess, erpController.list);

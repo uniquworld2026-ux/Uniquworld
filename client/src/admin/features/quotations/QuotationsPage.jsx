@@ -1,43 +1,8 @@
-import { createLocalStore } from '@/admin/lib/createLocalStore'
-import { createModuleHooks } from '@/admin/lib/createModuleHooks'
+import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 import { formatCurrency } from '@/shared/lib/utils'
 
-const seed = [
-  {
-    id: 'qt_1',
-    quoteNumber: 'Q-2026-088',
-    company: 'NovaTech Pvt Ltd',
-    amount: 142500,
-    validUntil: '2026-08-15',
-    status: 'sent',
-    updatedAt: '2026-07-21T10:00:00.000Z',
-    createdAt: '2026-07-21T10:00:00.000Z',
-  },
-  {
-    id: 'qt_2',
-    quoteNumber: 'Q-2026-074',
-    company: 'Cedar Bank',
-    amount: 398000,
-    validUntil: '2026-08-01',
-    status: 'approved',
-    updatedAt: '2026-07-18T10:00:00.000Z',
-    createdAt: '2026-07-12T10:00:00.000Z',
-  },
-  {
-    id: 'qt_3',
-    quoteNumber: 'Q-2026-061',
-    company: 'Bloom Studios',
-    amount: 76500,
-    validUntil: '2026-07-20',
-    status: 'draft',
-    updatedAt: '2026-07-05T10:00:00.000Z',
-    createdAt: '2026-07-02T10:00:00.000Z',
-  },
-]
-
-const store = createLocalStore('hm_admin_quotations_v1', seed, 'qt')
-const hooks = createModuleHooks('quotations', store)
+const hooks = createErpHooks('quotations')
 
 const defaults = {
   quoteNumber: '',
