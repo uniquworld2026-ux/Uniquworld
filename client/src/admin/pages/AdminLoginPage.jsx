@@ -42,7 +42,6 @@ export function AdminLoginPage() {
         setOtpStep({
           email: result.email || email,
           purpose: result.purpose || 'admin_login',
-          devOtp: result.devOtp,
         })
         setInfo(result.message || 'OTP sent to your email.')
         return
@@ -97,11 +96,6 @@ export function AdminLoginPage() {
 
           {otpStep ? (
             <form className="mt-6 space-y-4" onSubmit={handleOtpSubmit}>
-              {otpStep.devOtp ? (
-                <p className="rounded-lg bg-admin-muted px-3 py-2 text-xs text-admin-text-muted">
-                  Dev OTP: <strong className="text-admin-text">{otpStep.devOtp}</strong>
-                </p>
-              ) : null}
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-admin-text-muted">OTP code</span>
                 <div className="relative">
@@ -134,6 +128,37 @@ export function AdminLoginPage() {
               >
                 {submitting ? 'Verifying…' : 'Verify & enter admin'}
               </Button>
+              <button
+                type="button"
+                className="w-full text-center text-xs text-admin-text-muted hover:text-admin-text disabled:opacity-50"
+                disabled={submitting || !password}
+                onClick={async () => {
+                  setError('')
+                  setInfo('')
+                  setSubmitting(true)
+                  try {
+                    const result = await login(otpStep.email || email, password)
+                    if (!result.ok) {
+                      setError(result.error)
+                      return
+                    }
+                    if (result.requiresOtp) {
+                      setOtpStep({
+                        email: result.email || otpStep.email || email,
+                        purpose: result.purpose || 'admin_login',
+                      })
+                      setOtpCode('')
+                      setInfo(result.message || 'A new OTP was sent. Check inbox and spam.')
+                    }
+                  } catch (err) {
+                    setError(err?.message || 'Could not resend OTP.')
+                  } finally {
+                    setSubmitting(false)
+                  }
+                }}
+              >
+                Resend OTP
+              </button>
               <button
                 type="button"
                 className="w-full text-center text-xs text-admin-text-muted hover:text-admin-text"

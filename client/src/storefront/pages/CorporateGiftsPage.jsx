@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useStorefrontProducts } from '@/shared/catalog/useLiveCatalog'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
+import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Button } from '@/shared/components/ui/Button'
 
 const HERO_IMG =
@@ -99,9 +100,7 @@ export function CorporateGiftsPage() {
               <Building2 className="h-3.5 w-3.5" />
               Corporate gifting
             </p>
-            <p className="mt-4 font-display text-5xl leading-[0.95] tracking-tight text-hm-text sm:text-6xl md:text-7xl">
-              Uniquworld
-            </p>
+            <BrandLogo to={null} priority imgClassName="mt-4 h-12 sm:h-14 md:h-16" />
             <h1 className="mt-5 text-balance text-lg font-medium leading-snug text-hm-text sm:text-xl md:text-2xl">
               Brand gifts that feel personal — for teams, clients, and milestones.
             </h1>

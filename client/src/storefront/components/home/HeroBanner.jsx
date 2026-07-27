@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronLeft, ChevronRight, Play } from 'lucide-react'
 import { useRef } from 'react'
 import { Button } from '@/shared/components/ui/Button'
+import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Container } from '@/storefront/components/ui/Container'
 import { trendingCollections, occasions } from '@/storefront/data/home'
 
@@ -49,9 +50,7 @@ export function HeroBanner() {
               <div className="pointer-events-none absolute -left-8 top-0 h-40 w-40 rounded-full bg-hm-accent/20 blur-3xl" />
               <div className="pointer-events-none absolute bottom-0 right-1/3 h-32 w-32 rounded-full bg-hm-teal/20 blur-3xl" />
               <div className="relative z-10 flex w-full flex-col justify-center p-5 sm:max-w-[55%] sm:p-8 md:p-10">
-                <p className="font-display text-4xl leading-none tracking-tight text-hm-primary sm:text-5xl md:text-6xl">
-                  Uniquworld
-                </p>
+                <BrandLogo to={null} priority imgClassName="h-12 sm:h-14 md:h-16" />
                 <h1 className="mt-3 text-base font-semibold leading-snug text-hm-text sm:text-lg md:text-xl">
                   India&apos;s most premium gifting experience.
                 </h1>

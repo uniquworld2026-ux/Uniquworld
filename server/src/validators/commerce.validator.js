@@ -96,6 +96,14 @@ const wishlistSchema = z.object({
     .passthrough(),
 });
 
+const cartActivitySchema = z.object({
+  productName: z.string().min(1).max(300),
+  productId: z.union([z.string(), z.number()]).optional().nullable(),
+  catalogKey: z.string().max(160).optional().nullable(),
+  productImage: z.string().max(2000).optional().nullable(),
+  quantity: z.number().int().positive().max(99).optional(),
+});
+
 module.exports = {
   addressBody,
   updateAddressSchema,
@@ -105,4 +113,5 @@ module.exports = {
   cancelOrderSchema,
   returnSchema,
   wishlistSchema,
+  cartActivitySchema,
 };

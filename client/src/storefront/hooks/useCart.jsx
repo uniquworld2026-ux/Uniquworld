@@ -1,10 +1,29 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { accountApi } from '@/storefront/api/account'
+import { tokenStore } from '@/shared/lib/axios'
 
 const CartContext = createContext(null)
 
 function lineKey(product) {
   const meta = product.meta ? JSON.stringify(product.meta) : ''
   return `${product.id}::${meta}`
+}
+
+function notifyCartAdd(product, qty) {
+  if (!tokenStore.getAccess()) return
+  const productName = product?.name
+  if (!productName) return
+  accountApi
+    .reportCartAdd({
+      productName,
+      productId: product.id != null ? String(product.id) : null,
+      catalogKey: product.catalogKey || (product.id != null ? String(product.id) : null),
+      productImage: product.image || product.images?.[0] || null,
+      quantity: qty,
+    })
+    .catch(() => {
+      // Never block shopping if notification email fails
+    })
 }
 
 export function CartProvider({ children }) {
@@ -49,6 +68,7 @@ export function CartProvider({ children }) {
         ]
       })
       showToast(`Added “${product.name}” to bag`)
+      notifyCartAdd(product, addQty)
       if (open) setIsOpen(true)
     },
     [showToast],

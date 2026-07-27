@@ -11,6 +11,7 @@ const {
   cancelOrderSchema,
   returnSchema,
   wishlistSchema,
+  cartActivitySchema,
 } = require('../../validators/commerce.validator');
 
 const router = express.Router();
@@ -28,6 +29,8 @@ router.delete('/addresses/:id', accountController.deleteAddress);
 router.get('/wishlist', accountController.listWishlist);
 router.post('/wishlist', validate(wishlistSchema), accountController.addWishlist);
 router.delete('/wishlist/:catalogKey', accountController.removeWishlist);
+
+router.post('/cart-activity', validate(cartActivitySchema), accountController.reportCartAdd);
 
 router.get('/notifications', accountController.listNotifications);
 router.post('/notifications/read-all', accountController.markAllNotificationsRead);

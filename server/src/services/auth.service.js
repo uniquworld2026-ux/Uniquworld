@@ -31,7 +31,6 @@ const createAndSendOtp = async ({ userId, email, purpose, firstName }) => {
 
   return {
     expiresInMinutes: config.otp.expiresInMinutes,
-    ...(config.env === 'development' ? { devOtp: code } : {}),
   };
 };
 

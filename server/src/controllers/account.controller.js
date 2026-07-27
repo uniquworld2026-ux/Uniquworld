@@ -6,6 +6,7 @@ const addressRepository = require('../repositories/address.repository');
 const wishlistRepository = require('../repositories/wishlist.repository');
 const notificationRepository = require('../repositories/notification.repository');
 const orderService = require('../services/order.service');
+const notificationService = require('../services/notification.service');
 const { toPublicUser } = require('../models/user.model');
 
 const updateProfile = asyncHandler(async (req, res) => {
@@ -53,7 +54,37 @@ const addWishlist = asyncHandler(async (req, res) => {
     productId: req.body.productId || null,
     productSnapshot: req.body.product,
   });
+
+  const productName = req.body.product?.name || 'Gift';
+  const productImage = req.body.product?.image || req.body.product?.imageUrl || null;
+  await notificationService.notifyProductActivity(req.user.id, {
+    action: 'wishlist',
+    productName,
+    productId: req.body.productId || null,
+    catalogKey: req.body.catalogKey,
+    productImage,
+  });
+
   return ApiResponse.created(res, { item }, 'Added to wishlist');
+});
+
+/**
+ * Signed-in customer added a product to bag — in-app + email notification.
+ */
+const reportCartAdd = asyncHandler(async (req, res) => {
+  const productName = String(req.body.productName || '').trim();
+  if (!productName) throw ApiError.badRequest('productName is required');
+
+  await notificationService.notifyProductActivity(req.user.id, {
+    action: 'cart',
+    productName,
+    productId: req.body.productId || null,
+    catalogKey: req.body.catalogKey || null,
+    productImage: req.body.productImage || null,
+    quantity: req.body.quantity || 1,
+  });
+
+  return ApiResponse.ok(res, { notified: true }, 'Notification sent');
 });
 
 const removeWishlist = asyncHandler(async (req, res) => {
@@ -136,6 +167,7 @@ module.exports = {
   listWishlist,
   addWishlist,
   removeWishlist,
+  reportCartAdd,
   listNotifications,
   markNotificationRead,
   markAllNotificationsRead,

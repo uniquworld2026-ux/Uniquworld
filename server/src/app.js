@@ -63,6 +63,14 @@ app.get('/', (_req, res) => {
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
 app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec));
 
+app.use(
+  '/static/email',
+  express.static(require('path').join(__dirname, '../assets/email'), {
+    maxAge: '7d',
+    fallthrough: false,
+  })
+);
+
 app.use(config.apiPrefix, v1Routes);
 
 app.use(notFoundHandler);

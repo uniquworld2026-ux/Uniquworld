@@ -12,6 +12,14 @@ if (missing.length && process.env.NODE_ENV === 'production') {
   throw new Error(`Missing required env vars: ${missing.join(', ')}`);
 }
 
+// Fail fast in all envs when DB URL is missing — otherwise `pg` throws a cryptic
+// "SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string".
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    'DATABASE_URL is missing. Copy server/.env.example to server/.env and set your Supabase pooler connection string.'
+  );
+}
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT) || 5000,
@@ -19,6 +27,10 @@ const config = {
   appUrl: process.env.APP_URL || 'http://localhost:5000',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   apiPrefix: process.env.API_PREFIX || '/api/v1',
+  // Absolute URL required for email clients (Gmail blocks local/relative images)
+  emailLogoUrl:
+    process.env.EMAIL_LOGO_URL ||
+    `${(process.env.SUPABASE_URL || '').replace(/\/$/, '')}/storage/v1/object/public/${process.env.SUPABASE_STORAGE_BUCKET || 'uniquworld-assets'}/brand/Uniquworld.jpg`,
 
   db: {
     connectionString: process.env.DATABASE_URL,
@@ -76,9 +88,15 @@ const config = {
     port: Number(process.env.SMTP_PORT) || 587,
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    // Gmail app passwords are often pasted with spaces — strip them
+    pass: (process.env.SMTP_PASS || '').replace(/\s+/g, ''),
     fromName: process.env.SMTP_FROM_NAME || 'Uniquworld',
     fromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@uniquworld.com',
+  },
+
+  // Prefer Resend when set — Gmail SMTP frequently lands in Spam without domain auth
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || '',
   },
 
   google: {

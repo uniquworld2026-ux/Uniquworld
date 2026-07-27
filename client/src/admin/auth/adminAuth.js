@@ -68,7 +68,6 @@ export async function authenticateAdmin(email, password) {
         email: data.email || normalized,
         purpose: data.purpose,
         message: data.message,
-        devOtp: data?.otp?.devOtp,
       }
     }
     if (data?.user || data?.id) {

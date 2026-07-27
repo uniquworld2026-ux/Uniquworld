@@ -26,6 +26,9 @@ import { StarRating } from '@/storefront/components/product/StarRating'
 import { CustomizeProductModal } from '@/storefront/components/product/CustomizeProductModal'
 import { pushRecentlyViewed, getRecentlyViewedIds } from '@/storefront/hooks/useRecentlyViewed'
 import { useCart } from '@/storefront/hooks/useCart'
+import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
+import { accountApi } from '@/storefront/api/account'
+import { getErrorMessage } from '@/shared/lib/axios'
 import { createPersonalizedOrder } from '@/admin/features/personalized/personalizedOrdersStore'
 import { formatCurrency } from '@/shared/lib/utils'
 import { Button } from '@/shared/components/ui/Button'
@@ -39,6 +42,7 @@ export function ProductDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
+  const { isAuthenticated } = useCustomerAuth()
   const product = useStorefrontProduct(id)
   const allProducts = useStorefrontProducts()
   const related = useStorefrontRelated(product)
@@ -587,7 +591,34 @@ export function ProductDetailsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setWishlisted((w) => !w)}
+                onClick={async () => {
+                  if (!product) return
+                  if (!isAuthenticated) {
+                    navigate('/login', { state: { from: `/products/${product.id}` } })
+                    return
+                  }
+                  try {
+                    if (wishlisted) {
+                      await accountApi.removeWishlist(String(product.id))
+                      setWishlisted(false)
+                    } else {
+                      await accountApi.addWishlist({
+                        catalogKey: String(product.id),
+                        product: {
+                          id: product.id,
+                          name: product.name,
+                          price: product.price,
+                          image: product.images?.[0] || product.image,
+                          tag: product.tag,
+                        },
+                      })
+                      setWishlisted(true)
+                    }
+                  } catch (err) {
+                    // Soft fail — still toggle local state if already saved
+                    console.warn(getErrorMessage(err))
+                  }
+                }}
                 className={cn(wishlisted && 'text-hm-accent')}
               >
                 <Heart className={cn('h-4 w-4', wishlisted && 'fill-current')} />

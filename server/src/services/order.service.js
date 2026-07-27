@@ -4,42 +4,13 @@ const addressRepository = require('../repositories/address.repository');
 const orderRepository = require('../repositories/order.repository');
 const notificationRepository = require('../repositories/notification.repository');
 const returnRepository = require('../repositories/return.repository');
-const userRepository = require('../repositories/user.repository');
 const razorpayService = require('./razorpay.service');
 const shiprocketService = require('./shiprocket.service');
-const emailService = require('./email.service');
+const { notifyUser } = require('./notification.service');
 
 const calcShipping = (subtotal) => {
   if (subtotal >= config.commerce.freeShippingMin) return 0;
   return config.commerce.defaultShippingAmount;
-};
-
-const notifyUser = async (userId, { title, body, type, data, orderNumber, totalLabel }) => {
-  await notificationRepository.create({ userId, title, body, type, data });
-  try {
-    const user = await userRepository.findById(userId);
-    if (!user?.email) return;
-    if (orderNumber) {
-      await emailService.sendOrderEmail({
-        to: user.email,
-        firstName: user.first_name,
-        orderNumber,
-        title,
-        message: body,
-        totalLabel,
-      });
-    } else {
-      await emailService.sendNotificationEmail({
-        to: user.email,
-        firstName: user.first_name,
-        title,
-        body,
-      });
-    }
-  } catch (err) {
-    // Never fail the main flow if email delivery fails
-    require('../utils/logger').warn('Order notification email failed', { message: err.message });
-  }
 };
 
 const placeOrder = async (userId, payload) => {

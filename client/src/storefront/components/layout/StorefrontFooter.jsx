@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { SocialLinks } from '@/storefront/components/layout/SocialLinks'
 
 const footerColumns = [
@@ -51,7 +52,10 @@ export function StorefrontFooter() {
       <div className="pointer-events-none absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-hm-gold/20 blur-3xl" />
       <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-8 px-5 py-14 sm:px-8 lg:grid-cols-5 lg:gap-10">
         <div className="col-span-2 lg:col-span-1">
-          <p className="font-display text-3xl text-white">Uniquworld</p>
+          <BrandLogo
+            imgClassName="h-10 rounded-lg bg-white px-2 py-1 sm:h-11"
+            className="rounded-lg"
+          />
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/75">
             India&apos;s premium gifting experience — personalized, corporate, and surprise.
           </p>

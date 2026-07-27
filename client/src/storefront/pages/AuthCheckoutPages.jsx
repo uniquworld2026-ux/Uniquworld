@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { PageHero } from '@/storefront/components/layout/PageHero'
+import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Button } from '@/shared/components/ui/Button'
 import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
 import { useCart } from '@/storefront/hooks/useCart'
@@ -12,7 +13,7 @@ import { formatINR, loadRazorpay } from '@/storefront/lib/commerce'
 function AuthShell({ title, subtitle, children, footer }) {
   return (
     <div className="mx-auto flex min-h-[80svh] max-w-md flex-col justify-center px-5 py-24 sm:px-8">
-      <Link to="/" className="font-display text-3xl text-hm-text">Uniquworld</Link>
+      <BrandLogo priority imgClassName="h-11 sm:h-12" />
       <h1 className="mt-8 font-display text-4xl text-hm-text">{title}</h1>
       {subtitle ? <p className="mt-2 text-sm text-hm-text-muted">{subtitle}</p> : null}
       <div className="mt-8">{children}</div>
@@ -86,11 +87,6 @@ export function LoginPage() {
             }
           }}
         >
-          {otpStep.devOtp ? (
-            <p className="rounded-xl bg-hm-muted px-3 py-2 text-xs text-hm-text-muted">
-              Dev OTP: <strong className="text-hm-text">{otpStep.devOtp}</strong>
-            </p>
-          ) : null}
           <input
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value)}
@@ -132,9 +128,8 @@ export function LoginPage() {
               setOtpStep({
                 email: data.email || values.email,
                 purpose: data.purpose,
-                devOtp: data?.otp?.devOtp,
               })
-              setInfo(data.message || 'OTP sent to your email.')
+              setInfo(data.message || 'OTP sent to your email. Check your inbox.')
               return
             }
             navigate(from, { replace: true })
@@ -189,15 +184,12 @@ export function SignupPage() {
             }
           }}
         >
-          {otpStep.devOtp ? (
-            <p className="rounded-xl bg-hm-muted px-3 py-2 text-xs text-hm-text-muted">
-              Dev OTP: <strong className="text-hm-text">{otpStep.devOtp}</strong>
-            </p>
-          ) : null}
           <input
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value)}
             placeholder="6-digit OTP"
+            inputMode="numeric"
+            autoComplete="one-time-code"
             className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
           />
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
@@ -211,7 +203,7 @@ export function SignupPage() {
   return (
     <AuthShell
       title="Create account"
-      subtitle="Save addresses, track orders, and checkout faster."
+      subtitle="We’ll email a verification code — then you can sign in."
       footer={
         <>Already have an account? <Link to="/login" className="text-hm-accent">Sign in</Link></>
       }
@@ -223,7 +215,7 @@ export function SignupPage() {
           setInfo('')
           try {
             const nameParts = values.name.trim().split(/\s+/)
-            const data = await registerUser({
+            await registerUser({
               email: values.email,
               password: values.password,
               firstName: nameParts[0],
@@ -231,8 +223,8 @@ export function SignupPage() {
             })
             setOtpStep({
               email: values.email,
-              devOtp: data?.otp?.devOtp,
             })
+            setInfo('Verification code sent to your email.')
           } catch (err) {
             setError(getErrorMessage(err))
           }

@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiResponse = require('../utils/ApiResponse');
 const ApiError = require('../utils/ApiError');
 const config = require('../config');
+const logger = require('../utils/logger');
 const erpRepository = require('../repositories/erp.repository');
 const otpRepository = require('../repositories/otp.repository');
 const emailService = require('../services/email.service');
@@ -112,12 +113,32 @@ const adminLogin = asyncHandler(async (req, res) => {
     maxAttempts: config.otp.maxAttempts,
   });
 
-  await emailService.sendOtpEmail({
-    to: admin.email,
-    code,
-    purpose: OTP_PURPOSE.ADMIN_LOGIN,
-    firstName: admin.name?.split?.(' ')?.[0] || admin.name,
-  });
+  if (!emailService.isEmailConfigured()) {
+    throw ApiError.serviceUnavailable(
+      'Email is not configured. Set RESEND_API_KEY (recommended) or SMTP_* in server/.env.'
+    );
+  }
+
+  try {
+    await emailService.sendOtpEmail({
+      to: admin.email,
+      code,
+      purpose: OTP_PURPOSE.ADMIN_LOGIN,
+      firstName: admin.name?.split?.(' ')?.[0] || admin.name,
+    });
+  } catch (err) {
+    throw ApiError.serviceUnavailable(
+      `Could not send OTP email to ${admin.email}. Check SMTP settings / spam folder. ${err.message || ''}`
+    );
+  }
+
+  // Development-only: OTP is never returned in the API response; check server logs if mail is delayed.
+  if (config.env === 'development') {
+    logger.info('Admin login OTP issued (check email; spam folder if missing)', {
+      email: admin.email,
+      otp: code,
+    });
+  }
 
   return ApiResponse.ok(
     res,
@@ -125,10 +146,9 @@ const adminLogin = asyncHandler(async (req, res) => {
       requiresOtp: true,
       purpose: OTP_PURPOSE.ADMIN_LOGIN,
       email: admin.email,
-      message: 'OTP sent to your email. Enter it to complete admin sign-in.',
+      message: `OTP sent to ${admin.email}. Check your Primary inbox.`,
       otp: {
         expiresInMinutes: config.otp.expiresInMinutes,
-        ...(config.env === 'development' ? { devOtp: code } : {}),
       },
     },
     'OTP sent'

@@ -32,6 +32,7 @@ export const accountApi = {
   listWishlist: () => api.get('/account/wishlist').then((r) => r.data.data.items),
   addWishlist: (body) => api.post('/account/wishlist', body).then((r) => r.data.data.item),
   removeWishlist: (catalogKey) => api.delete(`/account/wishlist/${encodeURIComponent(catalogKey)}`).then((r) => r.data),
+  reportCartAdd: (body) => api.post('/account/cart-activity', body).then((r) => r.data.data),
 
   listNotifications: () => api.get('/account/notifications').then((r) => r.data.data),
   markNotificationRead: (id) => api.post(`/account/notifications/${id}/read`).then((r) => r.data.data.item),

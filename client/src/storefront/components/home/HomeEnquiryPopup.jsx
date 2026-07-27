@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { MessageCircle, X } from 'lucide-react'
 import { createCorporateEnquiry } from '@/admin/features/corporate/corporateEnquiriesStore'
 import { Button } from '@/shared/components/ui/Button'
+import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Input, Select, TextArea } from '@/storefront/components/ui/Input'
 import { cn } from '@/shared/utils/cn'
 
@@ -170,10 +171,8 @@ export function HomeEnquiryPopup() {
                   <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-hm-accent/20 blur-2xl" />
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-hm-accent">
-                        Uniquworld
-                      </p>
-                      <h2 className="mt-1 font-display text-2xl tracking-tight text-hm-text">
+                      <BrandLogo to={null} imgClassName="h-7" />
+                      <h2 className="mt-2 font-display text-2xl tracking-tight text-hm-text">
                         Enquiry Form
                       </h2>
                       <p className="mt-1 text-sm text-hm-text-muted">

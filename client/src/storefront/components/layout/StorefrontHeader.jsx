@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { primaryNav } from '@/storefront/config/sitemap'
+import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Button } from '@/shared/components/ui/Button'
 import { useTheme } from '@/shared/hooks/useTheme'
 import { useCart } from '@/storefront/hooks/useCart'
@@ -201,11 +202,7 @@ export function StorefrontHeader() {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          <Link to="/" className="min-w-0 shrink-0">
-            <span className="font-display text-xl tracking-tight text-hm-primary sm:text-3xl">
-              Uniquworld
-            </span>
-          </Link>
+          <BrandLogo priority className="min-w-0 shrink-0" imgClassName="h-8 sm:h-10" />
 
           <form onSubmit={onSearch} className="relative hidden min-w-0 flex-1 md:block">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-hm-text-subtle" />
