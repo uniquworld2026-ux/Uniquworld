@@ -167,8 +167,8 @@ export function HomeEnquiryPopup() {
                 aria-label="Enquiry form"
                 className="relative z-10 flex max-h-[min(92svh,640px)] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-hm-border bg-hm-elevated shadow-hm-elevated sm:rounded-3xl"
               >
-                <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#fff0ea] via-hm-elevated to-[#e8f7f4] px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-hm-accent/20 blur-2xl" />
+                <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#fff8f8] via-hm-elevated to-[#f3f7fb] px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
+                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-hm-accent/15 blur-2xl" />
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <BrandLogo to={null} imgClassName="h-7" />

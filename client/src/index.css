@@ -2,64 +2,64 @@
 
 /* ─── Design tokens (CSS variables) ─── */
 :root {
-  /* Shared brand — colorful premium atelier */
+  /* Logo palette: deep navy (#0A2D4D) + brand red (#D92C2B) on white premium */
   --hm-font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
   --hm-font-display: 'Fraunces', Georgia, serif;
 
-  /* Storefront light — soft blush canvas + jewel accents */
-  --hm-bg: #fff6f2;
+  /* Storefront light — mostly white, premium */
+  --hm-bg: #ffffff;
   --hm-bg-elevated: #ffffff;
-  --hm-bg-muted: #ffe8df;
-  --hm-surface: rgba(255, 255, 255, 0.78);
+  --hm-bg-muted: #f4f7fb;
+  --hm-surface: rgba(255, 255, 255, 0.86);
   --hm-surface-solid: #ffffff;
-  --hm-border: rgba(92, 31, 46, 0.1);
+  --hm-border: rgba(10, 45, 77, 0.1);
   --hm-radius-sm: 0.5rem;
   --hm-radius-md: 0.875rem;
   --hm-radius-lg: 1.25rem;
   --hm-radius-xl: 1.75rem;
   --hm-radius-2xl: 2.25rem;
-  --hm-border-strong: rgba(92, 31, 46, 0.18);
-  --hm-text: #24131a;
-  --hm-text-muted: #6d4a55;
-  --hm-text-subtle: #9a7380;
-  --hm-primary: #7a1f3d;
-  --hm-primary-hover: #5c1530;
-  --hm-accent: #e85d4c;
-  --hm-accent-soft: #ff9b88;
-  --hm-accent-muted: rgba(232, 93, 76, 0.14);
-  --hm-teal: #1f8a7a;
-  --hm-gold: #d4af37;
+  --hm-border-strong: rgba(10, 45, 77, 0.18);
+  --hm-text: #0a2d4d;
+  --hm-text-muted: #4a6280;
+  --hm-text-subtle: #7a90a8;
+  --hm-primary: #0a2d4d;
+  --hm-primary-hover: #071f36;
+  --hm-accent: #d92c2b;
+  --hm-accent-soft: #f07170;
+  --hm-accent-muted: rgba(217, 44, 43, 0.12);
+  --hm-teal: #0a2d4d;
+  --hm-gold: #d92c2b;
   --hm-success: #15803d;
-  --hm-offer: #15803d;
-  --hm-offer-muted: rgba(21, 128, 61, 0.12);
-  --hm-star: #d4af37;
+  --hm-offer: #d92c2b;
+  --hm-offer-muted: rgba(217, 44, 43, 0.1);
+  --hm-star: #e5a100;
   --hm-warning: #d4a017;
-  --hm-danger: #c2314a;
-  --hm-ring: rgba(232, 93, 76, 0.4);
-  --hm-shadow: rgba(92, 31, 46, 0.1);
-  --hm-overlay: rgba(36, 19, 26, 0.48);
+  --hm-danger: #d92c2b;
+  --hm-ring: rgba(217, 44, 43, 0.35);
+  --hm-shadow: rgba(10, 45, 77, 0.08);
+  --hm-overlay: rgba(10, 45, 77, 0.48);
 
-  /* Admin light */
-  --admin-bg: #f4f5f7;
+  /* Admin light — aligned to logo */
+  --admin-bg: #f5f7fa;
   --admin-bg-elevated: #ffffff;
-  --admin-bg-muted: #ebedf0;
-  --admin-sidebar: #1a1612;
-  --admin-sidebar-hover: #25201b;
-  --admin-sidebar-text: #e8dfd4;
-  --admin-sidebar-muted: #9a8b7c;
-  --admin-sidebar-active: #b8956c;
-  --admin-sidebar-active-bg: rgba(184, 149, 108, 0.12);
-  --admin-border: #e2e5ea;
-  --admin-text: #1a1d23;
-  --admin-text-muted: #6b7280;
-  --admin-primary: #4a3426;
-  --admin-accent: #b8956c;
+  --admin-bg-muted: #eef2f7;
+  --admin-sidebar: #0a2d4d;
+  --admin-sidebar-hover: #0d3a63;
+  --admin-sidebar-text: #e8eef5;
+  --admin-sidebar-muted: #8fa3bc;
+  --admin-sidebar-active: #d92c2b;
+  --admin-sidebar-active-bg: rgba(217, 44, 43, 0.16);
+  --admin-border: #e2e8f0;
+  --admin-text: #0a2d4d;
+  --admin-text-muted: #64748b;
+  --admin-primary: #0a2d4d;
+  --admin-accent: #d92c2b;
   --admin-success: #059669;
   --admin-warning: #d97706;
-  --admin-danger: #dc2626;
+  --admin-danger: #d92c2b;
   --admin-info: #2563eb;
-  --admin-ring: rgba(184, 149, 108, 0.4);
-  --admin-shadow: rgba(26, 29, 35, 0.08);
+  --admin-ring: rgba(217, 44, 43, 0.35);
+  --admin-shadow: rgba(10, 45, 77, 0.08);
   --admin-sidebar-width: 272px;
   --admin-sidebar-collapsed: 80px;
   --admin-header-height: 64px;
@@ -83,52 +83,52 @@
 }
 
 .dark {
-  --hm-bg: #140c10;
-  --hm-bg-elevated: #1e1218;
-  --hm-bg-muted: #2a1820;
-  --hm-surface: rgba(30, 18, 24, 0.82);
-  --hm-surface-solid: #1e1218;
-  --hm-border: rgba(255, 214, 204, 0.12);
-  --hm-border-strong: rgba(255, 214, 204, 0.2);
-  --hm-text: #fff1ec;
-  --hm-text-muted: #d2aeb8;
-  --hm-text-subtle: #a07f8c;
-  --hm-primary: #ffb4a4;
-  --hm-primary-hover: #ffd2c8;
-  --hm-accent: #ff7a68;
-  --hm-accent-soft: #ff9b88;
-  --hm-accent-muted: rgba(255, 122, 104, 0.18);
-  --hm-teal: #3db8a6;
-  --hm-gold: #e8c44a;
+  --hm-bg: #07111c;
+  --hm-bg-elevated: #0c1a2b;
+  --hm-bg-muted: #122338;
+  --hm-surface: rgba(12, 26, 43, 0.86);
+  --hm-surface-solid: #0c1a2b;
+  --hm-border: rgba(232, 240, 248, 0.12);
+  --hm-border-strong: rgba(232, 240, 248, 0.2);
+  --hm-text: #f4f8fc;
+  --hm-text-muted: #a8bdd4;
+  --hm-text-subtle: #7a93ad;
+  --hm-primary: #e8f0f8;
+  --hm-primary-hover: #ffffff;
+  --hm-accent: #f07170;
+  --hm-accent-soft: #f8a3a2;
+  --hm-accent-muted: rgba(240, 113, 112, 0.18);
+  --hm-teal: #8fb4d9;
+  --hm-gold: #f07170;
   --hm-success: #4ade80;
-  --hm-offer: #4ade80;
-  --hm-offer-muted: rgba(74, 222, 128, 0.16);
+  --hm-offer: #f07170;
+  --hm-offer-muted: rgba(240, 113, 112, 0.16);
   --hm-star: #e8c44a;
   --hm-warning: #e8c04a;
   --hm-danger: #ff6b81;
-  --hm-ring: rgba(255, 122, 104, 0.4);
+  --hm-ring: rgba(240, 113, 112, 0.4);
   --hm-shadow: rgba(0, 0, 0, 0.4);
   --hm-overlay: rgba(0, 0, 0, 0.62);
 
-  --admin-bg: #0f1115;
-  --admin-bg-elevated: #171a21;
-  --admin-bg-muted: #1e222b;
-  --admin-sidebar: #0b0d11;
-  --admin-sidebar-hover: #151920;
-  --admin-sidebar-text: #e8dfd4;
-  --admin-sidebar-muted: #8a7b6c;
-  --admin-sidebar-active: #c9a87a;
-  --admin-sidebar-active-bg: rgba(201, 168, 122, 0.14);
-  --admin-border: #2a303c;
-  --admin-text: #f3f4f6;
+  --admin-bg: #07111c;
+  --admin-bg-elevated: #0c1a2b;
+  --admin-bg-muted: #122338;
+  --admin-sidebar: #050d16;
+  --admin-sidebar-hover: #0c1a2b;
+  --admin-sidebar-text: #e8eef5;
+  --admin-sidebar-muted: #8fa3bc;
+  --admin-sidebar-active: #f07170;
+  --admin-sidebar-active-bg: rgba(240, 113, 112, 0.16);
+  --admin-border: #1a3048;
+  --admin-text: #f4f8fc;
   --admin-text-muted: #9ca3af;
-  --admin-primary: #e8dccc;
-  --admin-accent: #c9a87a;
+  --admin-primary: #e8f0f8;
+  --admin-accent: #f07170;
   --admin-success: #34d399;
   --admin-warning: #fbbf24;
   --admin-danger: #f87171;
   --admin-info: #60a5fa;
-  --admin-ring: rgba(201, 168, 122, 0.35);
+  --admin-ring: rgba(240, 113, 112, 0.35);
   --admin-shadow: rgba(0, 0, 0, 0.4);
 
   color-scheme: dark;
@@ -232,14 +232,14 @@ body {
   overflow-x: clip;
 }
 
-/* Soft colorful atmosphere behind the shop */
+/* Soft premium atmosphere — white with logo red / navy glows */
 .hm-atmosphere {
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(232, 93, 76, 0.18), transparent 55%),
-    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(31, 138, 122, 0.14), transparent 50%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(212, 160, 23, 0.1), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 8% -8%, rgba(217, 44, 43, 0.08), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 96% 4%, rgba(10, 45, 77, 0.07), transparent 50%),
+    radial-gradient(ellipse 55% 35% at 50% 100%, rgba(10, 45, 77, 0.04), transparent 55%),
     var(--hm-bg);
 }
 
@@ -249,10 +249,10 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  opacity: 0.35;
+  opacity: 0.28;
   background-image:
-    linear-gradient(rgba(122, 31, 61, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122, 31, 61, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(10, 45, 77, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 45, 77, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, black, transparent 85%);
 }

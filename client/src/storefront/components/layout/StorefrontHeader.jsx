@@ -182,7 +182,7 @@ export function StorefrontHeader() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-hm-border/80 bg-hm-elevated/90 shadow-hm-soft backdrop-blur-xl">
-        <div className="bg-gradient-to-r from-hm-primary via-[#9a2748] to-hm-accent text-white">
+        <div className="bg-gradient-to-r from-hm-primary via-[#0d3a63] to-hm-accent text-white">
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-1.5 text-center text-[11px] font-medium tracking-wide sm:text-xs">
             <Truck className="hidden h-3.5 w-3.5 shrink-0 sm:block" />
             <span className="line-clamp-1">

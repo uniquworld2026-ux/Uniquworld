@@ -302,7 +302,7 @@ export function AboutPage() {
       {/* CTA */}
       <Section>
         <Container>
-          <div className="rounded-3xl border border-hm-border bg-gradient-to-br from-[#fff0ea] via-hm-elevated to-[#e8f7f4] px-6 py-12 text-center sm:px-10">
+          <div className="rounded-3xl border border-hm-border bg-gradient-to-br from-[#fff8f8] via-hm-elevated to-[#f3f7fb] px-6 py-12 text-center sm:px-10">
             <h2 className="font-display text-3xl text-hm-text sm:text-4xl">
               Ready to celebrate with Uniquworld?
             </h2>

@@ -46,9 +46,9 @@ export function HeroBanner() {
             ref={scrollerRef}
             className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 scrollbar-none sm:gap-4"
           >
-            <article className="relative flex min-h-[280px] w-[min(88%,22rem)] shrink-0 snap-center flex-col overflow-hidden rounded-3xl border border-hm-border bg-gradient-to-br from-[#fff0ea] via-white to-[#e8f7f4] shadow-hm-elevated sm:min-h-[280px] sm:w-[70%] sm:flex-row lg:w-[58%]">
-              <div className="pointer-events-none absolute -left-8 top-0 h-40 w-40 rounded-full bg-hm-accent/20 blur-3xl" />
-              <div className="pointer-events-none absolute bottom-0 right-1/3 h-32 w-32 rounded-full bg-hm-teal/20 blur-3xl" />
+            <article className="relative flex min-h-[280px] w-[min(88%,22rem)] shrink-0 snap-center flex-col overflow-hidden rounded-3xl border border-hm-border bg-gradient-to-br from-[#fff8f8] via-white to-[#f3f7fb] shadow-hm-elevated sm:min-h-[280px] sm:w-[70%] sm:flex-row lg:w-[58%]">
+              <div className="pointer-events-none absolute -left-8 top-0 h-40 w-40 rounded-full bg-hm-accent/15 blur-3xl" />
+              <div className="pointer-events-none absolute bottom-0 right-1/3 h-32 w-32 rounded-full bg-hm-primary/10 blur-3xl" />
               <div className="relative z-10 flex w-full flex-col justify-center p-5 sm:max-w-[55%] sm:p-8 md:p-10">
                 <BrandLogo to={null} priority imgClassName="h-12 sm:h-14 md:h-16" />
                 <h1 className="mt-3 text-base font-semibold leading-snug text-hm-text sm:text-lg md:text-xl">
@@ -79,7 +79,7 @@ export function HeroBanner() {
                 className="relative mt-auto h-36 w-full object-cover sm:absolute sm:inset-y-0 sm:right-0 sm:mt-0 sm:h-full sm:w-[50%]"
                 fetchPriority="high"
               />
-              <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[50%] bg-gradient-to-r from-[#fff0ea] via-transparent to-transparent sm:block" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[50%] bg-gradient-to-r from-[#fff8f8] via-transparent to-transparent sm:block" />
             </article>
 
             {trendingCollections.map((item) => (
@@ -113,12 +113,12 @@ export function HeroBanner() {
         <div className="mt-5 flex gap-3 overflow-x-auto pb-2 scrollbar-none sm:mt-6 sm:justify-center sm:gap-5">
           {occasions.map((item, index) => {
             const tones = [
-              'from-[#ffd8cf] to-[#ffe9e3]',
-              'from-[#d8f3ee] to-[#eafaf7]',
-              'from-[#ffe8b8] to-[#fff4d8]',
-              'from-[#f3d6e2] to-[#fbeaf1]',
-              'from-[#dde9ff] to-[#eef3ff]',
-              'from-[#e4f5d8] to-[#f1fae8]',
+              'from-[#fde8e8] to-[#fff5f5]',
+              'from-[#e7eef6] to-[#f4f8fc]',
+              'from-[#f8dede] to-[#fdf0f0]',
+              'from-[#d9e4f0] to-[#eef3f9]',
+              'from-[#fce4e4] to-[#fff8f8]',
+              'from-[#e2ebf4] to-[#f7fafc]',
             ]
             return (
               <Link

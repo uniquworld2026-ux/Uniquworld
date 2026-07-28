@@ -54,10 +54,10 @@ export function StorefrontFooter() {
   return (
     <footer
       id="footer"
-      className="relative mt-10 overflow-hidden border-t border-hm-border bg-gradient-to-br from-hm-primary via-[#8f2448] to-[#c44536] text-white"
+      className="relative mt-10 overflow-hidden border-t border-hm-border bg-gradient-to-br from-hm-primary via-[#0d3a63] to-[#123f6b] text-white"
     >
-      <div className="pointer-events-none absolute -right-16 top-0 h-56 w-56 rounded-full bg-hm-teal/25 blur-3xl" />
-      <div className="pointer-events-none absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-hm-gold/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 top-0 h-56 w-56 rounded-full bg-hm-accent/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-14">
         <div className="grid grid-cols-2 items-start gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-12 lg:gap-x-8">
