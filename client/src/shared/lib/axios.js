@@ -72,10 +72,11 @@ api.interceptors.response.use(
 )
 
 export function getErrorMessage(error, fallback = 'Something went wrong') {
-  return (
-    error?.response?.data?.message ||
-    error?.response?.data?.errors?.[0]?.message ||
-    error?.message ||
-    fallback
-  )
+  const data = error?.response?.data
+  const fieldErrors = data?.errors
+  if (Array.isArray(fieldErrors) && fieldErrors.length) {
+    const messages = fieldErrors.map((item) => item?.message).filter(Boolean)
+    if (messages.length) return messages.join(' ')
+  }
+  return data?.message || error?.message || fallback
 }

@@ -11,19 +11,6 @@ import { Button } from '@/shared/components/ui/Button'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { getErrorMessage } from '@/shared/lib/axios'
 
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
-import { ProductForm } from '@/admin/features/products/ProductForm'
-import {
-  useCreateProduct,
-  useProduct,
-  useUpdateProduct,
-} from '@/admin/features/products/useProducts'
-import { Button } from '@/shared/components/ui/Button'
-import { Skeleton } from '@/shared/components/ui/Skeleton'
-import { getErrorMessage } from '@/shared/lib/axios'
-
 export function ProductCreatePage() {
   const navigate = useNavigate()
   const createMutation = useCreateProduct()
