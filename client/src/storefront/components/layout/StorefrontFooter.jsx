@@ -83,6 +83,30 @@ export function StorefrontFooter() {
                 </li>
               ))}
             </ul>
+            {col.title === 'Need Help ?' ? (
+              <div className="mt-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
+                  Our Partner
+                </p>
+                <a
+                  href="https://www.techackode.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center rounded-lg bg-white px-3 py-2 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                  aria-label="Techackode — visit www.techackode.com"
+                >
+                  <img
+                    src="/brand/thk.webp"
+                    alt="Techackode"
+                    width={140}
+                    height={40}
+                    className="h-8 w-auto object-contain sm:h-9"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </a>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
