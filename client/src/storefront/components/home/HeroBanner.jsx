@@ -114,11 +114,11 @@ export function HeroBanner() {
           {occasions.map((item, index) => {
             const tones = [
               'from-[#fde8e8] to-[#fff5f5]',
+              'from-[#d8f3ee] to-[#eafaf7]',
               'from-[#e7eef6] to-[#f4f8fc]',
+              'from-[#fff4d8] to-[#fffaf0]',
               'from-[#f8dede] to-[#fdf0f0]',
-              'from-[#d9e4f0] to-[#eef3f9]',
-              'from-[#fce4e4] to-[#fff8f8]',
-              'from-[#e2ebf4] to-[#f7fafc]',
+              'from-[#e4f5d8] to-[#f1fae8]',
             ]
             return (
               <Link

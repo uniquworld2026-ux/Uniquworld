@@ -24,18 +24,19 @@
   --hm-text-subtle: #7a90a8;
   --hm-primary: #0a2d4d;
   --hm-primary-hover: #071f36;
+  /* Brand red — CTAs / accents */
   --hm-accent: #d92c2b;
   --hm-accent-soft: #f07170;
   --hm-accent-muted: rgba(217, 44, 43, 0.12);
+  /* Multi-color system (keep these — not everything is brand red/navy) */
   --hm-teal: #1f8a7a;
-  /* Review stars / ratings — keep classic yellow-gold (not brand red) */
   --hm-gold: #d4af37;
-  --hm-success: #15803d;
-  --hm-offer: #d92c2b;
-  --hm-offer-muted: rgba(217, 44, 43, 0.1);
   --hm-star: #d4af37;
+  --hm-success: #15803d;
+  --hm-offer: #15803d;
+  --hm-offer-muted: rgba(21, 128, 61, 0.12);
   --hm-warning: #d4a017;
-  --hm-danger: #d92c2b;
+  --hm-danger: #c2314a;
   --hm-ring: rgba(217, 44, 43, 0.35);
   --hm-shadow: rgba(10, 45, 77, 0.08);
   --hm-overlay: rgba(10, 45, 77, 0.48);
@@ -99,13 +100,13 @@
   --hm-accent: #f07170;
   --hm-accent-soft: #f8a3a2;
   --hm-accent-muted: rgba(240, 113, 112, 0.18);
+  /* Multi-color system */
   --hm-teal: #3db8a6;
-  /* Review stars / ratings — yellow-gold unchanged */
   --hm-gold: #e8c44a;
-  --hm-success: #4ade80;
-  --hm-offer: #f07170;
-  --hm-offer-muted: rgba(240, 113, 112, 0.16);
   --hm-star: #e8c44a;
+  --hm-success: #4ade80;
+  --hm-offer: #4ade80;
+  --hm-offer-muted: rgba(74, 222, 128, 0.16);
   --hm-warning: #e8c04a;
   --hm-danger: #ff6b81;
   --hm-ring: rgba(240, 113, 112, 0.4);
@@ -234,14 +235,14 @@ body {
   overflow-x: clip;
 }
 
-/* Soft premium atmosphere — white with logo red / navy glows */
+/* Soft premium atmosphere — white + light multi-color glows */
 .hm-atmosphere {
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(ellipse 80% 50% at 8% -8%, rgba(217, 44, 43, 0.08), transparent 55%),
-    radial-gradient(ellipse 70% 45% at 96% 4%, rgba(10, 45, 77, 0.07), transparent 50%),
-    radial-gradient(ellipse 55% 35% at 50% 100%, rgba(10, 45, 77, 0.04), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 8% -8%, rgba(217, 44, 43, 0.07), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 96% 4%, rgba(10, 45, 77, 0.06), transparent 50%),
+    radial-gradient(ellipse 55% 35% at 50% 100%, rgba(31, 138, 122, 0.06), transparent 55%),
     var(--hm-bg);
 }
 
