@@ -61,11 +61,11 @@ export function SocialLinks({ className, iconClassName, variant = 'light' }) {
       : 'border-hm-border text-hm-text-muted hover:border-hm-accent hover:bg-hm-muted hover:text-hm-primary'
 
   return (
-    <ul className={cn('flex flex-wrap items-center gap-2.5', className)}>
+    <ul className={cn('flex flex-wrap items-center gap-2', className)}>
       {socialLinks.map((item) => {
         const Icon = icons[item.id] || InstagramIcon
         return (
-          <li key={item.id}>
+          <li key={item.id} className="shrink-0">
             <a
               href={item.href}
               target="_blank"
@@ -78,7 +78,7 @@ export function SocialLinks({ className, iconClassName, variant = 'light' }) {
                 iconClassName,
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3.5 w-3.5" />
             </a>
           </li>
         )
