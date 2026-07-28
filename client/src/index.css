@@ -27,12 +27,13 @@
   --hm-accent: #d92c2b;
   --hm-accent-soft: #f07170;
   --hm-accent-muted: rgba(217, 44, 43, 0.12);
-  --hm-teal: #0a2d4d;
-  --hm-gold: #d92c2b;
+  --hm-teal: #1f8a7a;
+  /* Review stars / ratings — keep classic yellow-gold (not brand red) */
+  --hm-gold: #d4af37;
   --hm-success: #15803d;
   --hm-offer: #d92c2b;
   --hm-offer-muted: rgba(217, 44, 43, 0.1);
-  --hm-star: #e5a100;
+  --hm-star: #d4af37;
   --hm-warning: #d4a017;
   --hm-danger: #d92c2b;
   --hm-ring: rgba(217, 44, 43, 0.35);
@@ -98,8 +99,9 @@
   --hm-accent: #f07170;
   --hm-accent-soft: #f8a3a2;
   --hm-accent-muted: rgba(240, 113, 112, 0.18);
-  --hm-teal: #8fb4d9;
-  --hm-gold: #f07170;
+  --hm-teal: #3db8a6;
+  /* Review stars / ratings — yellow-gold unchanged */
+  --hm-gold: #e8c44a;
   --hm-success: #4ade80;
   --hm-offer: #f07170;
   --hm-offer-muted: rgba(240, 113, 112, 0.16);

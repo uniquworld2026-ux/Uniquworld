@@ -19,13 +19,13 @@ export function StarRating({ rating = 0, size = 'sm', className, showValue = fal
             key={index}
             className={cn(
               iconClass,
-              isFilled ? 'fill-hm-gold text-hm-gold' : 'fill-transparent text-hm-border-strong',
+              isFilled ? 'fill-hm-star text-hm-star' : 'fill-transparent text-hm-border-strong',
             )}
           />
         )
       })}
       {showValue ? (
-        <span className="ml-1 text-[0.8125rem] font-semibold text-hm-gold">{value}</span>
+        <span className="ml-1 text-[0.8125rem] font-semibold text-hm-star">{value}</span>
       ) : null}
     </span>
   )

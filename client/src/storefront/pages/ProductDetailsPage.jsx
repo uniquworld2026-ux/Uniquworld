@@ -654,7 +654,7 @@ export function ProductDetailsPage() {
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {reviews.map((r) => (
                 <blockquote key={r.id} className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
-                  <p className="text-xs font-semibold text-hm-gold">{'★'.repeat(r.rating || 5)}</p>
+                  <p className="text-xs font-semibold text-hm-star">{'★'.repeat(r.rating || 5)}</p>
                   <p className="mt-2 text-sm text-hm-text">“{r.text}”</p>
                   <footer className="mt-3 text-xs text-hm-text-muted">
                     {r.name} · {r.date}
