@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query'
 import {
   PRODUCT_STATUSES,
   PRODUCT_STATUS_LABELS,
-  calcCustomerProfit,
   calcOfferPercent,
   calcProfit,
   compactGalleryImages,
@@ -81,6 +80,7 @@ export function ProductForm({
   const customizationEnabled = watch('customizationEnabled')
   const customizedPrice = watch('customizedPrice')
   const customizedMarketAtPrice = watch('customizedMarketAtPrice')
+  const customizedProductCost = watch('customizedProductCost')
   const productCost = watch('productCost')
   const serviceCost = watch('serviceCost')
 
@@ -107,6 +107,10 @@ export function ProductForm({
             customizedPrice: '',
             customizedMarketAtPrice: '',
             customizedOfferPercent: '',
+            customizedProductCost: '',
+            customizedProfitMarginCost: '',
+            customizedProfitMarginPercent: '',
+            serviceCost: '',
             deliveryDaysCustomized: 0,
           }),
     })
@@ -125,6 +129,10 @@ export function ProductForm({
       setValue('customizedPrice', '', { shouldDirty: true })
       setValue('customizedMarketAtPrice', '', { shouldDirty: true })
       setValue('customizedOfferPercent', '', { shouldDirty: true })
+      setValue('customizedProductCost', '', { shouldDirty: true })
+      setValue('customizedProfitMarginCost', '', { shouldDirty: true })
+      setValue('customizedProfitMarginPercent', '', { shouldDirty: true })
+      setValue('serviceCost', '', { shouldDirty: true })
     }
   }
 
@@ -146,19 +154,24 @@ export function ProductForm({
   }, [customizedPrice, customizedMarketAtPrice, setValue])
 
   useEffect(() => {
-    const { marginCost, marginPercent } = calcProfit(price, productCost, serviceCost)
+    const { marginCost, marginPercent } = calcProfit(price, productCost, 0)
     setValue('profitMarginCost', marginCost, { shouldValidate: false })
     setValue('profitMarginPercent', marginPercent, { shouldValidate: false })
     if (productCost !== '' && productCost != null) {
       setValue('cost', productCost, { shouldValidate: false })
     }
-  }, [price, productCost, serviceCost, setValue])
+  }, [price, productCost, setValue])
 
   useEffect(() => {
-    const { marginCost, marginPercent } = calcCustomerProfit(price, compareAtPrice)
-    setValue('customerProfitMarginCost', marginCost, { shouldValidate: false })
-    setValue('customerProfitMarginPercent', marginPercent, { shouldValidate: false })
-  }, [price, compareAtPrice, setValue])
+    if (!customizationEnabled) return
+    const { marginCost, marginPercent } = calcProfit(
+      customizedPrice,
+      customizedProductCost,
+      serviceCost,
+    )
+    setValue('customizedProfitMarginCost', marginCost, { shouldValidate: false })
+    setValue('customizedProfitMarginPercent', marginPercent, { shouldValidate: false })
+  }, [customizationEnabled, customizedPrice, customizedProductCost, serviceCost, setValue])
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
@@ -398,12 +411,11 @@ export function ProductForm({
           </div>
 
           <div className="rounded-xl border border-admin-border bg-admin-muted/40 p-4">
-            <h4 className="text-sm font-medium text-admin-text">Internal purpose</h4>
+            <h4 className="text-sm font-medium text-admin-text">Product — internal</h4>
             <p className="mt-1 text-xs text-admin-text-muted">
-              Product margin = sell price − (product cost + service cost). Customer margin =
-              market price − sell price.
+              Product margin = sell price − product cost.
             </p>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Input
                 label="Product cost (₹)"
                 type="number"
@@ -412,19 +424,10 @@ export function ProductForm({
                 {...register('productCost')}
               />
               <Input
-                label="Service cost (₹)"
-                type="number"
-                step="0.01"
-                error={errors.serviceCost?.message}
-                {...register('serviceCost')}
-              />
-            </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Input
                 label="Product profit margin (₹)"
                 type="number"
                 step="0.01"
-                hint="Auto from sell − costs"
+                hint="Auto: sell − product cost"
                 readOnly
                 className="cursor-not-allowed bg-admin-elevated opacity-80"
                 error={errors.profitMarginCost?.message}
@@ -434,34 +437,59 @@ export function ProductForm({
                 label="Product profit margin %"
                 type="number"
                 step="0.1"
-                hint="Auto from sell − costs"
+                hint="Auto: sell − product cost"
                 readOnly
                 className="cursor-not-allowed bg-admin-elevated opacity-80"
                 error={errors.profitMarginPercent?.message}
                 {...register('profitMarginPercent')}
               />
-              <Input
-                label="Customer profit margin (₹)"
-                type="number"
-                step="0.01"
-                hint="Auto from market − sell"
-                readOnly
-                className="cursor-not-allowed bg-admin-elevated opacity-80"
-                error={errors.customerProfitMarginCost?.message}
-                {...register('customerProfitMarginCost')}
-              />
-              <Input
-                label="Customer profit margin %"
-                type="number"
-                step="0.1"
-                hint="Auto from market − sell"
-                readOnly
-                className="cursor-not-allowed bg-admin-elevated opacity-80"
-                error={errors.customerProfitMarginPercent?.message}
-                {...register('customerProfitMarginPercent')}
-              />
             </div>
           </div>
+
+          {customizationEnabled ? (
+            <div className="rounded-xl border border-admin-border bg-admin-muted/40 p-4">
+              <h4 className="text-sm font-medium text-admin-text">Customized product — internal</h4>
+              <p className="mt-1 text-xs text-admin-text-muted">
+                Customized margin = customized sell price − (product cost + service charge).
+              </p>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Input
+                  label="Customized product cost (₹)"
+                  type="number"
+                  step="0.01"
+                  error={errors.customizedProductCost?.message}
+                  {...register('customizedProductCost')}
+                />
+                <Input
+                  label="Service charge (₹)"
+                  type="number"
+                  step="0.01"
+                  error={errors.serviceCost?.message}
+                  {...register('serviceCost')}
+                />
+                <Input
+                  label="Customized profit margin (₹)"
+                  type="number"
+                  step="0.01"
+                  hint="Auto: sell − costs"
+                  readOnly
+                  className="cursor-not-allowed bg-admin-elevated opacity-80"
+                  error={errors.customizedProfitMarginCost?.message}
+                  {...register('customizedProfitMarginCost')}
+                />
+                <Input
+                  label="Customized profit margin %"
+                  type="number"
+                  step="0.1"
+                  hint="Auto: sell − costs"
+                  readOnly
+                  className="cursor-not-allowed bg-admin-elevated opacity-80"
+                  error={errors.customizedProfitMarginPercent?.message}
+                  {...register('customizedProfitMarginPercent')}
+                />
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-6">
             <Checkbox label="Featured" {...register('featured')} />

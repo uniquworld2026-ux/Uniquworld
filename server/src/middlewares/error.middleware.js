@@ -18,6 +18,11 @@ const errorHandler = (err, req, res, _next) => {
     message = 'Token expired';
   }
 
+  if (err.type === 'entity.too.large') {
+    statusCode = 413;
+    message = 'Request too large. Use images under 2 MB each or fewer gallery photos.';
+  }
+
   if (err.code === '23505') {
     statusCode = 409;
     message = 'Resource already exists';

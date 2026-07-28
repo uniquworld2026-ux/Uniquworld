@@ -7,22 +7,39 @@ const META_KEYS = [
   'cost',
   'profitMarginCost',
   'profitMarginPercent',
-  'customerProfitMarginCost',
-  'customerProfitMarginPercent',
   'offerPercent',
   'customizationEnabled',
   'customizedPrice',
   'customizedMarketAtPrice',
   'customizedOfferPercent',
+  'customizedProductCost',
+  'customizedProfitMarginCost',
+  'customizedProfitMarginPercent',
   'deliveryDaysProduct',
   'deliveryDaysCustomized',
   'subcategory',
   'seoTitle',
   'seoDescription',
+  'seoKeywords',
+  'seoMetaTags',
+  'weightGrams',
+  'minOrderQty',
+  'gstPercent',
 ]
 
+function stripEmptyMeta(meta = {}) {
+  const out = {}
+  Object.entries(meta).forEach(([key, value]) => {
+    if (value === '' || value === null || value === undefined) return
+    out[key] = value
+  })
+  return out
+}
+
 function toErpPayload(values = {}) {
-  const meta = { ...(values.meta && typeof values.meta === 'object' ? values.meta : {}) }
+  const meta = stripEmptyMeta({
+    ...(values.meta && typeof values.meta === 'object' ? values.meta : {}),
+  })
   META_KEYS.forEach((key) => {
     if (values[key] !== undefined) meta[key] = values[key]
   })

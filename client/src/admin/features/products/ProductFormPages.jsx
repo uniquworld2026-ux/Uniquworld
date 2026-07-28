@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { ProductForm } from '@/admin/features/products/ProductForm'
 import {
@@ -8,19 +9,49 @@ import {
 } from '@/admin/features/products/useProducts'
 import { Button } from '@/shared/components/ui/Button'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
+import { getErrorMessage } from '@/shared/lib/axios'
+
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
+import { ProductForm } from '@/admin/features/products/ProductForm'
+import {
+  useCreateProduct,
+  useProduct,
+  useUpdateProduct,
+} from '@/admin/features/products/useProducts'
+import { Button } from '@/shared/components/ui/Button'
+import { Skeleton } from '@/shared/components/ui/Skeleton'
+import { getErrorMessage } from '@/shared/lib/axios'
 
 export function ProductCreatePage() {
   const navigate = useNavigate()
   const createMutation = useCreateProduct()
+  const [error, setError] = useState('')
 
   async function onSubmit(values) {
-    const product = await createMutation.mutateAsync(values)
-    navigate(`/admin/products/${product.id}/edit`)
+    setError('')
+    try {
+      const product = await createMutation.mutateAsync(values)
+      navigate('/admin/products', {
+        replace: true,
+        state: {
+          flash: `"${product.name || 'Product'}" created successfully.`,
+        },
+      })
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not create product'))
+    }
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Header title="Add Product" />
+      {error ? (
+        <p className="rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
+          {error}
+        </p>
+      ) : null}
       <ProductForm
         onSubmit={onSubmit}
         submitLabel="Create product"
@@ -35,10 +66,21 @@ export function ProductEditPage() {
   const navigate = useNavigate()
   const { data, isLoading, isError } = useProduct(id)
   const updateMutation = useUpdateProduct()
+  const [error, setError] = useState('')
 
   async function onSubmit(values) {
-    await updateMutation.mutateAsync({ id, data: values })
-    navigate('/admin/products')
+    setError('')
+    try {
+      await updateMutation.mutateAsync({ id, data: values })
+      navigate('/admin/products', {
+        replace: true,
+        state: {
+          flash: `"${values.name || 'Product'}" updated successfully.`,
+        },
+      })
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not update product'))
+    }
   }
 
   if (isLoading) {
@@ -64,6 +106,11 @@ export function ProductEditPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Header title={`Edit · ${data.name}`} />
+      {error ? (
+        <p className="rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
+          {error}
+        </p>
+      ) : null}
       <ProductForm
         initialValues={data}
         onSubmit={onSubmit}

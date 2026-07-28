@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useRef, useState, useEffect } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   flexRender,
   getCoreRowModel,
@@ -40,14 +40,25 @@ function statusLabel(status) {
 export function ProductsPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
   const { data = [], isLoading } = useProducts()
   const deleteMutation = useDeleteProduct()
   const [globalFilter, setGlobalFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [flash, setFlash] = useState('')
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    const msg = location.state?.flash
+    if (!msg) return undefined
+    setFlash(msg)
+    navigate(location.pathname, { replace: true, state: {} })
+    const timer = window.setTimeout(() => setFlash(''), 6000)
+    return () => window.clearTimeout(timer)
+  }, [location.state, location.pathname, navigate])
 
   const filtered = useMemo(() => {
     if (statusFilter === 'all') return data
@@ -234,6 +245,14 @@ export function ProductsPage() {
             Create, edit, and manage catalog inventory. Import CSV to create or update by id / SKU /
             slug.
           </p>
+          {flash ? (
+            <p
+              className="mt-2 rounded-lg border border-admin-success/30 bg-admin-success/10 px-3 py-2 text-sm text-admin-success"
+              role="status"
+            >
+              {flash}
+            </p>
+          ) : null}
           {importMessage ? <p className="mt-1 text-xs text-admin-success">{importMessage}</p> : null}
           {importError ? <p className="mt-1 text-xs text-admin-danger">{importError}</p> : null}
         </div>

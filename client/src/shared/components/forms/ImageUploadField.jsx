@@ -1,18 +1,10 @@
 import { useRef, useState } from 'react'
+import { compressImageFile } from '@/shared/lib/compressImage'
 import { ImagePlus, Upload, X } from 'lucide-react'
 import { Button } from '@/shared/components/ui/Button'
 import { cn } from '@/shared/utils/cn'
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(new Error('Failed to read image'))
-    reader.readAsDataURL(file)
-  })
-}
 
 /**
  * Drag-and-drop image upload that stores a data URL (or clears to '').
@@ -55,8 +47,12 @@ export function ImageUploadField({
       return
     }
     setError('')
-    const dataUrl = await readFileAsDataUrl(file)
-    onChange(dataUrl)
+    try {
+      const dataUrl = await compressImageFile(file)
+      onChange(dataUrl)
+    } catch (err) {
+      setError(err?.message || 'Could not process image')
+    }
   }
 
   function onDrop(e) {

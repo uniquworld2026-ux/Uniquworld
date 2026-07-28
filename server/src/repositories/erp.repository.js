@@ -369,31 +369,34 @@ const normalizeJsonColumn = (dbCol, value) => {
     return [];
   }
   if (dbCol === 'gallery' || dbCol === 'categories' || dbCol === 'permissions') {
-    if (Array.isArray(value)) return value;
-    if (typeof value === 'string') {
+    let normalized = [];
+    if (Array.isArray(value)) normalized = value;
+    else if (typeof value === 'string') {
       try {
         const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : [];
+        normalized = Array.isArray(parsed) ? parsed : value ? [value] : [];
       } catch {
-        return value ? [value] : [];
+        normalized = value ? [value] : [];
       }
     }
-    return [];
+    return JSON.stringify(normalized);
   }
   if (dbCol === 'meta') {
-    if (value && typeof value === 'object' && !Array.isArray(value)) return value;
-    if (typeof value === 'string') {
+    let normalized = {};
+    if (value && typeof value === 'object' && !Array.isArray(value)) normalized = value;
+    else if (typeof value === 'string') {
       try {
         const parsed = JSON.parse(value);
-        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        normalized =
+          parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
       } catch {
-        return {};
+        normalized = {};
       }
     }
-    return {};
+    return JSON.stringify(normalized);
   }
   if (dbCol === 'value' && typeof value === 'object') {
-    return value;
+    return JSON.stringify(value);
   }
   return value;
 };

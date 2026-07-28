@@ -12,6 +12,7 @@ const { hashPassword, comparePassword } = require('../utils/password');
 const { hashToken } = require('../utils/jwt');
 const { generateOtpCode, otpExpiresAt } = require('../utils/otp');
 const { OTP_PURPOSE } = require('../types/enums');
+const { prepareProductImages } = require('../utils/catalogImages');
 
 const prepareAdminUserPayload = async (body, { requirePassword = false } = {}) => {
   const payload = { ...(body || {}) };
@@ -56,6 +57,16 @@ const create = asyncHandler(async (req, res) => {
   let body = req.body || {};
   if (req.params.module === 'admin-users') {
     body = await prepareAdminUserPayload(body, { requirePassword: true });
+  } else if (req.params.module === 'products') {
+    try {
+      body = await prepareProductImages(body);
+    } catch (err) {
+      throw ApiError.badRequest(
+        err.message?.includes('Storage')
+          ? 'Image upload failed. Check Supabase storage bucket settings.'
+          : 'Could not process product images. Try smaller images (under 2 MB each).',
+      );
+    }
   }
   const item = await erpRepository.create(req.params.module, body);
   return ApiResponse.created(res, { item }, 'Created');
@@ -65,6 +76,16 @@ const update = asyncHandler(async (req, res) => {
   let body = req.body || {};
   if (req.params.module === 'admin-users') {
     body = await prepareAdminUserPayload(body, { requirePassword: false });
+  } else if (req.params.module === 'products') {
+    try {
+      body = await prepareProductImages(body);
+    } catch (err) {
+      throw ApiError.badRequest(
+        err.message?.includes('Storage')
+          ? 'Image upload failed. Check Supabase storage bucket settings.'
+          : 'Could not process product images. Try smaller images (under 2 MB each).',
+      );
+    }
   }
   const item = await erpRepository.update(req.params.module, req.params.id, body);
   return ApiResponse.ok(res, { item }, 'Updated');

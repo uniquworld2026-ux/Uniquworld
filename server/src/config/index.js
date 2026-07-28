@@ -77,6 +77,9 @@ const config = {
 
   bcryptSaltRounds: Number(process.env.BCRYPT_SALT_ROUNDS) || 12,
 
+  /** JSON body limit — product forms may include images before upload processing */
+  bodyParserLimit: process.env.BODY_PARSER_LIMIT || '15mb',
+
   rateLimit: {
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     max: Number(process.env.RATE_LIMIT_MAX) || 100,

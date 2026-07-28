@@ -33,8 +33,8 @@ export function calcOfferPercent(price, marketAtPrice) {
   return Math.round(((market - sell) / market) * 1000) / 10
 }
 
-/** Product profit from sell price minus product + service cost. */
-export function calcProfit(sellPrice, productCost, serviceCost) {
+/** Product profit from sell price minus product cost (and optional service cost for customized). */
+export function calcProfit(sellPrice, productCost, serviceCost = 0) {
   const sell = Number(sellPrice)
   const pCost = Number(productCost) || 0
   const sCost = Number(serviceCost) || 0
@@ -43,19 +43,6 @@ export function calcProfit(sellPrice, productCost, serviceCost) {
   }
   const marginCost = Math.round((sell - pCost - sCost) * 100) / 100
   const marginPercent = Math.round((marginCost / sell) * 1000) / 10
-  return { marginCost, marginPercent }
-}
-
-/** Customer profit (savings) from market price vs sell price. */
-export function calcCustomerProfit(sellPrice, marketAtPrice) {
-  const sell = Number(sellPrice)
-  const market = Number(marketAtPrice)
-  if (!Number.isFinite(sell) || !Number.isFinite(market) || market <= 0 || sell < 0) {
-    return { marginCost: '', marginPercent: '' }
-  }
-  if (sell >= market) return { marginCost: 0, marginPercent: 0 }
-  const marginCost = Math.round((market - sell) * 100) / 100
-  const marginPercent = Math.round((marginCost / market) * 1000) / 10
   return { marginCost, marginPercent }
 }
 
@@ -91,6 +78,9 @@ export const productSchema = z.object({
   customizedPrice: optionalNumber,
   customizedMarketAtPrice: optionalNumber,
   customizedOfferPercent: optionalNumber,
+  customizedProductCost: optionalNumber,
+  customizedProfitMarginCost: optionalNumber,
+  customizedProfitMarginPercent: optionalNumber,
   // Inventory
   minOrderQty: z.coerce.number().int().min(1, 'Min order must be at least 1').default(1),
   stock: z.coerce.number().int().min(0, 'Stock cannot be negative'),
@@ -102,9 +92,6 @@ export const productSchema = z.object({
   /** Product-side profit (sell − costs) */
   profitMarginCost: optionalNumber,
   profitMarginPercent: optionalNumber,
-  /** Customer-side profit / savings (market − sell) */
-  customerProfitMarginCost: optionalNumber,
-  customerProfitMarginPercent: optionalNumber,
   // Legacy aliases kept for older saved rows / storefront
   cost: optionalNumber,
   gstPercent: z.coerce.number().min(0).max(28).default(18),
@@ -206,6 +193,9 @@ export const productDefaults = {
   customizedPrice: '',
   customizedMarketAtPrice: '',
   customizedOfferPercent: '',
+  customizedProductCost: '',
+  customizedProfitMarginCost: '',
+  customizedProfitMarginPercent: '',
   minOrderQty: 1,
   stock: 0,
   weightGrams: '',
@@ -214,8 +204,6 @@ export const productDefaults = {
   serviceCost: '',
   profitMarginCost: '',
   profitMarginPercent: '',
-  customerProfitMarginCost: '',
-  customerProfitMarginPercent: '',
   cost: '',
   gstPercent: 18,
   status: 'published',
