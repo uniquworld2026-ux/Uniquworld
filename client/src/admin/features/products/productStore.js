@@ -75,8 +75,6 @@ function toErpPayload(values = {}) {
     status: values.status === 'active' ? 'published' : values.status || 'draft',
     featured: Boolean(values.featured),
     trending: Boolean(values.trending),
-    rating: values.rating === '' || values.rating == null ? null : Number(values.rating),
-    reviewCount: Number(values.reviewCount) || 0,
     meta,
   }
 }

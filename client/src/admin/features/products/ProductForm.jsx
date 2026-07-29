@@ -251,25 +251,29 @@ export function ProductForm({
             placeholder="Care tips, usage notes, personalization guidelines…"
             {...register('instruction')}
           />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Rating"
-              type="number"
-              step="0.1"
-              min={1}
-              max={5}
-              hint="Manual rating shown on shop (1–5)"
-              error={errors.rating?.message}
-              {...register('rating')}
-            />
-            <Input
-              label="Reviews"
-              type="number"
-              min={0}
-              hint="Manual review count shown on shop"
-              error={errors.reviewCount?.message}
-              {...register('reviewCount')}
-            />
+          <div className="rounded-xl border border-admin-border bg-admin-muted/40 p-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-admin-text-muted">
+              Rating & reviews
+            </h4>
+            <p className="mt-2 text-sm text-admin-text">
+              {Number(initialValues?.reviewCount) > 0 ? (
+                <>
+                  <span className="font-semibold">
+                    {Number(initialValues.rating) || 0} ★
+                  </span>
+                  <span className="text-admin-text-muted">
+                    {' '}
+                    · {Number(initialValues.reviewCount)} approved review
+                    {Number(initialValues.reviewCount) === 1 ? '' : 's'}
+                  </span>
+                </>
+              ) : (
+                <span className="text-admin-text-muted">No approved reviews yet</span>
+              )}
+            </p>
+            <p className="mt-1 text-xs text-admin-text-muted">
+              Calculated automatically from Reviews (Approved). Not set on product create.
+            </p>
           </div>
           <div className="rounded-xl border border-admin-border bg-admin-muted/40 p-4">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-admin-text-muted">

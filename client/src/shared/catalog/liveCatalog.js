@@ -1,8 +1,3 @@
-import {
-  averageRating,
-  listApprovedReviewsForProduct,
-} from '@/admin/features/reviews/reviewStore'
-
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1200&q=80'
 
@@ -152,20 +147,6 @@ function isPublishedCategory(c) {
 }
 
 /**
- * Attach live rating / review count from approved admin reviews.
- */
-function withLiveReviews(product) {
-  if (!product?.id) return product
-  const rows = listApprovedReviewsForProduct(product)
-  if (!rows.length) return product
-  return {
-    ...product,
-    rating: averageRating(rows) ?? product.rating,
-    reviewCount: rows.length,
-  }
-}
-
-/**
  * Active admin products for the storefront — no static seed fallback.
  * Prefer React Query hooks in useLiveCatalog for UI; this sync helper
  * returns [] when local cache is empty (API-backed data lives in hooks).
@@ -304,6 +285,12 @@ export function filterStorefrontCatalog({
   else if (sort === 'price-desc') list.sort((a, b) => b.price - a.price)
   else if (sort === 'newest') {
     list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  } else if (sort === 'rating') {
+    list.sort(
+      (a, b) =>
+        (Number(b.rating) || 0) - (Number(a.rating) || 0) ||
+        (Number(b.reviewCount) || 0) - (Number(a.reviewCount) || 0),
+    )
   } else {
     list.sort((a, b) => Number(b.featured) - Number(a.featured) || b.price - a.price)
   }

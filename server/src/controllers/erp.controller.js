@@ -20,10 +20,58 @@ const CATALOG_CATEGORIES_CACHE = 'catalog:public:categories';
 const CATALOG_CACHE_TTL_MS = 45_000;
 
 function bustCatalogCache(moduleName) {
-  if (moduleName === 'products' || moduleName === 'categories') {
+  if (moduleName === 'products' || moduleName === 'categories' || moduleName === 'reviews') {
     memoryCache.delPrefix(CATALOG_PRODUCTS_CACHE);
     memoryCache.delPrefix(CATALOG_CATEGORIES_CACHE);
   }
+}
+
+/**
+ * Recompute catalog_products.rating / review_count from approved erp_reviews.
+ * @param {{ productId?: string, productName?: string }} opts
+ */
+async function syncProductReviewStats({ productId, productName } = {}) {
+  const id = productId ? String(productId).trim() : '';
+  const name = productName ? String(productName).trim() : '';
+  if (!id && !name) return;
+
+  const stats = await query(
+    `SELECT
+       COALESCE(ROUND(AVG(rating)::numeric, 1), 0) AS avg_rating,
+       COUNT(*)::int AS review_count
+     FROM erp_reviews
+     WHERE status = 'approved'
+       AND (
+         ($1 <> '' AND (product_id = $1 OR product_id = (
+           SELECT slug FROM catalog_products WHERE id::text = $1 LIMIT 1
+         )))
+         OR ($2 <> '' AND LOWER(TRIM(product_name)) = LOWER(TRIM($2)))
+       )`,
+    [id, name]
+  );
+
+  const avg = Number(stats.rows[0]?.avg_rating) || 0;
+  const count = Number(stats.rows[0]?.review_count) || 0;
+  const ratingValue = count > 0 ? avg : null;
+
+  await query(
+    `UPDATE catalog_products
+     SET rating = $1,
+         review_count = $2,
+         updated_at = NOW()
+     WHERE ($3 <> '' AND id::text = $3)
+        OR ($4 <> '' AND LOWER(TRIM(name)) = LOWER(TRIM($4)))`,
+    [ratingValue, count, id, name]
+  );
+}
+
+/** Strip manual rating fields — shop stats come from approved reviews only. */
+function stripManualProductReviewFields(body = {}) {
+  const next = { ...(body || {}) };
+  delete next.rating;
+  delete next.reviewCount;
+  delete next.review_count;
+  return next;
 }
 
 const prepareAdminUserPayload = async (body, { requirePassword = false } = {}) => {
@@ -70,6 +118,9 @@ const create = asyncHandler(async (req, res) => {
   if (req.params.module === 'admin-users') {
     body = await prepareAdminUserPayload(body, { requirePassword: true });
   } else if (req.params.module === 'products') {
+    body = stripManualProductReviewFields(body);
+    body.rating = null;
+    body.reviewCount = 0;
     try {
       body = await prepareProductImages(body);
     } catch (err) {
@@ -81,15 +132,23 @@ const create = asyncHandler(async (req, res) => {
     }
   }
   const item = await erpRepository.create(req.params.module, body);
+  if (req.params.module === 'reviews') {
+    await syncProductReviewStats({
+      productId: item.productId,
+      productName: item.productName,
+    });
+  }
   bustCatalogCache(req.params.module);
   return ApiResponse.created(res, { item }, 'Created');
 });
 
 const update = asyncHandler(async (req, res) => {
   let body = req.body || {};
+  let previousReview = null;
   if (req.params.module === 'admin-users') {
     body = await prepareAdminUserPayload(body, { requirePassword: false });
   } else if (req.params.module === 'products') {
+    body = stripManualProductReviewFields(body);
     try {
       body = await prepareProductImages(body);
     } catch (err) {
@@ -99,8 +158,27 @@ const update = asyncHandler(async (req, res) => {
           : 'Could not process product images. Try smaller images (under 2 MB each).',
       );
     }
+  } else if (req.params.module === 'reviews') {
+    previousReview = await erpRepository.getById('reviews', req.params.id);
   }
   const item = await erpRepository.update(req.params.module, req.params.id, body);
+  if (req.params.module === 'reviews') {
+    await syncProductReviewStats({
+      productId: item.productId || previousReview?.productId,
+      productName: item.productName || previousReview?.productName,
+    });
+    // If the review moved to another product, refresh the old product too.
+    if (
+      previousReview?.productId &&
+      item.productId &&
+      String(previousReview.productId) !== String(item.productId)
+    ) {
+      await syncProductReviewStats({
+        productId: previousReview.productId,
+        productName: previousReview.productName,
+      });
+    }
+  }
   bustCatalogCache(req.params.module);
   return ApiResponse.ok(res, { item }, 'Updated');
 });
@@ -231,7 +309,17 @@ const adminVerifyOtp = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
+  let previousReview = null;
+  if (req.params.module === 'reviews') {
+    previousReview = await erpRepository.getById('reviews', req.params.id);
+  }
   await erpRepository.remove(req.params.module, req.params.id);
+  if (previousReview) {
+    await syncProductReviewStats({
+      productId: previousReview.productId,
+      productName: previousReview.productName,
+    });
+  }
   bustCatalogCache(req.params.module);
   return ApiResponse.ok(res, null, 'Deleted');
 });
@@ -538,12 +626,26 @@ const listPublicCatalogProducts = asyncHandler(async (req, res) => {
   }
 
   const result = await query(
-    `SELECT id, name, slug, sku, description, instruction, category, categories,
-            brand, price, compare_at_price, stock, low_stock_at, image_url, gallery,
-            status, featured, trending, rating, review_count, meta, created_at, updated_at
-     FROM catalog_products
-     WHERE status IN ('published', 'active')
-     ORDER BY featured DESC, updated_at DESC
+    `SELECT p.id, p.name, p.slug, p.sku, p.description, p.instruction, p.category, p.categories,
+            p.brand, p.price, p.compare_at_price, p.stock, p.low_stock_at, p.image_url, p.gallery,
+            p.status, p.featured, p.trending, p.meta, p.created_at, p.updated_at,
+            CASE WHEN r.review_count > 0 THEN r.avg_rating ELSE NULL END AS rating,
+            COALESCE(r.review_count, 0)::int AS review_count
+     FROM catalog_products p
+     LEFT JOIN LATERAL (
+       SELECT
+         ROUND(AVG(er.rating)::numeric, 1) AS avg_rating,
+         COUNT(*)::int AS review_count
+       FROM erp_reviews er
+       WHERE er.status = 'approved'
+         AND (
+           er.product_id = p.id::text
+           OR er.product_id = p.slug
+           OR LOWER(TRIM(er.product_name)) = LOWER(TRIM(p.name))
+         )
+     ) r ON TRUE
+     WHERE p.status IN ('published', 'active')
+     ORDER BY p.featured DESC, p.updated_at DESC
      LIMIT $1`,
     [limit]
   );
@@ -562,8 +664,23 @@ const listPublicCatalogProducts = asyncHandler(async (req, res) => {
 
 const getPublicCatalogProduct = asyncHandler(async (req, res) => {
   const result = await query(
-    `SELECT * FROM catalog_products
-     WHERE (slug = $1 OR id::text = $1) AND status IN ('published', 'active')
+    `SELECT p.*,
+            CASE WHEN r.review_count > 0 THEN r.avg_rating ELSE NULL END AS rating,
+            COALESCE(r.review_count, 0)::int AS review_count
+     FROM catalog_products p
+     LEFT JOIN LATERAL (
+       SELECT
+         ROUND(AVG(er.rating)::numeric, 1) AS avg_rating,
+         COUNT(*)::int AS review_count
+       FROM erp_reviews er
+       WHERE er.status = 'approved'
+         AND (
+           er.product_id = p.id::text
+           OR er.product_id = p.slug
+           OR LOWER(TRIM(er.product_name)) = LOWER(TRIM(p.name))
+         )
+     ) r ON TRUE
+     WHERE (p.slug = $1 OR p.id::text = $1) AND p.status IN ('published', 'active')
      LIMIT 1`,
     [req.params.idOrSlug]
   );

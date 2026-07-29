@@ -115,6 +115,7 @@ export function ReviewsPage() {
   function bustStorefrontReviews() {
     void queryClient.invalidateQueries({ queryKey: catalogQueryKeys.reviews })
     void queryClient.invalidateQueries({ queryKey: catalogQueryKeys.productReviews })
+    void queryClient.invalidateQueries({ queryKey: catalogQueryKeys.products })
   }
 
   const wrappedCreate = {
