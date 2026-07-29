@@ -92,11 +92,10 @@ export function ProductShareSheet({ open, onClose, product }) {
             compareAt: product.compareAt,
             offerPercent: product.offerPercent,
             url,
-            imageUrl,
             description: product.description,
           })
         : '',
-    [product, url, imageUrl],
+    [product, url],
   )
 
   const links = useMemo(() => getSocialShareLinks(url, shareText, product?.name), [url, shareText, product?.name])
@@ -202,7 +201,7 @@ export function ProductShareSheet({ open, onClose, product }) {
 
   /**
    * WhatsApp / Telegram: share product image + text (price + pay link) when possible;
-   * otherwise open the app with photo URL, price, and buy link in the message.
+   * otherwise open the app with name, price, and buy link in the message.
    */
   async function handleChannelClick(channel, event) {
     if (!channel.prefersImage) return
@@ -239,7 +238,7 @@ export function ProductShareSheet({ open, onClose, product }) {
     )
     setStatus(
       channel.id === 'whatsapp'
-        ? 'WhatsApp opened with product photo, price, and pay link.'
+        ? 'WhatsApp opened with product name, price, and pay link.'
         : 'Opened with product details and pay link.',
     )
   }

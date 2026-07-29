@@ -5,30 +5,12 @@ const CARD_W = 1080
 const CARD_H = 1350
 
 /**
- * Absolute URL for sharing (WhatsApp / social preview).
- * @param {string} src
- * @returns {string}
- */
-export function toAbsoluteShareUrl(src) {
-  const value = String(src || '').trim()
-  if (!value) return ''
-  if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
-  if (typeof window === 'undefined') return value
-  try {
-    return new URL(value, window.location.origin).href
-  } catch {
-    return value
-  }
-}
-
-/**
  * @param {{
  *   name: string
  *   price: number
  *   compareAt?: number
  *   offerPercent?: number
  *   url: string
- *   imageUrl?: string
  *   description?: string
  *   brand?: string
  * }} opts
@@ -39,7 +21,6 @@ export function buildProductShareText({
   compareAt,
   offerPercent,
   url,
-  imageUrl,
   description,
   brand = 'Uniquworld',
 }) {
@@ -49,7 +30,6 @@ export function buildProductShareText({
   if (offerPercent) extras.push(`${Math.round(offerPercent)}% off`)
   const priceBlock = extras.length ? `${priceLine} (${extras.join(' · ')})` : priceLine
 
-  const photo = toAbsoluteShareUrl(imageUrl)
   const blurb = String(description || '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -65,13 +45,7 @@ export function buildProductShareText({
     lines.push(blurb)
   }
 
-  lines.push('', `💰 Price: ${priceBlock}`)
-
-  if (photo && !photo.startsWith('data:')) {
-    lines.push('', `🖼️ Photo: ${photo}`)
-  }
-
-  lines.push('', '🛒 Pay / buy here:', url)
+  lines.push('', `💰 Price: ${priceBlock}`, '', '🛒 Pay / buy here:', url)
 
   return lines.join('\n')
 }
