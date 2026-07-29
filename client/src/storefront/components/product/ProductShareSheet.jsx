@@ -68,6 +68,7 @@ function TelegramIcon({ className }) {
  *     offerPercent?: number
  *     image?: string
  *     images?: string[]
+ *     description?: string
  *   }
  * }} props
  */
@@ -91,9 +92,11 @@ export function ProductShareSheet({ open, onClose, product }) {
             compareAt: product.compareAt,
             offerPercent: product.offerPercent,
             url,
+            imageUrl,
+            description: product.description,
           })
         : '',
-    [product, url],
+    [product, url, imageUrl],
   )
 
   const links = useMemo(() => getSocialShareLinks(url, shareText, product?.name), [url, shareText, product?.name])
@@ -151,10 +154,10 @@ export function ProductShareSheet({ open, onClose, product }) {
   if (!open || !product) return null
 
   const channels = [
-    { id: 'whatsapp', label: 'WhatsApp', href: links.whatsapp, Icon: WhatsAppIcon, tone: 'bg-[#25D366]/text-white' },
+    { id: 'whatsapp', label: 'WhatsApp', href: links.whatsapp, Icon: WhatsAppIcon, tone: 'bg-[#25D366] text-white', prefersImage: true },
     { id: 'facebook', label: 'Facebook', href: links.facebook, Icon: FacebookIcon, tone: 'bg-[#1877F2] text-white' },
     { id: 'twitter', label: 'X', href: links.twitter, Icon: XIcon, tone: 'bg-hm-text text-white' },
-    { id: 'telegram', label: 'Telegram', href: links.telegram, Icon: TelegramIcon, tone: 'bg-[#229ED9] text-white' },
+    { id: 'telegram', label: 'Telegram', href: links.telegram, Icon: TelegramIcon, tone: 'bg-[#229ED9] text-white', prefersImage: true },
     { id: 'sms', label: 'Message', href: links.sms, Icon: MessageCircle, tone: 'bg-hm-primary text-white' },
     { id: 'email', label: 'Email', href: links.email, Icon: Mail, tone: 'bg-hm-muted text-hm-text' },
   ]
@@ -197,6 +200,50 @@ export function ProductShareSheet({ open, onClose, product }) {
     }
   }
 
+  /**
+   * WhatsApp / Telegram: share product image + text (price + pay link) when possible;
+   * otherwise open the app with photo URL, price, and buy link in the message.
+   */
+  async function handleChannelClick(channel, event) {
+    if (!channel.prefersImage) return
+    event.preventDefault()
+
+    if (
+      cardFile &&
+      typeof navigator !== 'undefined' &&
+      typeof navigator.share === 'function' &&
+      (!navigator.canShare || navigator.canShare({ files: [cardFile] }))
+    ) {
+      try {
+        await navigator.share({
+          files: [cardFile],
+          title: product.name,
+          text: shareText,
+        })
+        setStatus(
+          channel.id === 'whatsapp'
+            ? 'Pick WhatsApp to send image, price & pay link.'
+            : 'Shared.',
+        )
+        onClose?.()
+        return
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+      }
+    }
+
+    window.open(
+      channel.href,
+      channel.id === 'email' || channel.id === 'sms' ? '_self' : '_blank',
+      'noopener,noreferrer',
+    )
+    setStatus(
+      channel.id === 'whatsapp'
+        ? 'WhatsApp opened with product photo, price, and pay link.'
+        : 'Opened with product details and pay link.',
+    )
+  }
+
   function handleDownload() {
     if (!cardBlob) {
       setStatus('Share image is still preparing.')
@@ -224,7 +271,7 @@ export function ProductShareSheet({ open, onClose, product }) {
         <div className="flex shrink-0 items-center justify-between border-b border-hm-border px-5 py-3.5">
           <div>
             <h2 className="text-base font-semibold text-hm-text">Share gift</h2>
-            <p className="text-xs text-hm-text-muted">Image · price · link for any app</p>
+            <p className="text-xs text-hm-text-muted">Image · price · pay link for any app</p>
           </div>
           <button
             type="button"
@@ -315,25 +362,29 @@ export function ProductShareSheet({ open, onClose, product }) {
               Share to
             </p>
             <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
-              {channels.map(({ id, label, href, Icon, tone }) => (
-                <a
-                  key={id}
-                  href={href}
-                  target={id === 'email' || id === 'sms' ? undefined : '_blank'}
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-hm-border bg-hm-bg px-2 py-3 text-center transition hover:border-hm-accent/40 hover:bg-hm-muted/50"
-                >
-                  <span
-                    className={cn(
-                      'inline-flex h-11 w-11 items-center justify-center rounded-full',
-                      tone,
-                    )}
+              {channels.map((channel) => {
+                const { id, label, href, Icon, tone, prefersImage } = channel
+                return (
+                  <a
+                    key={id}
+                    href={href}
+                    target={id === 'email' || id === 'sms' ? undefined : '_blank'}
+                    rel="noopener noreferrer"
+                    onClick={prefersImage ? (e) => handleChannelClick(channel, e) : undefined}
+                    className="flex flex-col items-center gap-1.5 rounded-2xl border border-hm-border bg-hm-bg px-2 py-3 text-center transition hover:border-hm-accent/40 hover:bg-hm-muted/50"
                   >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className="text-[11px] font-medium text-hm-text">{label}</span>
-                </a>
-              ))}
+                    <span
+                      className={cn(
+                        'inline-flex h-11 w-11 items-center justify-center rounded-full',
+                        tone,
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="text-[11px] font-medium text-hm-text">{label}</span>
+                  </a>
+                )
+              })}
             </div>
           </div>
 

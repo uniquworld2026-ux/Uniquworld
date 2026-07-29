@@ -15,6 +15,8 @@ const CATALOG_GC_MS = 30 * 60_000
 export const catalogQueryKeys = {
   categories: ['catalog', 'categories'],
   products: ['catalog', 'products'],
+  reviews: ['catalog', 'reviews'],
+  productReviews: ['catalog', 'product-reviews'],
 }
 
 function mapCategory(c) {
@@ -171,4 +173,83 @@ export function useFilteredStorefrontCatalog(filters) {
   )
 
   return { products: filtered, isLoading, isFetching, isPending }
+}
+
+const REVIEWS_STALE_MS = 30_000
+
+function formatReviewDate(iso) {
+  if (!iso) return ''
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch {
+    return ''
+  }
+}
+
+/** Map ERP review rows to storefront card shape. */
+export function mapStorefrontReview(row) {
+  if (!row) return null
+  return {
+    id: row.id,
+    name: row.author || row.customer || 'Customer',
+    rating: Number(row.rating) || 5,
+    text: row.body || row.comment || '',
+    quote: row.body || row.comment || '',
+    place: row.productName || row.product || '',
+    date: formatReviewDate(row.createdAt),
+    productId: row.productId,
+    productName: row.productName,
+  }
+}
+
+export function useProductReviews(productIdOrSlug) {
+  const enabled = Boolean(productIdOrSlug)
+  const { data, isLoading, isFetching, isPending, isError, isSuccess } = useQuery({
+    queryKey: [...catalogQueryKeys.productReviews, productIdOrSlug],
+    queryFn: () => catalogPublicApi.listProductReviews(productIdOrSlug),
+    enabled,
+    staleTime: REVIEWS_STALE_MS,
+    gcTime: CATALOG_GC_MS,
+  })
+
+  const reviews = useMemo(
+    () => (data?.items || []).map(mapStorefrontReview).filter(Boolean),
+    [data],
+  )
+
+  return {
+    reviews,
+    rating: data?.rating ?? undefined,
+    reviewCount: data?.reviewCount ?? reviews.length,
+    isLoading: enabled && (isLoading || isPending),
+    isFetching,
+    isError,
+    isSuccess,
+  }
+}
+
+export function useFeaturedReviews(limit = 6) {
+  const { data, isLoading, isFetching, isPending } = useQuery({
+    queryKey: [...catalogQueryKeys.reviews, { limit }],
+    queryFn: () => catalogPublicApi.listReviews({ limit }),
+    staleTime: REVIEWS_STALE_MS,
+    gcTime: CATALOG_GC_MS,
+  })
+
+  const reviews = useMemo(
+    () => (data?.items || []).map(mapStorefrontReview).filter(Boolean),
+    [data],
+  )
+
+  return {
+    reviews,
+    rating: data?.rating ?? undefined,
+    reviewCount: data?.reviewCount ?? reviews.length,
+    isLoading: isLoading || isPending,
+    isFetching,
+  }
 }

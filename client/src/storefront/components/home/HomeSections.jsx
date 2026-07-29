@@ -8,9 +8,9 @@ import {
   instagramPosts,
   occasionCollections,
   productRails,
-  reviews,
   surprisePaths,
 } from '@/storefront/data/home'
+import { useFeaturedReviews } from '@/shared/catalog/useLiveCatalog'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
@@ -344,6 +344,8 @@ export function CorporateClients() {
 }
 
 export function ReviewsSection() {
+  const { reviews, isLoading } = useFeaturedReviews(6)
+
   return (
     <Section id="reviews">
       <Container>
@@ -354,23 +356,34 @@ export function ReviewsSection() {
             description="Stories from givers and receivers across India."
           />
         </Reveal>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {reviews.map((review, i) => (
-            <Reveal key={review.id} delay={i * 0.06}>
-              <blockquote className="h-full rounded-2xl border border-hm-border bg-hm-elevated p-6">
-                <p className="text-xs font-semibold text-hm-gold">
-                  {'★'.repeat(review.rating || 5)}
-                </p>
-                <p className="mt-3 font-display text-xl leading-snug text-hm-text">
-                  “{review.quote}”
-                </p>
-                <footer className="mt-5 text-sm text-hm-text-muted">
-                  <span className="font-medium text-hm-text">{review.name}</span> · {review.place}
-                </footer>
-              </blockquote>
-            </Reveal>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-40 animate-pulse rounded-2xl bg-hm-muted" />
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <p className="mt-8 text-sm text-hm-text-muted">No customer reviews yet.</p>
+        ) : (
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {reviews.map((review, i) => (
+              <Reveal key={review.id} delay={i * 0.06}>
+                <blockquote className="h-full rounded-2xl border border-hm-border bg-hm-elevated p-6">
+                  <p className="text-xs font-semibold text-hm-gold">
+                    {'★'.repeat(review.rating || 5)}
+                  </p>
+                  <p className="mt-3 font-display text-xl leading-snug text-hm-text">
+                    “{review.quote || review.text}”
+                  </p>
+                  <footer className="mt-5 text-sm text-hm-text-muted">
+                    <span className="font-medium text-hm-text">{review.name}</span>
+                    {review.place ? <> · {review.place}</> : null}
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        )}
       </Container>
     </Section>
   )

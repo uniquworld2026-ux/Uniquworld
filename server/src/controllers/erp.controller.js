@@ -594,6 +594,69 @@ const listPublicCatalogCategories = asyncHandler(async (req, res) => {
   return ApiResponse.ok(res, payload);
 });
 
+function averageReviewRating(rows = []) {
+  if (!rows.length) return null;
+  const sum = rows.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+  return Math.round((sum / rows.length) * 10) / 10;
+}
+
+/** Public approved reviews for one catalog product (by id or slug). */
+const listPublicCatalogProductReviews = asyncHandler(async (req, res) => {
+  const idOrSlug = String(req.params.idOrSlug || '').trim();
+  if (!idOrSlug) throw ApiError.badRequest('Product id or slug is required');
+
+  const productResult = await query(
+    `SELECT id, name, slug FROM catalog_products
+     WHERE (slug = $1 OR id::text = $1) AND status IN ('published', 'active')
+     LIMIT 1`,
+    [idOrSlug]
+  );
+  const product = productResult.rows[0];
+  if (!product) throw ApiError.notFound('Product not found');
+
+  const limit = Math.min(Number(req.query.limit) || 50, 100);
+  const result = await query(
+    `SELECT id, product_id, product_name, author, rating, title, body, status, created_at, updated_at
+     FROM erp_reviews
+     WHERE status = 'approved'
+       AND (
+         product_id = $1
+         OR product_id = $2
+         OR LOWER(TRIM(product_name)) = LOWER(TRIM($3))
+       )
+     ORDER BY created_at DESC
+     LIMIT $4`,
+    [String(product.id), product.slug, product.name, limit]
+  );
+
+  const items = result.rows.map(rowToApi);
+  return ApiResponse.ok(res, {
+    items,
+    rating: averageReviewRating(items),
+    reviewCount: items.length,
+    productId: product.id,
+  });
+});
+
+/** Public featured / latest approved reviews (home, testimonials). */
+const listPublicCatalogReviews = asyncHandler(async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 12, 48);
+  const result = await query(
+    `SELECT id, product_id, product_name, author, rating, title, body, status, created_at, updated_at
+     FROM erp_reviews
+     WHERE status = 'approved'
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  const items = result.rows.map(rowToApi);
+  return ApiResponse.ok(res, {
+    items,
+    rating: averageReviewRating(items),
+    reviewCount: items.length,
+  });
+});
+
 /** Live dashboard aggregates for admin home */
 const dashboardSummary = asyncHandler(async (_req, res) => {
   const [orders, payments, customers, products, inventory, shipments, storeProducts] =
@@ -701,6 +764,8 @@ module.exports = {
   listPublicCatalogProducts,
   getPublicCatalogProduct,
   listPublicCatalogCategories,
+  listPublicCatalogProductReviews,
+  listPublicCatalogReviews,
   dashboardSummary,
   adminLogin,
   adminVerifyOtp,

@@ -5,12 +5,31 @@ const CARD_W = 1080
 const CARD_H = 1350
 
 /**
+ * Absolute URL for sharing (WhatsApp / social preview).
+ * @param {string} src
+ * @returns {string}
+ */
+export function toAbsoluteShareUrl(src) {
+  const value = String(src || '').trim()
+  if (!value) return ''
+  if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value
+  if (typeof window === 'undefined') return value
+  try {
+    return new URL(value, window.location.origin).href
+  } catch {
+    return value
+  }
+}
+
+/**
  * @param {{
  *   name: string
  *   price: number
  *   compareAt?: number
  *   offerPercent?: number
  *   url: string
+ *   imageUrl?: string
+ *   description?: string
  *   brand?: string
  * }} opts
  */
@@ -20,22 +39,41 @@ export function buildProductShareText({
   compareAt,
   offerPercent,
   url,
+  imageUrl,
+  description,
   brand = 'Uniquworld',
 }) {
   const priceLine = formatCurrency(price)
   const extras = []
   if (compareAt && compareAt > price) extras.push(`was ${formatCurrency(compareAt)}`)
-  if (offerPercent) extras.push(`${offerPercent}% off`)
+  if (offerPercent) extras.push(`${Math.round(offerPercent)}% off`)
   const priceBlock = extras.length ? `${priceLine} (${extras.join(' · ')})` : priceLine
 
-  return [
+  const photo = toAbsoluteShareUrl(imageUrl)
+  const blurb = String(description || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160)
+
+  const lines = [
     `🎁 Check out this gift on ${brand}!`,
     '',
     name,
-    priceBlock,
-    '',
-    url,
-  ].join('\n')
+  ]
+
+  if (blurb) {
+    lines.push(blurb)
+  }
+
+  lines.push('', `💰 Price: ${priceBlock}`)
+
+  if (photo && !photo.startsWith('data:')) {
+    lines.push('', `🖼️ Photo: ${photo}`)
+  }
+
+  lines.push('', '🛒 Pay / buy here:', url)
+
+  return lines.join('\n')
 }
 
 /**
@@ -51,12 +89,21 @@ export function getSocialShareLinks(url, text, title = 'Uniquworld') {
   return {
     whatsapp: `https://wa.me/?text=${t}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
-    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text.split('\n')[0] || title)}&url=${u}`,
-    telegram: `https://t.me/share/url?url=${u}&text=${encodeURIComponent(text.split('\n').slice(0, 4).join('\n'))}`,
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      [title, formatCurrencyLine(text), url].filter(Boolean).join('\n'),
+    )}`,
+    telegram: `https://t.me/share/url?url=${u}&text=${encodeURIComponent(
+      text.split('\n').filter(Boolean).slice(0, 8).join('\n'),
+    )}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
     email: `mailto:?subject=${subject}&body=${t}`,
     sms: `sms:?body=${t}`,
   }
+}
+
+function formatCurrencyLine(text) {
+  const match = String(text || '').match(/💰 Price: (.+)/)
+  return match ? match[1] : ''
 }
 
 function loadImage(src, { crossOrigin = true } = {}) {

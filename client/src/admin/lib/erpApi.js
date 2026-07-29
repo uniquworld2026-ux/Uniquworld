@@ -58,6 +58,12 @@ export const catalogPublicApi = {
     api.get(`/catalog/products/${idOrSlug}`).then((r) => r.data.data.item),
   listCategories: (params) =>
     api.get('/catalog/categories', { params }).then((r) => r.data.data.items),
+  listProductReviews: (idOrSlug, params) =>
+    api
+      .get(`/catalog/products/${encodeURIComponent(idOrSlug)}/reviews`, { params })
+      .then((r) => r.data.data),
+  listReviews: (params) =>
+    api.get('/catalog/reviews', { params }).then((r) => r.data.data),
 }
 
 export const storePublicApi = {

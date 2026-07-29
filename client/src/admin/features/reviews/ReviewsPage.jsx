@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createErpHooks } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
+import { catalogQueryKeys } from '@/shared/catalog/useLiveCatalog'
 
 const hooks = createErpHooks('reviews')
 const productHooks = createErpHooks('products')
@@ -67,6 +69,7 @@ function toErpPayload(payload, products = []) {
 }
 
 export function ReviewsPage() {
+  const queryClient = useQueryClient()
   const { data: raw = [], isLoading } = hooks.useList()
   const { data: products = [] } = productHooks.useList()
   const createMutation = hooks.useCreate()
@@ -109,16 +112,39 @@ export function ReviewsPage() {
     [productOptions],
   )
 
+  function bustStorefrontReviews() {
+    void queryClient.invalidateQueries({ queryKey: catalogQueryKeys.reviews })
+    void queryClient.invalidateQueries({ queryKey: catalogQueryKeys.productReviews })
+  }
+
   const wrappedCreate = {
     ...createMutation,
-    mutateAsync: async (payload) =>
-      createMutation.mutateAsync(toErpPayload(payload, products)),
+    mutateAsync: async (payload) => {
+      const item = await createMutation.mutateAsync(toErpPayload(payload, products))
+      bustStorefrontReviews()
+      return item
+    },
   }
 
   const wrappedUpdate = {
     ...updateMutation,
-    mutateAsync: async ({ id, data: row }) =>
-      updateMutation.mutateAsync({ id, data: toErpPayload(row, products) }),
+    mutateAsync: async ({ id, data: row }) => {
+      const item = await updateMutation.mutateAsync({
+        id,
+        data: toErpPayload(row, products),
+      })
+      bustStorefrontReviews()
+      return item
+    },
+  }
+
+  const wrappedDelete = {
+    ...deleteMutation,
+    mutateAsync: async (id) => {
+      const result = await deleteMutation.mutateAsync(id)
+      bustStorefrontReviews()
+      return result
+    },
   }
 
   return (
@@ -130,7 +156,7 @@ export function ReviewsPage() {
       isLoading={isLoading}
       createMutation={wrappedCreate}
       updateMutation={wrappedUpdate}
-      deleteMutation={deleteMutation}
+      deleteMutation={wrappedDelete}
       columns={columns}
       fields={fields}
       defaults={defaults}

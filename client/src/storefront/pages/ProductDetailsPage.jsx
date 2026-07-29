@@ -17,11 +17,11 @@ import {
   getUnitPrice,
 } from '@/storefront/data/catalog'
 import {
+  useProductReviews,
   useStorefrontProduct,
   useStorefrontProducts,
   useStorefrontRelated,
 } from '@/shared/catalog/useLiveCatalog'
-import { getStorefrontReviewBundle } from '@/admin/features/reviews/reviewStore'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { StarRating } from '@/storefront/components/product/StarRating'
 import { CustomizeProductModal } from '@/storefront/components/product/CustomizeProductModal'
@@ -65,7 +65,12 @@ export function ProductDetailsPage() {
   const [pendingCartAction, setPendingCartAction] = useState(null) // 'add' | 'buy' | null
   const [wishlisted, setWishlisted] = useState(false)
   const [optionType, setOptionType] = useState('product') // product | customized
-  const [reviewsTick, setReviewsTick] = useState(0)
+  const {
+    reviews,
+    rating: liveRating,
+    reviewCount: liveReviewCount,
+    isSuccess: reviewsLoaded,
+  } = useProductReviews(id)
 
   useEffect(() => {
     if (!product) return
@@ -86,12 +91,6 @@ export function ProductDetailsPage() {
     pushRecentlyViewed(product.id)
     window.scrollTo(0, 0)
   }, [product?.id])
-
-  useEffect(() => {
-    const onChange = () => setReviewsTick((n) => n + 1)
-    window.addEventListener('hm-catalog-changed', onChange)
-    return () => window.removeEventListener('hm-catalog-changed', onChange)
-  }, [])
 
   function updateLensOrigin(clientX, clientY) {
     const el = imageFrameRef.current
@@ -151,15 +150,8 @@ export function ProductDetailsPage() {
       : product?.shippingNote || 'Dispatches in 1–2 days'
 
   const unitPrice = displayPrice
-  const reviewBundle = useMemo(() => {
-    if (!product) return { reviews: [], rating: undefined, reviewCount: 0 }
-    return getStorefrontReviewBundle(product)
-    // reviewsTick refreshes after admin / seed writes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product, reviewsTick])
-  const reviews = reviewBundle.reviews
-  const displayRating = reviewBundle.rating || product?.rating || 0
-  const displayReviewCount = reviewBundle.reviewCount || product?.reviewCount || 0
+  const displayRating = reviewsLoaded ? liveRating || 0 : product?.rating || 0
+  const displayReviewCount = reviewsLoaded ? liveReviewCount : product?.reviewCount || 0
   const recentlyViewed = useMemo(() => {
     if (!product) return []
     return getRecentlyViewedIds()
@@ -713,6 +705,7 @@ export function ProductDetailsPage() {
           offerPercent: displayOffer,
           image: product.images?.[0],
           images: product.images,
+          description: product.shortDescription || product.description || '',
         }}
       />
 
