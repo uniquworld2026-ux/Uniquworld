@@ -127,7 +127,7 @@ export function DiscoverHubPage() {
 
 export function CategorySlugPage() {
   const { slug } = useParams()
-  const categories = useStorefrontCategories()
+  const { categories } = useStorefrontCategories()
   const key = String(slug || '')
     .trim()
     .toLowerCase()

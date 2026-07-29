@@ -13,6 +13,18 @@ const { hashToken } = require('../utils/jwt');
 const { generateOtpCode, otpExpiresAt } = require('../utils/otp');
 const { OTP_PURPOSE } = require('../types/enums');
 const { prepareProductImages } = require('../utils/catalogImages');
+const memoryCache = require('../utils/cache');
+
+const CATALOG_PRODUCTS_CACHE = 'catalog:public:products';
+const CATALOG_CATEGORIES_CACHE = 'catalog:public:categories';
+const CATALOG_CACHE_TTL_MS = 45_000;
+
+function bustCatalogCache(moduleName) {
+  if (moduleName === 'products' || moduleName === 'categories') {
+    memoryCache.delPrefix(CATALOG_PRODUCTS_CACHE);
+    memoryCache.delPrefix(CATALOG_CATEGORIES_CACHE);
+  }
+}
 
 const prepareAdminUserPayload = async (body, { requirePassword = false } = {}) => {
   const payload = { ...(body || {}) };
@@ -69,6 +81,7 @@ const create = asyncHandler(async (req, res) => {
     }
   }
   const item = await erpRepository.create(req.params.module, body);
+  bustCatalogCache(req.params.module);
   return ApiResponse.created(res, { item }, 'Created');
 });
 
@@ -88,6 +101,7 @@ const update = asyncHandler(async (req, res) => {
     }
   }
   const item = await erpRepository.update(req.params.module, req.params.id, body);
+  bustCatalogCache(req.params.module);
   return ApiResponse.ok(res, { item }, 'Updated');
 });
 
@@ -218,6 +232,7 @@ const adminVerifyOtp = asyncHandler(async (req, res) => {
 
 const remove = asyncHandler(async (req, res) => {
   await erpRepository.remove(req.params.module, req.params.id);
+  bustCatalogCache(req.params.module);
   return ApiResponse.ok(res, null, 'Deleted');
 });
 
@@ -515,14 +530,24 @@ const getPublicStoreProduct = asyncHandler(async (req, res) => {
 
 /** Public gift catalog (admin Product Management → storefront) */
 const listPublicCatalogProducts = asyncHandler(async (req, res) => {
+  const limit = Number(req.query.limit) || 200;
+  const cacheKey = `${CATALOG_PRODUCTS_CACHE}:${limit}`;
+  const cached = memoryCache.get(cacheKey);
+  if (cached) {
+    return ApiResponse.ok(res, cached);
+  }
+
   const result = await query(
-    `SELECT * FROM catalog_products
+    `SELECT id, name, slug, sku, description, instruction, category, categories,
+            brand, price, compare_at_price, stock, low_stock_at, image_url, gallery,
+            status, featured, trending, rating, review_count, meta, created_at, updated_at
+     FROM catalog_products
      WHERE status IN ('published', 'active')
      ORDER BY featured DESC, updated_at DESC
      LIMIT $1`,
-    [Number(req.query.limit) || 200]
+    [limit]
   );
-  return ApiResponse.ok(res, {
+  const payload = {
     items: result.rows.map((row) => {
       const item = rowToApi(row);
       return {
@@ -530,7 +555,9 @@ const listPublicCatalogProducts = asyncHandler(async (req, res) => {
         galleryImages: Array.isArray(item.gallery) ? item.gallery : [],
       };
     }),
-  });
+  };
+  memoryCache.set(cacheKey, payload, CATALOG_CACHE_TTL_MS);
+  return ApiResponse.ok(res, payload);
 });
 
 const getPublicCatalogProduct = asyncHandler(async (req, res) => {
@@ -548,14 +575,23 @@ const getPublicCatalogProduct = asyncHandler(async (req, res) => {
 });
 
 const listPublicCatalogCategories = asyncHandler(async (req, res) => {
+  const limit = Number(req.query.limit) || 100;
+  const cacheKey = `${CATALOG_CATEGORIES_CACHE}:${limit}`;
+  const cached = memoryCache.get(cacheKey);
+  if (cached) {
+    return ApiResponse.ok(res, cached);
+  }
+
   const result = await query(
     `SELECT * FROM catalog_categories
      WHERE status IN ('published', 'active')
      ORDER BY sort_order ASC, name ASC
      LIMIT $1`,
-    [Number(req.query.limit) || 100]
+    [limit]
   );
-  return ApiResponse.ok(res, { items: result.rows.map(rowToApi) });
+  const payload = { items: result.rows.map(rowToApi) };
+  memoryCache.set(cacheKey, payload, CATALOG_CACHE_TTL_MS);
+  return ApiResponse.ok(res, payload);
 });
 
 /** Live dashboard aggregates for admin home */

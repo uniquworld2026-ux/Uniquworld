@@ -75,7 +75,7 @@ export const personalizedTypes = [
 ]
 
 export function PersonalizedPage() {
-  const catalog = useStorefrontProducts()
+  const { products: catalog } = useStorefrontProducts()
   const products = catalog.filter(
     (p) => p.category === 'Personalized Gifts' || p.personalization?.customText,
   )

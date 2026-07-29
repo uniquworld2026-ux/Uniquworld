@@ -34,6 +34,13 @@ class MemoryCache {
     this.store.delete(key);
   }
 
+  /** Remove all keys that start with `prefix` (e.g. `catalog:public:products`). */
+  delPrefix(prefix) {
+    for (const key of this.store.keys()) {
+      if (String(key).startsWith(prefix)) this.store.delete(key);
+    }
+  }
+
   clear() {
     this.store.clear();
   }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -24,6 +25,7 @@ import { getStorefrontReviewBundle } from '@/admin/features/reviews/reviewStore'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { StarRating } from '@/storefront/components/product/StarRating'
 import { CustomizeProductModal } from '@/storefront/components/product/CustomizeProductModal'
+import { ProductShareSheet } from '@/storefront/components/product/ProductShareSheet'
 import { pushRecentlyViewed, getRecentlyViewedIds } from '@/storefront/hooks/useRecentlyViewed'
 import { useCart } from '@/storefront/hooks/useCart'
 import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
@@ -43,8 +45,8 @@ export function ProductDetailsPage() {
   const navigate = useNavigate()
   const { addItem } = useCart()
   const { isAuthenticated } = useCustomerAuth()
-  const product = useStorefrontProduct(id)
-  const allProducts = useStorefrontProducts()
+  const { product, isLoading: productLoading } = useStorefrontProduct(id)
+  const { products: allProducts } = useStorefrontProducts()
   const related = useStorefrontRelated(product)
 
   const [activeImage, setActiveImage] = useState(0)
@@ -59,6 +61,7 @@ export function ProductDetailsPage() {
   const [customPhotoName, setCustomPhotoName] = useState('')
   const [customPhotoDataUrl, setCustomPhotoDataUrl] = useState('')
   const [customizeOpen, setCustomizeOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const [pendingCartAction, setPendingCartAction] = useState(null) // 'add' | 'buy' | null
   const [wishlisted, setWishlisted] = useState(false)
   const [optionType, setOptionType] = useState('product') // product | customized
@@ -76,6 +79,7 @@ export function ProductDetailsPage() {
     setCustomPhotoDataUrl('')
     setCustomizeOpen(false)
     setPendingCartAction(null)
+    setShareOpen(false)
     setOptionType('product')
     setLensZoom(false)
     setLensOrigin({ x: 50, y: 50 })
@@ -168,10 +172,19 @@ export function ProductDetailsPage() {
   if (!product) {
     return (
       <div className="mx-auto flex min-h-[70svh] max-w-lg flex-col items-center justify-center px-6 py-32 text-center">
-        <h1 className="font-display text-4xl text-hm-text">Gift not found</h1>
-        <Link to="/categories" className="mt-6">
-          <Button variant="primary">Back to shop</Button>
-        </Link>
+        {productLoading ? (
+          <>
+            <div className="h-8 w-48 animate-pulse rounded-md bg-hm-muted" />
+            <div className="mt-4 h-4 w-64 animate-pulse rounded-md bg-hm-muted" />
+          </>
+        ) : (
+          <>
+            <h1 className="font-display text-4xl text-hm-text">Gift not found</h1>
+            <Link to="/categories" className="mt-6">
+              <Button variant="primary">Back to shop</Button>
+            </Link>
+          </>
+        )}
       </div>
     )
   }
@@ -624,20 +637,7 @@ export function ProductDetailsPage() {
                 <Heart className={cn('h-4 w-4', wishlisted && 'fill-current')} />
                 Wishlist
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={async () => {
-                  const url = window.location.href
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({ title: product.name, url })
-                    } catch {
-                      /* ignore */
-                    }
-                  } else await navigator.clipboard.writeText(url)
-                }}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShareOpen(true)}>
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
@@ -702,18 +702,37 @@ export function ProductDetailsPage() {
         onContinue={handleCustomizeContinue}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hm-border bg-hm-elevated/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-lg sm:hidden">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
-          <Button variant="outline" size="lg" onClick={() => handleAddToBag('add')}>
-            <ShoppingBag className="h-4 w-4" />
-            Add
-          </Button>
-          <Button variant="primary" size="lg" onClick={() => handleAddToBag('buy')}>
-            <Zap className="h-4 w-4" />
-            Buy now
-          </Button>
-        </div>
-      </div>
+      <ProductShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        product={{
+          id: product.id,
+          name: product.name,
+          price: unitPrice,
+          compareAt: displayCompareAt,
+          offerPercent: displayOffer,
+          image: product.images?.[0],
+          images: product.images,
+        }}
+      />
+
+      {typeof document !== 'undefined'
+        ? createPortal(
+            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hm-border bg-hm-elevated/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-lg sm:hidden">
+              <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
+                <Button variant="outline" size="lg" onClick={() => handleAddToBag('add')}>
+                  <ShoppingBag className="h-4 w-4" />
+                  Add
+                </Button>
+                <Button variant="primary" size="lg" onClick={() => handleAddToBag('buy')}>
+                  <Zap className="h-4 w-4" />
+                  Buy now
+                </Button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

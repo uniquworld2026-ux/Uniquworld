@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Filter, Search, SlidersHorizontal, X } from 'lucide-react'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
+import { ProductGridSkeleton } from '@/storefront/components/product/ProductCardSkeleton'
 import { Button } from '@/shared/components/ui/Button'
+import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { cn } from '@/shared/utils/cn'
 import {
   useFilteredStorefrontCatalog,
@@ -13,8 +15,8 @@ import {
 export function ProductsPage() {
   const [params, setParams] = useSearchParams()
   const [mobileFilters, setMobileFilters] = useState(false)
-  const categories = useStorefrontCategories()
-  const allProducts = useStorefrontProducts()
+  const { categories, isLoading: categoriesLoading } = useStorefrontCategories()
+  const { products: allProducts, isLoading: allLoading } = useStorefrontProducts()
 
   useEffect(() => {
     if (!mobileFilters) return undefined
@@ -69,15 +71,16 @@ export function ProductsPage() {
     setParams(next, { replace: true })
   }
 
-  // Resolve filter to category name so slug/id query params still match admin products
   const categoryFilter = activeCategory?.name || state.category
 
-  const products = useFilteredStorefrontCatalog({
+  const { products, isLoading: filteredLoading } = useFilteredStorefrontCatalog({
     search: state.search,
     category: categoryFilter,
     sort: state.sort,
     onlyInStock: state.inStock,
   })
+
+  const isLoading = filteredLoading || allLoading || categoriesLoading
 
   const totalInCategory =
     state.category === 'All'
@@ -90,7 +93,13 @@ export function ProductsPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-hm-text-subtle">
           Category
         </p>
-        {categories.length === 0 ? (
+        {categoriesLoading ? (
+          <div className="mt-3 space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : categories.length === 0 ? (
           <p className="mt-3 text-sm text-hm-text-muted">Categories will appear here soon.</p>
         ) : (
           <div className="mt-3 flex flex-col gap-1.5">
@@ -200,11 +209,19 @@ export function ProductsPage() {
 
         <div>
           <p className="mb-5 text-[0.9375rem] text-hm-text-muted">
-            <span className="font-semibold text-hm-text">{products.length}</span> active gift
-            {products.length === 1 ? '' : 's'}
-            {categoryFilter !== 'All' ? <span> in {categoryFilter}</span> : null}
+            {isLoading ? (
+              <Skeleton className="inline-block h-4 w-40 rounded-md align-middle" />
+            ) : (
+              <>
+                <span className="font-semibold text-hm-text">{products.length}</span> active gift
+                {products.length === 1 ? '' : 's'}
+                {categoryFilter !== 'All' ? <span> in {categoryFilter}</span> : null}
+              </>
+            )}
           </p>
-          {products.length === 0 ? (
+          {isLoading ? (
+            <ProductGridSkeleton count={8} />
+          ) : products.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-hm-border bg-hm-elevated/50 p-8 text-center sm:p-12">
               <p className="font-display text-2xl text-hm-text">
                 {categoryFilter !== 'All' ? `No active gifts in ${categoryFilter}` : 'No gifts match'}
@@ -222,10 +239,11 @@ export function ProductsPage() {
             </div>
           ) : (
             <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   className="h-full"
+                  priority={index < 4}
                   product={{
                     ...product,
                     image: product.image || product.images?.[0],

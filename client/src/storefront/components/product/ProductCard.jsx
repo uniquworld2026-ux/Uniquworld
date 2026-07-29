@@ -6,7 +6,7 @@ import { StarRating } from '@/storefront/components/product/StarRating'
 import { cn } from '@/shared/utils/cn'
 
 /** Simple product card — responsive for 2-col mobile grids */
-export function ProductCard({ product, className, href }) {
+export function ProductCard({ product, className, href, priority = false }) {
   const navigate = useNavigate()
   const { addItem } = useCart()
   const image = product.image || product.images?.[0]
@@ -38,7 +38,9 @@ export function ProductCard({ product, className, href }) {
         <img
           src={image}
           alt={product.name}
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
         />
         {product.tag ? (

@@ -260,19 +260,19 @@ body {
   mask-image: linear-gradient(to bottom, black, transparent 85%);
 }
 
+/* Opacity-only: a lingering transform on <main> makes position:fixed
+   children (mobile Add / Buy now bar) stick to the page end instead of the viewport. */
 @keyframes hm-fade-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 .hm-animate-in {
-  animation: hm-fade-up 0.55s ease-out both;
+  animation: hm-fade-up 0.45s ease-out both;
 }
 
 .admin-shell {

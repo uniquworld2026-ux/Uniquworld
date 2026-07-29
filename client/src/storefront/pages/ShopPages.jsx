@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom'
 import { PageHero } from '@/storefront/components/layout/PageHero'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
+import {
+  CategoryCardSkeleton,
+  ProductGridSkeleton,
+} from '@/storefront/components/product/ProductCardSkeleton'
 import { Button } from '@/shared/components/ui/Button'
 import {
   useStorefrontCategories,
@@ -8,8 +12,9 @@ import {
 } from '@/shared/catalog/useLiveCatalog'
 
 export function CategoriesPage() {
-  const categories = useStorefrontCategories()
-  const products = useStorefrontProducts()
+  const { categories, isLoading: categoriesLoading } = useStorefrontCategories()
+  const { products, isLoading: productsLoading } = useStorefrontProducts()
+  const isLoading = categoriesLoading || productsLoading
 
   return (
     <div>
@@ -25,60 +30,78 @@ export function CategoriesPage() {
       />
 
       <div className="mx-auto max-w-7xl space-y-14 px-5 py-12 sm:px-8">
-        {categories.length === 0 ? (
+        {isLoading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CategoryCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : null}
+
+        {!isLoading && categories.length === 0 ? (
           <p className="py-16 text-center text-sm text-hm-text-muted">
             No active categories yet. Check back soon.
           </p>
         ) : null}
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={cat.path}
-              className="group relative aspect-[3/4] overflow-hidden rounded-2xl"
-            >
-              <img
-                src={cat.image}
-                alt=""
-                className="h-full w-full object-cover transition group-hover:scale-[1.03]"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                <p className="font-display text-2xl">{cat.title}</p>
-                <p className="text-sm text-white/75">
-                  {cat.subtitle || `${cat.productCount} product${cat.productCount === 1 ? '' : 's'}`}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {categories.map((cat) => {
-          const catProducts = products.filter((p) => p.category === cat.name)
-          if (catProducts.length === 0) return null
-          return (
-            <section key={`list-${cat.id}`}>
-              <div className="mb-6 flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="font-display text-3xl text-hm-text">{cat.title}</h2>
-                  <p className="mt-1 text-sm text-hm-text-muted">
-                    {catProducts.length} product{catProducts.length === 1 ? '' : 's'}
+        {!isLoading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={cat.path}
+                className="group relative aspect-[3/4] overflow-hidden rounded-2xl"
+              >
+                <img
+                  src={cat.image}
+                  alt=""
+                  className="h-full w-full object-cover transition group-hover:scale-[1.03]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                  <p className="font-display text-2xl">{cat.title}</p>
+                  <p className="text-sm text-white/75">
+                    {cat.subtitle || `${cat.productCount} product${cat.productCount === 1 ? '' : 's'}`}
                   </p>
                 </div>
-                <Link to={cat.path} className="text-sm font-medium text-hm-accent hover:underline">
-                  View all
-                </Link>
-              </div>
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {catProducts.slice(0, 4).map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
-          )
-        })}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        {isLoading ? (
+          <div className="space-y-6">
+            <div className="h-8 w-48 animate-pulse rounded-md bg-hm-muted" />
+            <ProductGridSkeleton count={4} className="xl:grid-cols-4" />
+          </div>
+        ) : (
+          categories.map((cat) => {
+            const catProducts = products.filter((p) => p.category === cat.name)
+            if (catProducts.length === 0) return null
+            return (
+              <section key={`list-${cat.id}`}>
+                <div className="mb-6 flex items-end justify-between gap-4">
+                  <div>
+                    <h2 className="font-display text-3xl text-hm-text">{cat.title}</h2>
+                    <p className="mt-1 text-sm text-hm-text-muted">
+                      {catProducts.length} product{catProducts.length === 1 ? '' : 's'}
+                    </p>
+                  </div>
+                  <Link to={cat.path} className="text-sm font-medium text-hm-accent hover:underline">
+                    View all
+                  </Link>
+                </div>
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {catProducts.slice(0, 4).map((product, index) => (
+                    <ProductCard key={product.id} product={product} priority={index < 2} />
+                  ))}
+                </div>
+              </section>
+            )
+          })
+        )}
       </div>
     </div>
   )

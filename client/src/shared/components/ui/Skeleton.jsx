@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils/cn'
 export function Skeleton({ className }) {
   return (
     <div
-      className={cn('animate-pulse rounded-hm-md bg-hm-bg-muted', className)}
+      className={cn('animate-pulse rounded-hm-md bg-hm-muted', className)}
       aria-hidden
     />
   )

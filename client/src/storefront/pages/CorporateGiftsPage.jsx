@@ -76,7 +76,7 @@ const perks = [
 ]
 
 export function CorporateGiftsPage() {
-  const allProducts = useStorefrontProducts()
+  const { products: allProducts } = useStorefrontProducts()
   const products = allProducts.filter(
     (p) => p.category === 'Corporate Gifts' || (p.occasion || []).includes('Corporate'),
   )
