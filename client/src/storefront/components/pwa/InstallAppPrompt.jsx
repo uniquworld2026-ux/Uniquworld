@@ -4,8 +4,13 @@ import { Download, Share, X } from 'lucide-react'
 import { BRAND_ICON_SRC } from '@/storefront/components/brand/BrandLogo'
 import { cn } from '@/shared/utils/cn'
 
-const DISMISS_KEY = 'uw_install_prompt_dismissed_at'
-const DISMISS_DAYS = 14
+/** Session-only: hide for this tab visit after Not now / X */
+const SESSION_DISMISS_KEY = 'uw_install_prompt_session_dismissed'
+/** Permanent: never ask again after successful install */
+const INSTALLED_KEY = 'uw_install_prompt_installed'
+/** Legacy 14-day key — clear so older dismissals don't block forever */
+const LEGACY_DISMISS_KEY = 'uw_install_prompt_dismissed_at'
+
 const TAGLINE = 'Make a Moment, Unique the world.'
 
 function isStandalone() {
@@ -28,29 +33,60 @@ function isIos() {
   return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 }
 
-function wasDismissedRecently() {
+function clearLegacyDismiss() {
   try {
-    const raw = localStorage.getItem(DISMISS_KEY)
-    if (!raw) return false
-    const at = Number(raw)
-    if (!Number.isFinite(at)) return false
-    return Date.now() - at < DISMISS_DAYS * 24 * 60 * 60 * 1000
-  } catch {
-    return false
-  }
-}
-
-function markDismissed() {
-  try {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()))
+    localStorage.removeItem(LEGACY_DISMISS_KEY)
   } catch {
     /* ignore */
   }
 }
 
+function wasInstalled() {
+  try {
+    if (isStandalone()) return true
+    return localStorage.getItem(INSTALLED_KEY) === '1'
+  } catch {
+    return isStandalone()
+  }
+}
+
+function markInstalled() {
+  try {
+    localStorage.setItem(INSTALLED_KEY, '1')
+    sessionStorage.removeItem(SESSION_DISMISS_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+function wasDismissedThisSession() {
+  try {
+    return sessionStorage.getItem(SESSION_DISMISS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markDismissedThisSession() {
+  try {
+    sessionStorage.setItem(SESSION_DISMISS_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
+function shouldShowPrompt() {
+  if (wasInstalled()) return false
+  if (wasDismissedThisSession()) return false
+  if (!isMobileViewport()) return false
+  return true
+}
+
 /**
- * First-visit install ask — Worklogz-style card for Uniquworld.
- * Tagline: Make a Moment, Unique the world.
+ * Install ask for Uniquworld.
+ * - Shows every new visit until installed
+ * - “Not now” only hides for the current session
+ * - After install, never shows again
  */
 export function InstallAppPrompt() {
   const [open, setOpen] = useState(false)
@@ -60,13 +96,21 @@ export function InstallAppPrompt() {
   const ios = isIos()
 
   const dismiss = useCallback(() => {
-    markDismissed()
+    markDismissedThisSession()
     setOpen(false)
     setShowIosHelp(false)
   }, [])
 
   useEffect(() => {
-    if (isStandalone() || wasDismissedRecently()) return undefined
+    clearLegacyDismiss()
+
+    // Already running as installed app → remember permanently
+    if (isStandalone()) {
+      markInstalled()
+      return undefined
+    }
+
+    if (!shouldShowPrompt()) return undefined
 
     const onBeforeInstall = (event) => {
       event.preventDefault()
@@ -76,14 +120,13 @@ export function InstallAppPrompt() {
 
     const onInstalled = () => {
       setDeferredPrompt(null)
+      markInstalled()
       setOpen(false)
-      markDismissed()
     }
     window.addEventListener('appinstalled', onInstalled)
 
     const timer = window.setTimeout(() => {
-      if (isStandalone() || wasDismissedRecently()) return
-      if (!isMobileViewport()) return
+      if (!shouldShowPrompt()) return
       setOpen(true)
     }, 2200)
 
@@ -122,7 +165,7 @@ export function InstallAppPrompt() {
       const choice = await deferredPrompt.userChoice
       setDeferredPrompt(null)
       if (choice?.outcome === 'accepted') {
-        markDismissed()
+        markInstalled()
         setOpen(false)
       }
     } catch {
