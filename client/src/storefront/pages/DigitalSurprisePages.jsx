@@ -92,12 +92,19 @@ export function DigitalSurprisePage() {
                     <p className="mt-3 text-xs text-hm-text-subtle">
                       {occ.templates.length} unique templates · 30-day private link
                     </p>
-                    <Link to={`/surprise/digital/${occ.slug}`} className="mt-4 block">
-                      <Button type="button" variant="primary" className="w-full gap-1.5">
-                        Pay now · {formatINR(DIGITAL_PRICE_INR)}
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Link to={`/surprise/digital/${occ.slug}/demo`} className="block">
+                        <Button type="button" variant="outline" className="w-full text-sm">
+                          Watch demo
+                        </Button>
+                      </Link>
+                      <Link to={`/surprise/digital/${occ.slug}`} className="block">
+                        <Button type="button" variant="primary" className="w-full gap-1.5 text-sm">
+                          Pay now · {formatINR(DIGITAL_PRICE_INR)}
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </article>
               </Reveal>
@@ -131,7 +138,6 @@ export function DigitalSurpriseCustomizePage() {
   const [photoUrl, setPhotoUrl] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [previewOpen, setPreviewOpen] = useState(false)
   const [previewUsed, setPreviewUsed] = useState(() =>
     occasion ? hasUsedPreview(occasion.id) : false,
   )
@@ -234,14 +240,16 @@ export function DigitalSurpriseCustomizePage() {
       setError('Demo preview already used on this device. Pay ₹49 to unlock your private link.')
       return
     }
-    if (!recipientName.trim() || recipientName.trim().length < 2) {
-      setError('Enter their name to preview')
-      return
-    }
     setError('')
     markPreviewUsed(occasion.id)
     setPreviewUsed(true)
-    setPreviewOpen(true)
+    navigate(`/surprise/digital/${occasion.slug}/demo`, {
+      state: {
+        recipientName: recipientName.trim() || 'Alex',
+        senderName: senderName.trim() || 'Uniquworld',
+        message: message.trim(),
+      },
+    })
   }
 
   if (published) {
@@ -287,26 +295,6 @@ export function DigitalSurpriseCustomizePage() {
 
   return (
     <div>
-      {previewOpen ? (
-        <div className="fixed inset-0 z-[70] overflow-y-auto bg-black">
-          <button
-            type="button"
-            className="fixed right-3 top-3 z-[71] rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-hm-text"
-            onClick={() => setPreviewOpen(false)}
-          >
-            Close preview
-          </button>
-          <DigitalSurpriseExperience
-            templateId={templateId}
-            recipientName={recipientName}
-            senderName={senderName}
-            message={message}
-            media={draftMedia}
-            preview
-          />
-        </div>
-      ) : null}
-
       <section className="border-b border-hm-border bg-hm-bg-muted/60 py-10">
         <Container>
           <Link to="/surprise/digital" className="text-sm text-hm-accent hover:underline">
@@ -444,7 +432,7 @@ export function DigitalSurpriseCustomizePage() {
 
               <div id="ds-pay-now" className="flex flex-col gap-2 sm:flex-row">
                 <Button type="button" variant="outline" className="flex-1" onClick={openPreview} disabled={busy}>
-                  {previewUsed ? 'Preview used' : 'Demo preview (once)'}
+                  {previewUsed ? 'Demo used' : 'Full-screen demo'}
                 </Button>
                 <Button type="button" variant="primary" className="flex-1 gap-1.5" onClick={payAndPublish} disabled={busy}>
                   {busy ? 'Processing…' : `Pay now · ${formatINR(DIGITAL_PRICE_INR)}`}

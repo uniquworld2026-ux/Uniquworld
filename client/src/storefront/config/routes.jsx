@@ -52,6 +52,7 @@ import {
   DigitalSurpriseCustomizePage,
   DigitalSurpriseLivePage,
 } from '@/storefront/pages/DigitalSurprisePages'
+import { DigitalSurpriseDemoPage } from '@/storefront/pages/DigitalSurpriseDemoPage'
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
 import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
 import { HandmadePage } from '@/storefront/pages/HandmadePage'
@@ -204,6 +205,7 @@ export const storefrontRouteTree = (
     <Route path="surprise" element={<SurpriseHubPage />} />
     <Route path="surprise/local" element={<LocalSurprisePage />} />
     <Route path="surprise/digital" element={<DigitalSurprisePage />} />
+    <Route path="surprise/digital/:occasionSlug/demo" element={<DigitalSurpriseDemoPage />} />
     <Route path="surprise/digital/:occasionSlug" element={<DigitalSurpriseCustomizePage />} />
     <Route path="surprise/s/:slug" element={<DigitalSurpriseLivePage />} />
     <Route path="store" element={<StoreHubPage />} />
