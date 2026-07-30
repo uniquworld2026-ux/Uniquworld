@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { resolveMediaEmbeds } from '@/storefront/features/digitalSurprise/mediaEmbeds'
+import { DS_GRADIENTS } from '@/storefront/features/digitalSurprise/gradients'
 import { cn } from '@/shared/utils/cn'
 
 function MediaBlock({ media }) {
@@ -28,12 +29,7 @@ function MediaBlock({ media }) {
         />
       ) : null}
       {embeds.video?.type === 'direct' ? (
-        <video
-          src={embeds.video.src}
-          controls
-          playsInline
-          className="w-full rounded-2xl shadow-lg"
-        />
+        <video src={embeds.video.src} controls playsInline className="w-full rounded-2xl shadow-lg" />
       ) : embeds.video ? (
         <div className="aspect-video overflow-hidden rounded-2xl shadow-lg">
           <iframe
@@ -49,7 +45,7 @@ function MediaBlock({ media }) {
   )
 }
 
-function FloatingBits({ count = 18, chars = ['❤', '✦', '✿'], className }) {
+function FloatingBits({ count = 18, chars = ['*', '+', 'o'], className }) {
   const bits = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
@@ -79,7 +75,8 @@ function FloatingBits({ count = 18, chars = ['❤', '✦', '✿'], className }) 
   )
 }
 
-function Shell({ children, gradient, className }) {
+function Shell({ children, tone = 'default', className }) {
+  const gradient = DS_GRADIENTS[tone] || DS_GRADIENTS.default
   return (
     <div className={cn('relative min-h-[70svh] overflow-hidden', className)} style={{ background: gradient }}>
       {children}
@@ -151,355 +148,12 @@ function InteractiveTap({ label, onDone, children }) {
   )
 }
 
-/** Render one of 24 unique interactive templates */
-export function DigitalSurpriseExperience({
-  templateId,
-  recipientName,
-  senderName,
-  message,
-  media,
-  preview = false,
-}) {
-  const name = recipientName || 'You'
-  const common = { name, sender: senderName, message, media }
-
-  switch (templateId) {
-    case 'gf-bloom':
-      return (
-        <Shell gradient="linear-gradient(160deg,#4a1020 0%,#a61d3a 45%,#f07170 100%)">
-          <FloatingBits chars={['✿', '❀', '❤']} />
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'gf-polaroid':
-      return (
-        <Shell gradient="linear-gradient(180deg,#1a1520,#3d2a35)">
-          <TitleBlock {...common} />
-          <div className="relative z-10 mx-auto mt-8 flex max-w-sm justify-center gap-[-1rem] px-4">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ rotate: (i - 1) * 8, y: 40, opacity: 0 }}
-                animate={{ rotate: (i - 1) * 8, y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 + i * 0.15 }}
-                className="-mx-2 w-36 rounded-sm bg-white p-2 shadow-xl"
-              >
-                <div className="aspect-square bg-gradient-to-br from-rose-200 to-rose-400" />
-                <p className="mt-2 text-center text-xs text-stone-600">{name}</p>
-              </motion.div>
-            ))}
-          </div>
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'gf-constellation':
-      return (
-        <Shell gradient="radial-gradient(circle at 30% 20%,#2a1848,#0b1020 70%)">
-          <FloatingBits count={24} chars={['✦', '✧', '❤']} />
-          <TitleBlock {...common} titleClass="drop-shadow-[0_0_24px_rgba(255,120,160,0.55)]" />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'gf-letter':
-      return (
-        <Shell gradient="linear-gradient(180deg,#f7efe6,#e8d5c4)">
-          <div className="relative z-10 mx-auto max-w-md px-5 py-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-sm bg-[#fffaf3] p-6 shadow-xl ring-1 ring-black/5 sm:p-8"
-            >
-              <p className="font-display text-2xl text-[#5c3d2e]">Dear {name},</p>
-              <Typewriter text={message || 'You make ordinary days feel extraordinary.'} />
-              {senderName ? <p className="mt-8 text-right text-sm text-[#5c3d2e]/— {senderName}</p> : null}
-            </motion.div>
-            <MediaBlock media={media} />
-          </div>
-          {preview ? <PreviewBadge dark /> : null}
-        </Shell>
-      )
-    case 'gf-spotlight':
-      return (
-        <Shell gradient="linear-gradient(160deg,#111,#2a1520 50%,#111)">
-          <TitleBlock {...common} />
-          <p className="relative z-10 text-center text-xs uppercase tracking-widest text-white/50">Featured moment</p>
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'gf-balloons':
-      return (
-        <Shell gradient="linear-gradient(180deg,#ffe4ec,#ffb7c5)">
-          <FloatingBits count={14} chars={['🎈', '💕', '✨']} />
-          <TitleBlock {...common} titleClass="text-[#5a2030]" />
-          <div className="[&_p]:!text-[#5a2030]/90 [&_h1]:!text-[#5a2030]">
-            <MediaBlock media={media} />
-          </div>
-          {preview ? <PreviewBadge dark /> : null}
-        </Shell>
-      )
-    case 'gf-scrapbook':
-      return (
-        <Shell gradient="linear-gradient(135deg,#f3e7d3,#d4b896)">
-          <div className="relative z-10 mx-auto max-w-lg px-4 py-16">
-            <motion.div
-              initial={{ rotateY: -20, opacity: 0 }}
-              animate={{ rotateY: 0, opacity: 1 }}
-              className="rounded-lg border-4 border-[#c4a484] bg-[#fff8ee] p-6 shadow-2xl"
-            >
-              <h1 className="font-display text-4xl text-[#4a3426]">{name}</h1>
-              <p className="mt-3 text-[#4a3426]/80">{message || 'Our story, page by page.'}</p>
-              {senderName ? <p className="mt-6 text-sm text-[#4a3426]/60">From {senderName}</p> : null}
-            </motion.div>
-            <MediaBlock media={media} />
-          </div>
-          {preview ? <PreviewBadge dark /> : null}
-        </Shell>
-      )
-    case 'gf-neon':
-      return (
-        <Shell gradient="linear-gradient(180deg,#050510,#1a0a2e)">
-          <TitleBlock
-            {...common}
-            titleClass="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-300 to-cyan-300 drop-shadow-[0_0_30px_rgba(236,72,153,0.6)]"
-          />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-
-    case 'bd-cake':
-      return (
-        <Shell gradient="linear-gradient(180deg,#1e1630,#4a3060)">
-          <TitleBlock {...common} />
-          <InteractiveTap label="🎂 Make a wish">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-center text-5xl"
-            >
-              🎉✨🎊
-            </motion.div>
-          </InteractiveTap>
-          <FloatingBits chars={['🎉', '✨', '🎂']} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'bd-balloons':
-      return (
-        <Shell gradient="linear-gradient(160deg,#0f766e,#134e4a)">
-          <FloatingBits count={16} chars={['🎈', '🎁', '⭐']} />
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'bd-countdown':
-      return <CountdownTemplate {...common} preview={preview} />
-    case 'bd-unwrap':
-      return (
-        <Shell gradient="linear-gradient(180deg,#3b1d0f,#7c2d12)">
-          <TitleBlock {...common} />
-          <InteractiveTap label="🎁 Unwrap gift">
-            <motion.p
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="max-w-sm text-center text-lg text-amber-100"
-            >
-              {message || `Happy Birthday, ${name}!`}
-            </motion.p>
-          </InteractiveTap>
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'bd-carousel':
-      return (
-        <Shell gradient="linear-gradient(135deg,#312e81,#1e1b4b)">
-          <TitleBlock {...common} />
-          <motion.div
-            className="relative z-10 mx-auto mt-6 h-40 w-40 overflow-hidden rounded-full ring-4 ring-amber-300/50"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-          >
-            <div className="flex h-full w-[400%] ">
-              {['#fbbf24', '#f472b6', '#60a5fa', '#34d399'].map((c) => (
-                <div key={c} className="h-full w-1/4" style={{ background: c }} />
-              ))}
-            </div>
-          </motion.div>
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'bd-fireworks':
-      return (
-        <Shell gradient="radial-gradient(circle at bottom,#1a1040,#050510)">
-          <FloatingBits count={28} chars={['✦', '✧', '💥']} />
-          <TitleBlock {...common} titleClass="text-amber-200" />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'bd-karaoke':
-      return (
-        <Shell gradient="linear-gradient(180deg,#0c0a14,#2d1b3d)">
-          <TitleBlock {...common} />
-          <motion.p
-            className="relative z-10 mx-auto mt-6 max-w-md px-6 text-center font-display text-2xl text-pink-200"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2.4, repeat: Infinity }}
-          >
-            Happy birthday to you… ♪
-          </motion.p>
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'bd-tunnel':
-      return (
-        <Shell gradient="radial-gradient(circle,#7c3aed,#1e1033 70%)">
-          <FloatingBits count={30} chars={['🎊', '✨', '💫']} />
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-
-    case 'dw-diya':
-      return (
-        <Shell gradient="linear-gradient(180deg,#1a0a00,#4a1c00 40%,#7c2d12)">
-          <TitleBlock {...common} />
-          <InteractiveTap label="🪔 Light the diya">
-            <motion.div
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: [1, 1.08, 1], opacity: 1 }}
-              transition={{ duration: 1.2, repeat: Infinity }}
-              className="text-6xl drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]"
-            >
-              🪔
-            </motion.div>
-          </InteractiveTap>
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-rangoli':
-      return (
-        <Shell gradient="linear-gradient(160deg,#3b0764,#9a3412)">
-          <motion.div
-            className="pointer-events-none absolute left-1/2 top-1/3 h-48 w-48 -translate-x-1/2 rounded-full border-4 border-amber-300/40"
-            animate={{ rotate: 360, scale: [0.9, 1.05, 0.9] }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-          />
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-sparkler':
-      return (
-        <Shell gradient="radial-gradient(circle at center,#422006,#0c0a09)">
-          <FloatingBits count={40} chars={['✨', '⭐', '·']} />
-          <TitleBlock {...common} titleClass="text-amber-100" />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-lantern':
-      return (
-        <Shell gradient="linear-gradient(180deg,#0c1440,#1e1b4b)">
-          <FloatingBits count={12} chars={['🏮', '✨']} />
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-cracker':
-      return (
-        <Shell gradient="linear-gradient(180deg,#1c1917,#7f1d1d)">
-          <InteractiveTap label="💥 Burst celebration">
-            <FloatingBits count={36} chars={['💥', '✨', '🎆']} />
-          </InteractiveTap>
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-mandala':
-      return (
-        <Shell gradient="radial-gradient(circle,#451a03,#1c1917)">
-          <motion.div
-            className="pointer-events-none absolute left-1/2 top-[28%] h-56 w-56 -translate-x-1/2 rounded-full border border-amber-400/30"
-            style={{
-              background:
-                'repeating-conic-gradient(from 0deg, rgba(251,191,36,0.15) 0 10deg, transparent 10deg 20deg)',
-            }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          />
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-foil':
-      return (
-        <Shell gradient="linear-gradient(135deg,#78350f,#fbbf24 50%,#78350f)">
-          <div className="relative z-10 mx-auto max-w-md px-5 py-20">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-amber-200/50 bg-black/25 p-8 text-center backdrop-blur"
-            >
-              <p className="text-xs uppercase tracking-[0.25em] text-amber-100/80">Shubh Diwali</p>
-              <h1 className="mt-3 font-display text-4xl text-amber-50">{name}</h1>
-              <p className="mt-4 text-amber-50/90">{message || 'May your lights never dim.'}</p>
-              {senderName ? <p className="mt-6 text-sm text-amber-100/60">— {senderName}</p> : null}
-            </motion.div>
-            <MediaBlock media={media} />
-          </div>
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-    case 'dw-bells':
-      return (
-        <Shell gradient="linear-gradient(180deg,#1e1b4b,#312e81)">
-          <motion.p
-            className="relative z-10 pt-10 text-center text-4xl"
-            animate={{ rotate: [-8, 8, -8] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
-          >
-            🔔
-          </motion.p>
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-
-    default:
-      return (
-        <Shell gradient="linear-gradient(160deg,#0a2d4d,#1f4e79)">
-          <TitleBlock {...common} />
-          <MediaBlock media={media} />
-          {preview ? <PreviewBadge /> : null}
-        </Shell>
-      )
-  }
-}
-
 function PreviewBadge({ dark }) {
   return (
     <div
       className={cn(
         'pointer-events-none absolute left-3 top-3 z-20 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider',
-        dark ? 'bg-black/70 text-white' : 'bg-white/90 text-[#0a2d4d]',
+        dark ? 'bg-black/70 text-white' : 'bg-white/90 text-hm-primary',
       )}
     >
       Demo preview
@@ -519,7 +173,7 @@ function Typewriter({ text }) {
     }, 28)
     return () => clearInterval(id)
   }, [text])
-  return <p className="mt-4 min-h-[4.5rem] whitespace-pre-wrap text-[#5c3d2e]/90">{shown}</p>
+  return <p className="mt-4 min-h-[4.5rem] whitespace-pre-wrap text-stone-700">{shown}</p>
 }
 
 function CountdownTemplate({ name, sender, message, media, preview }) {
@@ -537,7 +191,7 @@ function CountdownTemplate({ name, sender, message, media, preview }) {
   }, [n, go])
 
   return (
-    <Shell gradient="linear-gradient(180deg,#111827,#4c1d95)">
+    <Shell tone="bd-countdown">
       {!go ? (
         <div className="flex min-h-[70svh] items-center justify-center">
           <motion.span
@@ -551,7 +205,7 @@ function CountdownTemplate({ name, sender, message, media, preview }) {
         </div>
       ) : (
         <>
-          <FloatingBits chars={['🎉', '🎂', '✨']} />
+          <FloatingBits chars={['*', '+', 'o']} />
           <TitleBlock name={name} sender={sender} message={message || 'Happy Birthday!'} />
           <MediaBlock media={media} />
         </>
@@ -559,4 +213,337 @@ function CountdownTemplate({ name, sender, message, media, preview }) {
       {preview ? <PreviewBadge /> : null}
     </Shell>
   )
+}
+
+/** Render one of 24 unique interactive templates */
+export function DigitalSurpriseExperience({
+  templateId,
+  recipientName,
+  senderName,
+  message,
+  media,
+  preview = false,
+}) {
+  const name = recipientName || 'You'
+  const common = { name, sender: senderName, message, media }
+  const tone = templateId
+
+  switch (templateId) {
+    case 'gf-bloom':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits chars={['*', '+', 'o']} />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'gf-polaroid':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <div className="relative z-10 mx-auto mt-8 flex max-w-sm justify-center gap-0 px-4">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ rotate: (i - 1) * 8, y: 40, opacity: 0 }}
+                animate={{ rotate: (i - 1) * 8, y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 + i * 0.15 }}
+                className="-mx-2 w-36 rounded-sm bg-white p-2 shadow-xl"
+              >
+                <div className="aspect-square bg-gradient-to-br from-rose-200 to-rose-400" />
+                <p className="mt-2 text-center text-xs text-stone-600">{name}</p>
+              </motion.div>
+            ))}
+          </div>
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'gf-constellation':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={24} chars={['*', '+', '.']} />
+          <TitleBlock {...common} titleClass="text-pink-200" />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'gf-letter':
+      return (
+        <Shell tone={tone}>
+          <div className="relative z-10 mx-auto max-w-md px-5 py-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-sm bg-amber-50 p-6 shadow-xl ring-1 ring-black/5 sm:p-8"
+            >
+              <p className="font-display text-2xl text-stone-700">Dear {name},</p>
+              <Typewriter text={message || 'You make ordinary days feel extraordinary.'} />
+              {senderName ? <p className="mt-8 text-right text-sm text-stone-700">— {senderName}</p> : null}
+            </motion.div>
+            <MediaBlock media={media} />
+          </div>
+          {preview ? <PreviewBadge dark /> : null}
+        </Shell>
+      )
+    case 'gf-spotlight':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <p className="relative z-10 text-center text-xs uppercase tracking-widest text-white/50">
+            Featured moment
+          </p>
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'gf-balloons':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={14} chars={['o', '*', '+']} />
+          <TitleBlock {...common} titleClass="text-rose-900" />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge dark /> : null}
+        </Shell>
+      )
+    case 'gf-scrapbook':
+      return (
+        <Shell tone={tone}>
+          <div className="relative z-10 mx-auto max-w-lg px-4 py-16">
+            <motion.div
+              initial={{ rotateY: -20, opacity: 0 }}
+              animate={{ rotateY: 0, opacity: 1 }}
+              className="rounded-lg border-4 border-amber-700/40 bg-amber-50 p-6 shadow-2xl"
+            >
+              <h1 className="font-display text-4xl text-stone-800">{name}</h1>
+              <p className="mt-3 text-stone-700/80">{message || 'Our story, page by page.'}</p>
+              {senderName ? <p className="mt-6 text-sm text-stone-600">From {senderName}</p> : null}
+            </motion.div>
+            <MediaBlock media={media} />
+          </div>
+          {preview ? <PreviewBadge dark /> : null}
+        </Shell>
+      )
+    case 'gf-neon':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} titleClass="text-fuchsia-300" />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+
+    case 'bd-cake':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <InteractiveTap label="Make a wish">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-center text-2xl font-semibold text-amber-200"
+            >
+              Celebrate!
+            </motion.div>
+          </InteractiveTap>
+          <FloatingBits chars={['*', '+', 'o']} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'bd-balloons':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={16} chars={['o', '*', '+']} />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'bd-countdown':
+      return <CountdownTemplate {...common} preview={preview} />
+    case 'bd-unwrap':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <InteractiveTap label="Unwrap gift">
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="max-w-sm text-center text-lg text-amber-100"
+            >
+              {message || `Happy Birthday, ${name}!`}
+            </motion.p>
+          </InteractiveTap>
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'bd-carousel':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <motion.div
+            className="relative z-10 mx-auto mt-6 h-40 w-40 overflow-hidden rounded-full ring-4 ring-amber-300/50"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+          >
+            <div className="flex h-full w-[400%]">
+              {['bg-amber-400', 'bg-pink-400', 'bg-sky-400', 'bg-emerald-400'].map((c) => (
+                <div key={c} className={cn('h-full w-1/4', c)} />
+              ))}
+            </div>
+          </motion.div>
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'bd-fireworks':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={28} chars={['*', '+', '.']} />
+          <TitleBlock {...common} titleClass="text-amber-200" />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'bd-karaoke':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <motion.p
+            className="relative z-10 mx-auto mt-6 max-w-md px-6 text-center font-display text-2xl text-pink-200"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 2.4, repeat: Infinity }}
+          >
+            Happy birthday to you
+          </motion.p>
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'bd-tunnel':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={30} chars={['*', '+', 'o']} />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+
+    case 'dw-diya':
+      return (
+        <Shell tone={tone}>
+          <TitleBlock {...common} />
+          <InteractiveTap label="Light the diya">
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: [1, 1.08, 1], opacity: 1 }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+              className="h-16 w-16 rounded-full bg-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.8)]"
+            />
+          </InteractiveTap>
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-rangoli':
+      return (
+        <Shell tone={tone}>
+          <motion.div
+            className="pointer-events-none absolute left-1/2 top-1/3 h-48 w-48 -translate-x-1/2 rounded-full border-4 border-amber-300/40"
+            animate={{ rotate: 360, scale: [0.9, 1.05, 0.9] }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+          />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-sparkler':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={40} chars={['*', '.', '+']} />
+          <TitleBlock {...common} titleClass="text-amber-100" />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-lantern':
+      return (
+        <Shell tone={tone}>
+          <FloatingBits count={12} chars={['o', '*']} />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-cracker':
+      return (
+        <Shell tone={tone}>
+          <InteractiveTap label="Burst celebration">
+            <FloatingBits count={36} chars={['*', '+', '.']} />
+          </InteractiveTap>
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-mandala':
+      return (
+        <Shell tone={tone}>
+          <motion.div
+            className="pointer-events-none absolute left-1/2 top-[28%] h-56 w-56 -translate-x-1/2 rounded-full border border-amber-400/30 bg-amber-400/10"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-foil':
+      return (
+        <Shell tone={tone}>
+          <div className="relative z-10 mx-auto max-w-md px-5 py-20">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-amber-200/50 bg-black/25 p-8 text-center backdrop-blur"
+            >
+              <p className="text-xs uppercase tracking-[0.25em] text-amber-100/80">Shubh Diwali</p>
+              <h1 className="mt-3 font-display text-4xl text-amber-50">{name}</h1>
+              <p className="mt-4 text-amber-50/90">{message || 'May your lights never dim.'}</p>
+              {senderName ? <p className="mt-6 text-sm text-amber-100/60">— {senderName}</p> : null}
+            </motion.div>
+            <MediaBlock media={media} />
+          </div>
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+    case 'dw-bells':
+      return (
+        <Shell tone={tone}>
+          <motion.div
+            className="relative z-10 mx-auto mt-10 h-10 w-10 rounded-full bg-amber-300"
+            animate={{ rotate: [-8, 8, -8] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+          />
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+
+    default:
+      return (
+        <Shell tone="default">
+          <TitleBlock {...common} />
+          <MediaBlock media={media} />
+          {preview ? <PreviewBadge /> : null}
+        </Shell>
+      )
+  }
 }
