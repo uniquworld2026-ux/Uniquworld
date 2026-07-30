@@ -52,5 +52,6 @@ router.use('/account', accountRoutes);
 router.use('/erp', erpRoutes);
 router.use('/store', storeRoutes);
 router.use('/catalog', require('./catalog.routes'));
+router.use('/digital-surprises', require('./digitalSurprise.routes'));
 
 module.exports = router;

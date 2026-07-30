@@ -13,7 +13,6 @@ import { Container } from '@/storefront/components/ui/Container'
 import { Section } from '@/storefront/components/ui/Section'
 import { Reveal } from '@/storefront/components/ui/Reveal'
 import { SectionHeading } from '@/storefront/components/ui/SectionHeading'
-import { ModulePlaceholderPage } from '@/storefront/pages/ModulePlaceholderPage'
 import { surprisePaths } from '@/storefront/data/home'
 import {
   CHENNAI_CITY,
@@ -345,17 +344,4 @@ export function LocalSurprisePage() {
   )
 }
 
-export function DigitalSurprisePage() {
-  return (
-    <ModulePlaceholderPage
-      title="Digital Surprise"
-      eyebrow="Shareable magic"
-      description="Plans from ₹99 — love stories, countdowns, photo memories, QR share, and gift-reveal animations."
-      nextModule="Digital Surprise — Plans & Studio"
-      links={[
-        { label: 'Local Surprise · Chennai', path: '/surprise/local' },
-        { label: 'All surprise options', path: '/surprise' },
-      ]}
-    />
-  )
-}
+export { DigitalSurprisePage } from '@/storefront/pages/DigitalSurprisePages'

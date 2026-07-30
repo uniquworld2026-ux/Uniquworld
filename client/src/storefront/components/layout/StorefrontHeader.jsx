@@ -291,7 +291,7 @@ export function StorefrontHeader() {
                 to={item.path}
                 className={({ isActive }) =>
                   cn(
-                    'group relative flex min-w-0 flex-col items-center gap-1 border-b-2 px-1 py-1.5 transition sm:gap-1.5 sm:px-2 sm:py-2',
+                    'group relative flex min-w-0 flex-col items-center gap-0.5 border-b-2 px-0.5 py-1 transition sm:px-1',
                     isActive
                       ? 'border-hm-accent bg-hm-accent/[0.04]'
                       : 'border-transparent hover:bg-hm-muted/50',
@@ -302,7 +302,7 @@ export function StorefrontHeader() {
                   <>
                     <span
                       className={cn(
-                        'relative block aspect-square w-[clamp(1.75rem,5.5vw,2.25rem)] overflow-hidden rounded-full ring-1 transition duration-300 sm:w-[clamp(2rem,4vw,2.5rem)]',
+                        'relative block h-7 w-7 shrink-0 overflow-hidden rounded-full ring-1 transition duration-300 sm:h-8 sm:w-8',
                         isActive
                           ? 'ring-2 ring-hm-accent shadow-[0_0_0_2px_rgba(217,44,43,0.12)]'
                           : 'ring-hm-border group-hover:ring-hm-accent/50',
@@ -318,7 +318,7 @@ export function StorefrontHeader() {
                     </span>
                     <span
                       className={cn(
-                        'max-w-full truncate text-center text-[9px] font-semibold tracking-wide sm:text-[11px] md:text-[12px]',
+                        'max-w-full truncate text-center text-[8px] font-semibold leading-tight tracking-wide sm:text-[10px]',
                         isActive ? 'text-hm-primary' : 'text-hm-text-muted group-hover:text-hm-primary',
                       )}
                     >

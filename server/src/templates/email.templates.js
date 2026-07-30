@@ -359,6 +359,54 @@ function productActivityEmail({
   return { subject, html, text };
 }
 
+function digitalSurpriseEmail({ buyerName, recipientName, occasionTitle, shareUrl, expiresAt }) {
+  const name = escapeHtml(buyerName || 'there');
+  const recipient = escapeHtml(recipientName || 'them');
+  const occasion = escapeHtml(occasionTitle || 'Digital Surprise');
+  const href = escapeHtml(shareUrl);
+  const expiry = expiresAt
+    ? new Date(expiresAt).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '30 days';
+  const subject = `Your ${occasionTitle || 'Digital Surprise'} link is ready`;
+  const html = layout({
+    preheader: `Share this link with ${recipientName || 'them'} — valid for 30 days.`,
+    title: subject,
+    bodyHtml: `
+      ${heading('Your surprise is live')}
+      ${paragraph(`Hi ${name},`)}
+      ${paragraph(
+        `Your <strong>${occasion}</strong> page for <strong>${recipient}</strong> is ready. Share the private link below — it auto-expires in 30 days (${escapeHtml(String(expiry))}).`,
+        { muted: true, top: 10 }
+      )}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 8px;">
+        <tr>
+          <td style="border-radius:10px;background-color:${brand.accent};">
+            <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:${brand.white};text-decoration:none;">
+              Open surprise link
+            </a>
+          </td>
+        </tr>
+      </table>
+      ${paragraph(`Link: ${href}`, { muted: true, top: 12 })}
+    `,
+    footerNote: 'Keep this email — the share link is private to you.',
+  });
+  const text = [
+    `Hi ${buyerName || 'there'},`,
+    '',
+    `Your ${occasionTitle || 'Digital Surprise'} for ${recipientName || 'them'} is ready.`,
+    `Open: ${shareUrl}`,
+    `Expires: ${expiry}`,
+    '',
+    `— ${brand.name}`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
 module.exports = {
   otpEmail,
   welcomeEmail,
@@ -366,4 +414,5 @@ module.exports = {
   orderEmail,
   notificationEmail,
   productActivityEmail,
+  digitalSurpriseEmail,
 };

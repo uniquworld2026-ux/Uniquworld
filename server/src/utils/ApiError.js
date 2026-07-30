@@ -30,6 +30,10 @@ class ApiError extends Error {
     return new ApiError(404, message);
   }
 
+  static gone(message = 'Resource gone') {
+    return new ApiError(410, message);
+  }
+
   static conflict(message = 'Conflict') {
     return new ApiError(409, message);
   }

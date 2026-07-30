@@ -48,6 +48,10 @@ import {
   GiftIdeasPage,
   TrackOrderPage,
 } from '@/storefront/pages/ModuleHubPages'
+import {
+  DigitalSurpriseCustomizePage,
+  DigitalSurpriseLivePage,
+} from '@/storefront/pages/DigitalSurprisePages'
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
 import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
 import { HandmadePage } from '@/storefront/pages/HandmadePage'
@@ -142,8 +146,6 @@ const plannedLeaves = [
   ['relationships/employee', 'For Employee'],
   ['relationships/client', 'For Client'],
   ['relationships/partner', 'For Partner'],
-  // Surprise
-  ['surprise/digital/plans', 'Digital Surprise Plans'],
   // Store
   ['store/wholesale', 'Wholesale Orders'],
   ['store/dealer', 'Dealer Pricing'],
@@ -202,6 +204,8 @@ export const storefrontRouteTree = (
     <Route path="surprise" element={<SurpriseHubPage />} />
     <Route path="surprise/local" element={<LocalSurprisePage />} />
     <Route path="surprise/digital" element={<DigitalSurprisePage />} />
+    <Route path="surprise/digital/:occasionSlug" element={<DigitalSurpriseCustomizePage />} />
+    <Route path="surprise/s/:slug" element={<DigitalSurpriseLivePage />} />
     <Route path="store" element={<StoreHubPage />} />
     <Route path="store/p/:slug" element={<StoreProductDetailsPage />} />
     <Route path="store/bulk" element={<BulkOrdersPage />} />

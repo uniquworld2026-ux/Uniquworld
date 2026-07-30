@@ -66,21 +66,21 @@
   --admin-sidebar-collapsed: 80px;
   --admin-header-height: 64px;
 
-  /* Sticky header clearance: announcement + utility + menubar */
-  --hm-header-offset: 8.25rem;
+  /* Sticky header clearance: announcement + utility + compact nav strip */
+  --hm-header-offset: 7.25rem;
 
   color-scheme: light;
 }
 
 @media (min-width: 640px) {
   :root {
-    --hm-header-offset: 8.75rem;
+    --hm-header-offset: 7.75rem;
   }
 }
 
 @media (min-width: 1024px) {
   :root {
-    --hm-header-offset: 9.25rem;
+    --hm-header-offset: 8.25rem;
   }
 }
 

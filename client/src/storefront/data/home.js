@@ -139,8 +139,8 @@ export const surprisePaths = [
   {
     id: 'digital',
     title: 'Digital Surprise',
-    hint: 'Shareable websites from ₹99 — stories, countdowns, reveals',
-    cta: 'See plans',
+    hint: 'Girlfriends Day, Birthday & Diwali — interactive pages from ₹49, 30-day private link',
+    cta: 'Create digital',
     path: '/surprise/digital',
     image:
       'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80',
