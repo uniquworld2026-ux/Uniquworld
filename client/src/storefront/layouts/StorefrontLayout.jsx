@@ -4,6 +4,7 @@ import { StorefrontFooter } from '@/storefront/components/layout/StorefrontFoote
 import { CartProvider } from '@/storefront/hooks/useCart'
 import { CartToast } from '@/storefront/components/cart/CartToast'
 import { CartDrawer } from '@/storefront/components/cart/CartDrawer'
+import { InstallAppPrompt } from '@/storefront/components/pwa/InstallAppPrompt'
 import { usePrefetchStorefrontCatalog } from '@/shared/catalog/useLiveCatalog'
 
 function CatalogPrefetch() {
@@ -23,6 +24,7 @@ export function StorefrontLayout() {
         <StorefrontFooter />
         <CartDrawer />
         <CartToast />
+        <InstallAppPrompt />
       </div>
     </CartProvider>
   )
