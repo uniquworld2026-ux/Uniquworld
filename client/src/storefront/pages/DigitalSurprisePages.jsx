@@ -17,24 +17,6 @@ import { digitalSurpriseApi } from '@/storefront/features/digitalSurprise/api'
 import { DigitalSurpriseExperience } from '@/storefront/features/digitalSurprise/DigitalSurpriseExperience'
 import { cn } from '@/shared/utils/cn'
 
-const PREVIEW_KEY = (occasionId) => `uw_ds_preview_once_${occasionId}`
-
-function hasUsedPreview(occasionId) {
-  try {
-    return localStorage.getItem(PREVIEW_KEY(occasionId)) === '1'
-  } catch {
-    return false
-  }
-}
-
-function markPreviewUsed(occasionId) {
-  try {
-    localStorage.setItem(PREVIEW_KEY(occasionId), '1')
-  } catch {
-    /* ignore */
-  }
-}
-
 export function DigitalSurprisePage() {
   return (
     <div>
@@ -61,7 +43,7 @@ export function DigitalSurprisePage() {
             <SectionHeading
               eyebrow="Choose a card"
               title="Three occasions · unique interactive pages"
-              description="Girlfriends Day, Birthday (13 styles), and Diwali — pick a template, preview once, unlock for ₹49."
+              description="Girlfriends Day, Birthday, and Diwali — watch a sharable 8-page demo, then unlock for ₹49."
             />
           </Reveal>
 
@@ -138,9 +120,6 @@ export function DigitalSurpriseCustomizePage() {
   const [photoUrl, setPhotoUrl] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [previewUsed, setPreviewUsed] = useState(() =>
-    occasion ? hasUsedPreview(occasion.id) : false,
-  )
   const [published, setPublished] = useState(null)
 
   const draftMedia = useMemo(
@@ -236,20 +215,13 @@ export function DigitalSurpriseCustomizePage() {
   }
 
   function openPreview() {
-    if (previewUsed) {
-      setError('Demo preview already used on this device. Pay ₹49 to unlock your private link.')
-      return
-    }
     setError('')
-    markPreviewUsed(occasion.id)
-    setPreviewUsed(true)
-    navigate(`/surprise/digital/${occasion.slug}/demo`, {
-      state: {
-        recipientName: recipientName.trim() || 'Alex',
-        senderName: senderName.trim() || 'Uniquworld',
-        message: message.trim(),
-      },
-    })
+    const params = new URLSearchParams()
+    if (recipientName.trim()) params.set('name', recipientName.trim())
+    if (senderName.trim()) params.set('from', senderName.trim())
+    if (message.trim()) params.set('msg', message.trim().slice(0, 180))
+    const q = params.toString()
+    navigate(`/surprise/digital/${occasion.slug}/demo${q ? `?${q}` : ''}`)
   }
 
   if (published) {
@@ -432,7 +404,7 @@ export function DigitalSurpriseCustomizePage() {
 
               <div id="ds-pay-now" className="flex flex-col gap-2 sm:flex-row">
                 <Button type="button" variant="outline" className="flex-1" onClick={openPreview} disabled={busy}>
-                  {previewUsed ? 'Demo used' : 'Full-screen demo'}
+                  Full-screen demo
                 </Button>
                 <Button type="button" variant="primary" className="flex-1 gap-1.5" onClick={payAndPublish} disabled={busy}>
                   {busy ? 'Processing…' : `Pay now · ${formatINR(DIGITAL_PRICE_INR)}`}
