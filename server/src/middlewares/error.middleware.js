@@ -30,7 +30,12 @@ const errorHandler = (err, req, res, _next) => {
 
   if (err.code === '23503') {
     statusCode = 400;
-    message = 'Related resource not found';
+    const detail = String(err.detail || err.message || '');
+    if (/roles/i.test(detail) || /role_id/i.test(detail)) {
+      message = 'Account roles are not set up. Ask an admin to run database seed.';
+    } else {
+      message = 'Related resource not found';
+    }
   }
 
   if (!(err instanceof ApiError) || !err.isOperational) {

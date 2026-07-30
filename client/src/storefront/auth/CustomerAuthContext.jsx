@@ -4,22 +4,53 @@ import { getErrorMessage, tokenStore } from '@/shared/lib/axios'
 
 const CustomerAuthContext = createContext(null)
 
+async function restoreSession() {
+  const access = tokenStore.getAccess()
+  const refresh = tokenStore.getRefresh()
+
+  if (!access && !refresh) {
+    return null
+  }
+
+  // Access expired / missing but refresh still in browser → renew quietly
+  if (!access && refresh) {
+    const refreshed = await authApi.refresh(refresh)
+    const tokens = refreshed?.tokens || refreshed
+    if (!tokens?.accessToken) {
+      throw Object.assign(new Error('Refresh failed'), { response: { status: 401 } })
+    }
+    tokenStore.set({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken || refresh,
+    })
+  }
+
+  const data = await authApi.me()
+  return data.user || data
+}
+
 export function CustomerAuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const bootstrap = useCallback(async () => {
-    if (!tokenStore.getAccess()) {
+    if (!tokenStore.getAccess() && !tokenStore.getRefresh()) {
       setUser(null)
       setLoading(false)
       return
     }
     try {
-      const data = await authApi.me()
-      setUser(data.user || data)
-    } catch {
-      tokenStore.clear()
-      setUser(null)
+      const nextUser = await restoreSession()
+      setUser(nextUser)
+    } catch (err) {
+      const status = err?.response?.status
+      // Only wipe browser session on auth failure — keep tokens on network blips
+      if (status === 401 || status === 403) {
+        tokenStore.clear()
+        setUser(null)
+      } else {
+        setUser(null)
+      }
     } finally {
       setLoading(false)
     }

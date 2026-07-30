@@ -1,10 +1,11 @@
 const config = require('../config');
 const ApiError = require('../utils/ApiError');
+const logger = require('../utils/logger');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { hashToken } = require('../utils/jwt');
 const { generateOtpCode, otpExpiresAt } = require('../utils/otp');
 const { toPublicUser } = require('../models/user.model');
-const { ROLE_IDS, USER_STATUS, OTP_PURPOSE, ROLES } = require('../types/enums');
+const { USER_STATUS, OTP_PURPOSE, ROLES } = require('../types/enums');
 
 const userRepository = require('../repositories/user.repository');
 const roleRepository = require('../repositories/role.repository');
@@ -27,10 +28,33 @@ const createAndSendOtp = async ({ userId, email, purpose, firstName }) => {
     maxAttempts: config.otp.maxAttempts,
   });
 
-  await emailService.sendOtpEmail({ to: email, code, purpose, firstName });
+  try {
+    await emailService.sendOtpEmail({ to: email, code, purpose, firstName });
+  } catch (err) {
+    // Keep the OTP row so verification still works; surface code in non-production.
+    logger.error('OTP email failed — account/OTP still created', {
+      email,
+      purpose,
+      message: err.message,
+    });
+    if (config.env !== 'production') {
+      logger.info('[DEV OTP]', { email, purpose, code });
+      return {
+        expiresInMinutes: config.otp.expiresInMinutes,
+        delivered: false,
+        emailError: err.message,
+        // Helps local testing when mail providers reject the domain
+        debugCode: code,
+      };
+    }
+    throw ApiError.badRequest(
+      `Could not send email (${err.message}). Verify your domain at https://resend.com/domains or check SMTP settings.`
+    );
+  }
 
   return {
     expiresInMinutes: config.otp.expiresInMinutes,
+    delivered: true,
   };
 };
 
@@ -61,7 +85,8 @@ const register = async (payload) => {
   }
 
   const passwordHash = await hashPassword(payload.password);
-  const roleId = payload.role === ROLES.CORPORATE ? ROLE_IDS.CORPORATE : ROLE_IDS.CUSTOMER;
+  const roleSlug = payload.role === ROLES.CORPORATE ? ROLES.CORPORATE : ROLES.CUSTOMER;
+  const roleId = await roleRepository.resolveRoleId(roleSlug);
 
   const user = await userRepository.create({
     email: payload.email,
@@ -81,10 +106,14 @@ const register = async (payload) => {
     firstName: user.first_name,
   });
 
-  await emailService.sendWelcomeEmail({
-    to: user.email,
-    firstName: user.first_name,
-  });
+  try {
+    await emailService.sendWelcomeEmail({
+      to: user.email,
+      firstName: user.first_name,
+    });
+  } catch (err) {
+    logger.warn('Welcome email skipped', { email: user.email, message: err.message });
+  }
 
   return {
     user: toPublicUser(withRole),
@@ -233,11 +262,28 @@ const verifyOtp = async ({ email, code, purpose }, meta = {}) => {
     }
 
     const user = await userRepository.findByEmail(email);
+    if (!user) throw ApiError.notFound('User not found');
+    if (user.status === USER_STATUS.BANNED) {
+      throw ApiError.forbidden('Account is banned');
+    }
+    if (user.status === USER_STATUS.INACTIVE) {
+      throw ApiError.forbidden('Account is inactive');
+    }
+
+    // Sign in after first OTP so the browser keeps the session
+    await userRepository.touchLastLogin(user.id);
+    const tokens = await tokenService.issueTokenPair(user, meta);
+
     return {
       verified: true,
       purpose,
-      message: 'Email verified. Sign in with your password to receive a login OTP.',
-      user: toPublicUser(user),
+      message: 'Email verified. You are signed in.',
+      user: toPublicUser({ ...user, permissions: tokens.permissions }),
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+      },
     };
   }
 
@@ -362,7 +408,7 @@ const googleLogin = async (profile, meta = {}) => {
         firstName: firstName || 'Google',
         lastName: lastName || null,
         phone: null,
-        roleId: ROLE_IDS.CUSTOMER,
+        roleId: await roleRepository.resolveRoleId(ROLES.CUSTOMER),
         status: USER_STATUS.ACTIVE,
         googleId,
         emailVerifiedAt: new Date().toISOString(),

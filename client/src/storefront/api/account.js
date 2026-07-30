@@ -4,6 +4,7 @@ export const authApi = {
   login: (body) => api.post('/auth/login', body).then((r) => r.data.data),
   register: (body) => api.post('/auth/register', body).then((r) => r.data.data),
   logout: (refreshToken) => api.post('/auth/logout', { refreshToken }).then((r) => r.data.data),
+  refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }).then((r) => r.data.data),
   me: () => api.get('/auth/me').then((r) => r.data.data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }).then((r) => r.data.data),
   resetPassword: (body) => api.post('/auth/reset-password', body).then((r) => r.data.data),

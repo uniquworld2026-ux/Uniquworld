@@ -109,7 +109,7 @@ export function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in with your password — we’ll email a one-time code to finish."
+      subtitle="Sign in once with password + OTP — we’ll keep you signed in on this browser."
       footer={
         <>
           New here? <Link to="/signup" className="text-hm-accent">Create account</Link>
@@ -153,12 +153,17 @@ export function LoginPage() {
 
 export function SignupPage() {
   const navigate = useNavigate()
-  const { register: registerUser } = useCustomerAuth()
+  const { register: registerUser, completeLoginWithOtp, isAuthenticated } = useCustomerAuth()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm()
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [otpStep, setOtpStep] = useState(null)
   const [otpCode, setOtpCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) navigate('/account', { replace: true })
+  }, [isAuthenticated, navigate])
 
   if (otpStep) {
     return (
@@ -172,16 +177,23 @@ export function SignupPage() {
           onSubmit={async (e) => {
             e.preventDefault()
             setError('')
+            setVerifying(true)
             try {
-              await authApi.verifyOtp({
+              const data = await completeLoginWithOtp({
                 email: otpStep.email,
                 code: otpCode,
                 purpose: 'email_verification',
               })
-              setInfo('Email verified. You can sign in now.')
+              if (data?.tokens) {
+                navigate('/account', { replace: true })
+                return
+              }
+              setInfo(data?.message || 'Email verified. You can sign in now.')
               setTimeout(() => navigate('/login'), 1200)
             } catch (err) {
               setError(getErrorMessage(err))
+            } finally {
+              setVerifying(false)
             }
           }}
         >
@@ -195,7 +207,9 @@ export function SignupPage() {
           />
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
           {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
-          <Button type="submit" variant="primary" className="w-full">Verify & continue</Button>
+          <Button type="submit" variant="primary" className="w-full" disabled={verifying}>
+            {verifying ? 'Verifying…' : 'Verify & continue'}
+          </Button>
         </form>
       </AuthShell>
     )
@@ -204,7 +218,7 @@ export function SignupPage() {
   return (
     <AuthShell
       title="Create account"
-      subtitle="We’ll email a verification code — then you can sign in."
+      subtitle="We’ll email a one-time code — enter it once and you’ll stay signed in on this browser."
       footer={
         <>Already have an account? <Link to="/login" className="text-hm-accent">Sign in</Link></>
       }

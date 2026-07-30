@@ -3,6 +3,9 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const templates = require('../templates/email.templates');
 
+/** Resend allows this from-address before your own domain is verified. */
+const RESEND_ONBOARDING_FROM = 'beth.t@example.com';
+
 let transporter = null;
 
 const isResendConfigured = () => Boolean(config.resend.apiKey && !config.resend.apiKey.includes('re_xxxx'));
@@ -17,11 +20,46 @@ const isSmtpConfigured = () => {
 
 const isEmailConfigured = () => isResendConfigured() || isSmtpConfigured();
 
-const getFrom = () => {
-  const fromAddress = config.smtp.fromEmail || config.smtp.user;
+const domainOf = (email) => {
+  const at = String(email || '').lastIndexOf('@');
+  return at >= 0 ? String(email).slice(at + 1).toLowerCase() : '';
+};
+
+/**
+ * From address for Resend — use onboarding sender until uniquworld.com is verified.
+ * Set RESEND_FROM_EMAIL=noreply@uniquworld.com after https://resend.com/domains is verified.
+ */
+const getResendFrom = () => {
+  const configured =
+    process.env.RESEND_FROM_EMAIL ||
+    config.smtp.fromEmail ||
+    RESEND_ONBOARDING_FROM;
+  const domain = domainOf(configured);
+  const useOnboarding =
+    process.env.RESEND_FORCE_ONBOARDING === 'true' ||
+    !domain ||
+    domain === 'uniquworld.com' ||
+    domain === 'www.uniquworld.com';
+
+  const fromAddress = useOnboarding ? RESEND_ONBOARDING_FROM : configured;
+  if (useOnboarding && configured !== RESEND_ONBOARDING_FROM) {
+    logger.warn(
+      'Resend FROM uses beth.t@example.com until uniquworld.com is verified at https://resend.com/domains',
+      { configured }
+    );
+  }
   return {
     fromAddress,
-    from: `${config.smtp.fromName} <${fromAddress}>`,
+    from: `${config.smtp.fromName || 'Uniquworld'} <${fromAddress}>`,
+  };
+};
+
+const getSmtpFrom = () => {
+  // Gmail SMTP must send as the authenticated mailbox (or a verified alias).
+  const fromAddress = config.smtp.user || config.smtp.fromEmail;
+  return {
+    fromAddress,
+    from: `${config.smtp.fromName || 'Uniquworld'} <${fromAddress}>`,
   };
 };
 
@@ -45,12 +83,7 @@ const getTransporter = () => {
   return transporter;
 };
 
-/**
- * Send via Resend API (SPF/DKIM on your domain → Primary inbox).
- * @see https://resend.com/docs/send-with-nodejs
- */
-const sendViaResend = async ({ to, subject, html, text }) => {
-  const { from } = getFrom();
+const postResend = async ({ from, to, subject, html, text }) => {
   const payload = {
     from,
     to: [to],
@@ -74,25 +107,65 @@ const sendViaResend = async ({ to, subject, html, text }) => {
     throw new Error(message);
   }
 
-  logger.info('Email sent via Resend', {
-    to,
-    subject,
-    messageId: body.id,
-    provider: 'resend',
-  });
-  return { messageId: body.id, accepted: [to], provider: 'resend' };
+  return body;
+};
+
+/**
+ * Send via Resend API. Falls back to onboarding from-address on domain errors.
+ * @see https://resend.com/docs/send-with-nodejs
+ */
+const sendViaResend = async ({ to, subject, html, text }) => {
+  const primary = getResendFrom();
+
+  try {
+    const body = await postResend({
+      from: primary.from,
+      to,
+      subject,
+      html,
+      text,
+    });
+    logger.info('Email sent via Resend', {
+      to,
+      subject,
+      messageId: body.id,
+      from: primary.fromAddress,
+      provider: 'resend',
+    });
+    return { messageId: body.id, accepted: [to], provider: 'resend' };
+  } catch (err) {
+    const msg = String(err.message || '');
+    const domainIssue = /domain is not verified|not verified/i.test(msg);
+    if (domainIssue && !primary.fromAddress.includes('resend.dev')) {
+      logger.warn('Resend domain not verified — retrying with beth.t@example.com', { to });
+      const body = await postResend({
+        from: `Uniquworld <${RESEND_ONBOARDING_FROM}>`,
+        to,
+        subject,
+        html,
+        text,
+      });
+      logger.info('Email sent via Resend (onboarding from)', {
+        to,
+        subject,
+        messageId: body.id,
+        provider: 'resend',
+      });
+      return { messageId: body.id, accepted: [to], provider: 'resend' };
+    }
+    throw err;
+  }
 };
 
 const sendViaSmtp = async ({ to, subject, html, text }) => {
   const transport = getTransporter();
-  const { from, fromAddress } = getFrom();
+  const { from, fromAddress } = getSmtpFrom();
 
   if (!transport) {
     logger.info('[DEV EMAIL]', { to, subject, text: text || '(html)' });
     return { messageId: 'dev-console', accepted: [to], provider: 'console' };
   }
 
-  // Prefer plain text for OTP-style messages (less likely to hit Gmail Promotions/Spam)
   const mail = {
     from,
     replyTo: fromAddress,
@@ -133,25 +206,43 @@ const sendMail = async ({ to, subject, html, text, textOnly = false }) => {
     html: textOnly ? undefined : html,
   };
 
-  try {
-    if (isResendConfigured()) {
+  let lastError = null;
+
+  if (isResendConfigured()) {
+    try {
       return await sendViaResend(content);
+    } catch (err) {
+      lastError = err;
+      logger.warn('Resend send failed — trying SMTP fallback if configured', {
+        to,
+        subject,
+        message: err.message,
+      });
     }
-    if (!isSmtpConfigured()) {
-      logger.warn('No email provider configured — logging to console');
-      logger.info('[DEV EMAIL]', { to, subject, text: text || '(html)' });
-      return { messageId: 'dev-console', accepted: [to], provider: 'console' };
-    }
-    return await sendViaSmtp(content);
-  } catch (err) {
-    logger.error('Email send failed', {
-      to,
-      subject,
-      message: err.message,
-      provider: isResendConfigured() ? 'resend' : 'smtp',
-    });
-    throw err;
   }
+
+  if (isSmtpConfigured()) {
+    try {
+      return await sendViaSmtp(content);
+    } catch (err) {
+      lastError = err;
+      logger.error('SMTP send failed', { to, subject, message: err.message });
+    }
+  }
+
+  if (!isResendConfigured() && !isSmtpConfigured()) {
+    logger.warn('No email provider configured — logging to console');
+    logger.info('[DEV EMAIL]', { to, subject, text: text || '(html)' });
+    return { messageId: 'dev-console', accepted: [to], provider: 'console' };
+  }
+
+  logger.error('Email send failed', {
+    to,
+    subject,
+    message: lastError?.message,
+    provider: isResendConfigured() ? 'resend' : 'smtp',
+  });
+  throw lastError || new Error('Email send failed');
 };
 
 const sendOtpEmail = async ({ to, code, purpose, firstName }) => {
