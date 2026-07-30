@@ -45,7 +45,7 @@ import { AuditLogsPage } from '@/admin/features/audit/AuditLogsPage'
 import { DesignSystemPage } from '@/storefront/pages/DesignSystemPage'
 import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
-import { storefrontRouteTree } from '@/storefront/config/routes'
+import { storefrontRouteTree, surpriseFullscreenRoutes } from '@/storefront/config/routes'
 import { adminFlatNav } from '@/admin/config/navigation'
 
 const implementedAdminPaths = new Set([
@@ -90,6 +90,7 @@ export function AppRouter() {
 
   return (
     <Routes>
+      {surpriseFullscreenRoutes}
       {storefrontRouteTree}
 
       <Route path="/design-system" element={<DesignSystemPage />} />

@@ -75,11 +75,11 @@ export function DigitalSurprisePage() {
                       {occ.templates.length} unique templates · 30-day private link
                     </p>
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                      <Link to={`/surprise/digital/${occ.slug}/demo`} className="block">
+                      <a href={`/surprise/digital/${occ.slug}/demo`} className="block">
                         <Button type="button" variant="outline" className="w-full text-sm">
                           Watch demo
                         </Button>
-                      </Link>
+                      </a>
                       <Link to={`/surprise/digital/${occ.slug}`} className="block">
                         <Button type="button" variant="primary" className="w-full gap-1.5 text-sm">
                           Pay now · {formatINR(DIGITAL_PRICE_INR)}
@@ -221,7 +221,8 @@ export function DigitalSurpriseCustomizePage() {
     if (senderName.trim()) params.set('from', senderName.trim())
     if (message.trim()) params.set('msg', message.trim().slice(0, 180))
     const q = params.toString()
-    navigate(`/surprise/digital/${occasion.slug}/demo${q ? `?${q}` : ''}`)
+    // Hard navigate so demo loads as its own full-screen page (no layout overlay)
+    window.location.assign(`/surprise/digital/${occasion.slug}/demo${q ? `?${q}` : ''}`)
   }
 
   if (published) {
@@ -460,7 +461,7 @@ export function DigitalSurpriseLivePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60svh] items-center justify-center text-sm text-hm-text-muted">
+      <div className="flex min-h-svh items-center justify-center bg-black text-sm text-white/70">
         Loading surprise…
       </div>
     )
@@ -468,23 +469,25 @@ export function DigitalSurpriseLivePage() {
 
   if (error || !data) {
     return (
-      <Container className="py-20 text-center">
+      <div className="flex min-h-svh flex-col items-center justify-center bg-hm-bg px-5 text-center">
         <h1 className="font-display text-3xl text-hm-text">Link unavailable</h1>
         <p className="mt-2 text-sm text-hm-text-muted">{error || 'Not found'}</p>
         <Link to="/surprise/digital" className="mt-6 inline-block text-hm-accent">
           Create a new digital surprise
         </Link>
-      </Container>
+      </div>
     )
   }
 
   return (
-    <DigitalSurpriseExperience
-      templateId={data.templateId}
-      recipientName={data.recipientName}
-      senderName={data.senderName}
-      message={data.message}
-      media={data.media}
-    />
+    <div className="min-h-svh w-full bg-black">
+      <DigitalSurpriseExperience
+        templateId={data.templateId}
+        recipientName={data.recipientName}
+        senderName={data.senderName}
+        message={data.message}
+        media={data.media}
+      />
+    </div>
   )
 }

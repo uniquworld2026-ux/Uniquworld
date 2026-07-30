@@ -127,6 +127,15 @@ export function DigitalSurpriseDemoPage() {
   const holdRef = useRef(false)
   const confettiFor = useRef(-1)
 
+  // Lock page scroll while demo is open
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
   // Keep URL sharable (name/from in query)
   useEffect(() => {
     if (!occasion) return
@@ -234,7 +243,7 @@ export function DigitalSurpriseDemoPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[90] overflow-hidden bg-black text-white"
+      className="relative flex min-h-svh w-full flex-col overflow-hidden bg-black text-white"
       onPointerDown={() => {
         holdRef.current = true
         setPaused(true)

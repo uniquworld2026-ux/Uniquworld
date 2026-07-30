@@ -205,9 +205,7 @@ export const storefrontRouteTree = (
     <Route path="surprise" element={<SurpriseHubPage />} />
     <Route path="surprise/local" element={<LocalSurprisePage />} />
     <Route path="surprise/digital" element={<DigitalSurprisePage />} />
-    <Route path="surprise/digital/:occasionSlug/demo" element={<DigitalSurpriseDemoPage />} />
     <Route path="surprise/digital/:occasionSlug" element={<DigitalSurpriseCustomizePage />} />
-    <Route path="surprise/s/:slug" element={<DigitalSurpriseLivePage />} />
     <Route path="store" element={<StoreHubPage />} />
     <Route path="store/p/:slug" element={<StoreProductDetailsPage />} />
     <Route path="store/bulk" element={<BulkOrdersPage />} />
@@ -268,4 +266,12 @@ export const storefrontRouteTree = (
 
     <Route path="*" element={<NotFoundPage />} />
   </Route>
+)
+
+/** Full-screen surprise pages — no header/footer/install overlay */
+export const surpriseFullscreenRoutes = (
+  <>
+    <Route path="/surprise/digital/:occasionSlug/demo" element={<DigitalSurpriseDemoPage />} />
+    <Route path="/surprise/s/:slug" element={<DigitalSurpriseLivePage />} />
+  </>
 )
