@@ -1,150 +1,140 @@
 import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { PageHero } from '@/storefront/components/layout/PageHero'
-import { useStorefrontProducts } from '@/shared/catalog/useLiveCatalog'
-import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
-import { Chip } from '@/storefront/components/ui/Chip'
+import { giftCollectionGroups } from '@/storefront/features/personalized/giftCollectionGroups'
+import { cn } from '@/shared/utils/cn'
 
-/** Personalized gift types — shown as collection cards */
-export const personalizedTypes = [
-  {
-    id: 'name',
-    title: 'Custom Name Gifts',
-    subtitle: 'Monograms & nameplates',
-    path: '/personalized/name',
-    image:
-      'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'photo',
-    title: 'Photo Gifts',
-    subtitle: 'Frames, albums & prints',
-    path: '/personalized/photo',
-    image:
-      'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'audio-qr',
-    title: 'Audio QR Gifts',
-    subtitle: 'A voice note they can replay',
-    path: '/personalized/audio-qr',
-    image:
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'video-qr',
-    title: 'Video QR Gifts',
-    subtitle: 'Memories in a scan',
-    path: '/personalized/video-qr',
-    image:
-      'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'engraving',
-    title: 'Custom Engraving',
-    subtitle: 'Brass, wood & keepsakes',
-    path: '/personalized/engraving',
-    image:
-      'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'message',
-    title: 'Custom Message',
-    subtitle: 'Notes that feel handwritten',
-    path: '/personalized/message',
-    image:
-      'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'logo',
-    title: 'Logo Printing',
-    subtitle: 'Brand it for teams & clients',
-    path: '/personalized/logo',
-    image:
-      'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'box',
-    title: 'Gift Box Personalization',
-    subtitle: 'Unboxing made theirs',
-    path: '/personalized/box',
-    image:
-      'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1200&q=80',
-  },
-]
+/** @deprecated kept for imports — prefer giftCollectionGroups */
+export const personalizedTypes = giftCollectionGroups.flatMap((g) =>
+  g.items.slice(0, 1).map((it) => ({
+    id: it.id,
+    title: it.label,
+    subtitle: g.title,
+    path: it.path,
+    image: g.image,
+  })),
+)
+
+function SubCard({ item }) {
+  return (
+    <Link
+      to={item.path}
+      className="group flex min-h-[4.5rem] items-center justify-between gap-2 rounded-xl border border-hm-border bg-hm-elevated px-3.5 py-3 shadow-hm-soft transition duration-300 hover:-translate-y-0.5 hover:border-hm-accent/40 hover:shadow-hm-card sm:min-h-[5rem] sm:px-4"
+    >
+      <span className="text-sm font-semibold leading-snug text-hm-primary group-hover:text-hm-accent">
+        {item.label}
+      </span>
+      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-hm-text-subtle transition group-hover:translate-x-0.5 group-hover:text-hm-accent" />
+    </Link>
+  )
+}
+
+function CollectionBlock({ group, reverse = false }) {
+  return (
+    <section
+      id={group.id}
+      className="scroll-mt-36 border-b border-hm-border py-10 last:border-0 sm:py-12"
+    >
+      <div
+        className={cn(
+          'grid gap-5 lg:grid-cols-12 lg:items-stretch lg:gap-6',
+          reverse && 'lg:[&>*:first-child]:order-2',
+        )}
+      >
+        {/* Large side card */}
+        <Link
+          to={group.path}
+          className="group relative overflow-hidden rounded-2xl lg:col-span-4"
+        >
+          <div className="aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[280px]">
+            <img
+              src={group.image}
+              alt=""
+              className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a2d4d]/90 via-[#0a2d4d]/35 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+            <p className="text-2xl" aria-hidden>
+              {group.emoji}
+            </p>
+            <h2 className="mt-1 font-display text-2xl tracking-tight text-white sm:text-3xl">
+              {group.title}
+            </h2>
+            <p className="mt-1.5 line-clamp-2 text-sm text-white/75">{group.description}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-hm-accent-soft">
+              Explore
+              <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+            </span>
+          </div>
+        </Link>
+
+        {/* Small cards — 4 per row */}
+        <div className="lg:col-span-8">
+          <div className="mb-3 flex items-end justify-between gap-3 lg:hidden">
+            <h2 className="font-display text-2xl text-hm-primary">
+              <span className="mr-1.5" aria-hidden>
+                {group.emoji}
+              </span>
+              {group.title}
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
+            {group.items.map((item) => (
+              <SubCard key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export function PersonalizedPage() {
-  const { products: catalog } = useStorefrontProducts()
-  const products = catalog.filter(
-    (p) => p.category === 'Personalized Gifts' || p.personalization?.customText,
-  )
-
   return (
     <div>
       <PageHero
         eyebrow="Personalized"
-        title="Make it unmistakably theirs"
-        description="Custom names, photo keepsakes, audio & video QR, engraving, and live preview — personalization without the chaos."
+        title="Gift collections for every moment"
+        description="Corporate kits, weddings, birthdays, handmade crafts, hampers, and more — pick a category, then a style. Four picks per row, ready to explore."
         actions={
           <>
-            <Link to="/personalized/studio">
-              <Button variant="primary">Live preview studio</Button>
+            <Link to="/categories">
+              <Button variant="primary">Shop all gifts</Button>
             </Link>
-            <Link to="/categories?category=Personalized%20Gifts">
-              <Button variant="outline">Shop all personalized</Button>
+            <Link to="/personalized/studio">
+              <Button variant="outline">Live preview studio</Button>
             </Link>
           </>
         }
       />
 
-      <Container className="py-10 sm:py-12">
-        <div className="mb-6 flex flex-wrap gap-2">
-          {['Name', 'Photo', 'Audio QR', 'Video QR', 'Engraving', 'Logo'].map((label) => (
-            <Chip key={label} to="/personalized" className="bg-hm-elevated">
-              {label}
-            </Chip>
-          ))}
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {personalizedTypes.map((item) => (
-            <Link
-              key={item.id}
-              to={item.path}
-              className="group relative aspect-[3/4] overflow-hidden rounded-2xl"
-            >
-              <img
-                src={item.image}
-                alt=""
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                <p className="font-display text-2xl">{item.title}</p>
-                <p className="mt-1 text-sm text-white/75">{item.subtitle}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {products.length > 0 ? (
-          <div className="mt-14">
-            <h2 className="font-display text-3xl text-hm-text sm:text-4xl">Ready to personalize</h2>
-            <p className="mt-2 text-sm text-hm-text-muted">
-              Pick a gift — add name, note, or logo at checkout.
-            </p>
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {products.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={{ ...p, image: p.images[0], occasion: p.occasion?.[0] }}
-                />
-              ))}
-            </div>
+      {/* Quick jump chips */}
+      <div className="sticky top-[var(--hm-header-offset,7.5rem)] z-20 border-b border-hm-border bg-hm-elevated/95 backdrop-blur-md">
+        <Container className="py-2.5">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none [-webkit-overflow-scrolling:touch]">
+            {giftCollectionGroups.map((g) => (
+              <a
+                key={g.id}
+                href={`#${g.id}`}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-hm-border bg-hm-bg px-3 py-1.5 text-xs font-semibold text-hm-text-muted transition hover:border-hm-accent hover:text-hm-primary"
+              >
+                <span aria-hidden>{g.emoji}</span>
+                {g.title.replace(/ Gifts$/, '').replace(/ & .*$/, '')}
+              </a>
+            ))}
           </div>
-        ) : null}
+        </Container>
+      </div>
+
+      <Container className="pb-16 pt-2 sm:pb-20">
+        {giftCollectionGroups.map((group, index) => (
+          <CollectionBlock key={group.id} group={group} reverse={index % 2 === 1} />
+        ))}
       </Container>
     </div>
   )

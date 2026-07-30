@@ -51,7 +51,6 @@ import {
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
 import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
 import { HandmadePage } from '@/storefront/pages/HandmadePage'
-import { CategoryHubPage } from '@/storefront/pages/CategoryHubPage'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
 import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
 
@@ -168,13 +167,10 @@ const plannedLeaves = [
   ['loyalty', 'Loyalty Points'],
 ]
 
-/** Preserve query string when redirecting /categories?… filter → /products */
-function CategoriesFilterToProductsRedirect() {
+/** Preserve query string when redirecting /products → /categories */
+function ProductsToCategoriesRedirect() {
   const { search } = useLocation()
-  if (search && (search.includes('category=') || search.includes('q=') || search.includes('max='))) {
-    return <Navigate to={`/products${search}`} replace />
-  }
-  return <CategoryHubPage />
+  return <Navigate to={`/categories${search}`} replace />
 }
 
 /**
@@ -185,14 +181,14 @@ export const storefrontRouteTree = (
   <Route element={<StorefrontLayout />}>
     <Route index element={<HomePage />} />
 
-    {/* Catalog — Category hub + product listing */}
-    <Route path="categories" element={<CategoriesFilterToProductsRedirect />} />
+    {/* Catalog — Category page lives at /categories; details stay at /products/:id */}
+    <Route path="categories" element={<ProductsPage />} />
     <Route path="categories/:slug" element={<CategorySlugPage />} />
-    <Route path="products" element={<ProductsPage />} />
+    <Route path="products" element={<ProductsToCategoriesRedirect />} />
     <Route path="products/:id" element={<ProductDetailsPage />} />
     <Route path="search" element={<SearchPage />} />
     <Route path="wishlist" element={<WishlistPage />} />
-    <Route path="uniquworld" element={<Navigate to="/products?tag=uniquworld" replace />} />
+    <Route path="uniquworld" element={<Navigate to="/categories?tag=uniquworld" replace />} />
 
     {/* Module hubs */}
     <Route path="personalized" element={<PersonalizedPage />} />
