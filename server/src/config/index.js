@@ -108,9 +108,17 @@ const config = {
   },
 
   razorpay: {
+    // Techackode (or any) merchant API keys — settlement follows the Razorpay account.
     keyId: process.env.RAZORPAY_KEY_ID || '',
     keySecret: process.env.RAZORPAY_KEY_SECRET || '',
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+    // Customer-facing checkout branding (Uniquworld), independent of KYC legal name.
+    displayName: process.env.RAZORPAY_DISPLAY_NAME || process.env.APP_NAME || 'Uniquworld',
+    logoUrl:
+      process.env.RAZORPAY_LOGO_URL ||
+      process.env.EMAIL_LOGO_URL ||
+      '',
+    themeColor: process.env.RAZORPAY_THEME_COLOR || '#4a3426',
   },
 
   shiprocket: {

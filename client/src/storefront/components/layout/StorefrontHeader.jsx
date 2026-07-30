@@ -101,7 +101,7 @@ export function StorefrontHeader() {
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-hm-text-subtle">
                   Shop
                 </p>
-                <nav className="mb-4 flex flex-col overflow-hidden rounded-2xl border border-hm-border bg-hm-bg">
+                <nav className="mb-4 grid grid-cols-2 gap-2">
                   {primaryNav.map((item) => (
                     <NavLink
                       key={item.path}
@@ -109,12 +109,25 @@ export function StorefrontHeader() {
                       onClick={() => setOpen(false)}
                       className={({ isActive }) =>
                         cn(
-                          'border-b border-hm-border/60 px-4 py-3.5 text-base font-medium last:border-0',
-                          isActive ? 'bg-hm-primary/8 text-hm-primary' : 'text-hm-text',
+                          'flex flex-col overflow-hidden rounded-2xl border transition',
+                          isActive
+                            ? 'border-hm-accent bg-hm-accent/5 ring-1 ring-hm-accent/30'
+                            : 'border-hm-border bg-hm-bg hover:border-hm-accent/40',
                         )
                       }
                     >
-                      {item.label}
+                      <div className="aspect-[5/3] overflow-hidden bg-hm-muted">
+                        <img
+                          src={item.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                      <span className="px-2.5 py-2.5 text-center text-sm font-semibold text-hm-primary">
+                        {item.label}
+                      </span>
                     </NavLink>
                   ))}
                 </nav>
@@ -270,32 +283,51 @@ export function StorefrontHeader() {
           </div>
         </div>
 
-        <nav className="relative border-t border-hm-border" aria-label="Primary">
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-hm-elevated to-transparent lg:hidden"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-6 bg-gradient-to-l from-hm-elevated to-transparent lg:hidden"
-            aria-hidden
-          />
-          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-            <div className="flex items-stretch gap-0.5 overflow-x-auto overscroll-x-contain scroll-smooth scrollbar-none [-webkit-overflow-scrolling:touch] sm:gap-1">
-              {primaryNav.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    cn(
-                      'inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 border-transparent px-3 text-[12px] font-semibold tracking-wide text-hm-text-muted transition hover:text-hm-primary sm:px-3.5 sm:text-[13px]',
-                      isActive && 'border-hm-accent text-hm-primary',
-                    )
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
+        <nav className="border-t border-hm-border bg-hm-elevated/95" aria-label="Primary">
+          <div className="mx-auto grid max-w-7xl grid-cols-5">
+            {primaryNav.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    'group relative flex min-w-0 flex-col items-center gap-0.5 border-b-2 px-0.5 py-1.5 transition sm:gap-1 sm:px-1.5 sm:py-2',
+                    isActive
+                      ? 'border-hm-accent bg-hm-accent/[0.04]'
+                      : 'border-transparent hover:bg-hm-muted/50',
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={cn(
+                        'relative block aspect-square w-8 overflow-hidden rounded-full ring-2 transition duration-300 sm:w-10 md:w-11',
+                        isActive
+                          ? 'ring-hm-accent shadow-[0_0_0_3px_rgba(217,44,43,0.12)]'
+                          : 'ring-hm-border group-hover:ring-hm-accent/50',
+                      )}
+                    >
+                      <img
+                        src={item.image}
+                        alt=""
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </span>
+                    <span
+                      className={cn(
+                        'max-w-full truncate text-center text-[10px] font-semibold tracking-wide sm:text-[12px] md:text-[13px]',
+                        isActive ? 'text-hm-primary' : 'text-hm-text-muted group-hover:text-hm-primary',
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            ))}
           </div>
         </nav>
       </header>

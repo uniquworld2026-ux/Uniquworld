@@ -147,15 +147,21 @@ const placeOrder = async (userId, payload) => {
   }
 
   const amountPaise = Math.round(totalAmount * 100);
+  const brandName = config.razorpay.displayName || config.appName || 'Uniquworld';
   const rzpOrder = await razorpayService.createOrder({
     amountPaise,
     receipt: order.orderNumber,
-    notes: { orderId: order.id, orderNumber: order.orderNumber },
+    notes: {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      brand: brandName,
+      store: 'Uniquworld',
+    },
   });
 
   await orderRepository.updatePayment(order.payment.id, {
     gatewayOrderId: rzpOrder.id,
-    metadata: { razorpayOrder: rzpOrder },
+    metadata: { razorpayOrder: rzpOrder, brand: brandName },
   });
 
   return {
@@ -167,8 +173,11 @@ const placeOrder = async (userId, payload) => {
       razorpayOrderId: rzpOrder.id,
       amount: amountPaise,
       currency: rzpOrder.currency,
-      name: config.appName,
-      description: `Order ${order.orderNumber}`,
+      // Always Uniquworld on checkout — even when API keys belong to Techackode.
+      name: brandName,
+      image: config.razorpay.logoUrl || undefined,
+      themeColor: config.razorpay.themeColor,
+      description: `Uniquworld · Order ${order.orderNumber}`,
     },
   };
 };

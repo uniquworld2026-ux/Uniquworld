@@ -139,7 +139,7 @@ export function CategorySlugPage() {
         .replace(/\s+/g, '-') === key,
   )
   if (cat) {
-    return <Navigate to={`/categories?category=${encodeURIComponent(cat.name)}`} replace />
+    return <Navigate to={`/products?category=${encodeURIComponent(cat.name)}`} replace />
   }
   return <Navigate to="/categories" replace />
 }

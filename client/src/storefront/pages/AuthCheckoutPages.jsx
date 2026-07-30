@@ -442,18 +442,32 @@ export function CheckoutPage() {
     const ok = await loadRazorpay()
     if (!ok) throw new Error('Unable to load Razorpay checkout')
 
+    const brandName = payment.name || 'Uniquworld'
+    const logo =
+      payment.image ||
+      `${window.location.origin}/brand/uniquworld-icon.png`
+
     return new Promise((resolve, reject) => {
       const rzp = new window.Razorpay({
         key: payment.keyId,
         amount: payment.amount,
         currency: payment.currency || 'INR',
-        name: payment.name || 'Uniquworld',
-        description: payment.description,
+        name: brandName,
+        description: payment.description || `Uniquworld · Order ${order.orderNumber}`,
+        image: logo,
         order_id: payment.razorpayOrderId,
+        notes: {
+          brand: brandName,
+          store: 'Uniquworld',
+          orderNumber: order.orderNumber,
+        },
         prefill: {
-          name: user?.firstName,
+          name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.firstName,
           email: user?.email,
           contact: user?.phone || '',
+        },
+        theme: {
+          color: payment.themeColor || '#4a3426',
         },
         handler: async (response) => {
           try {
