@@ -245,6 +245,19 @@ export const sitemap = [
     ],
   },
 
+  /* ── Handmade (makers marketplace — coming soon) ───────────────────── */
+  {
+    id: 'handmade',
+    label: 'Handmade',
+    path: '/handmade',
+    status: 'scaffold',
+    module: 'handmade',
+    children: [
+      { id: 'handmade-sell', label: 'Sell Handmade', path: '/handmade/sell', status: 'planned' },
+      { id: 'handmade-makers', label: 'Maker Stories', path: '/handmade/makers', status: 'planned' },
+    ],
+  },
+
   /* ── Store / Wholesale ───────────────────────────────────────────────── */
   {
     id: 'store',
@@ -327,6 +340,7 @@ export const sitemap = [
 export const primaryNav = [
   { label: 'Category', path: '/categories' },
   { label: 'Personalized', path: '/personalized' },
+  { label: 'Handmade', path: '/handmade' },
   { label: 'Uniquworld', path: '/uniquworld' },
   { label: 'Surprise', path: '/surprise' },
   { label: 'Store', path: '/store' },

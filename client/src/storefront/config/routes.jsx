@@ -50,6 +50,7 @@ import {
 } from '@/storefront/pages/ModuleHubPages'
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
 import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
+import { HandmadePage } from '@/storefront/pages/HandmadePage'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
 import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
 
@@ -65,6 +66,9 @@ const plannedLeaves = [
   ['personalized/logo', 'Logo Printing'],
   ['personalized/box', 'Gift Box Personalization'],
   ['personalized/studio', 'Live Preview Studio'],
+  // Handmade
+  ['handmade/sell', 'Sell Handmade'],
+  ['handmade/makers', 'Maker Stories'],
   // Corporate
   ['corporate/welcome-kits', 'Employee Welcome Kits'],
   ['corporate/joining-kits', 'Joining Kits'],
@@ -188,6 +192,7 @@ export const storefrontRouteTree = (
 
     {/* Module hubs */}
     <Route path="personalized" element={<PersonalizedPage />} />
+    <Route path="handmade" element={<HandmadePage />} />
     <Route path="corporate" element={<CorporateHubPage />} />
     <Route path="functions" element={<FunctionsHubPage />} />
     <Route path="celebrations" element={<CelebrationsHubPage />} />

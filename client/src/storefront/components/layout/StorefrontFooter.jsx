@@ -8,6 +8,7 @@ const shopLinks = [
   { label: 'All gifts', path: '/products' },
   { label: 'Categories', path: '/categories' },
   { label: 'Personalized', path: '/personalized' },
+  { label: 'Handmade', path: '/handmade' },
   { label: 'Corporate', path: '/corporate' },
   { label: 'Surprise experiences', path: '/surprise/local' },
   { label: 'Retail store', path: '/store' },
@@ -196,7 +197,7 @@ export function StorefrontFooter() {
       <div className="border-t border-hm-border bg-hm-primary text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p className="text-center text-xs leading-relaxed text-white/65 sm:text-left">
-            © {year} Uniquworld. Crafted for memorable moments.
+            © {year} Uniquworld. Make a Moment, Unique the world.
           </p>
 
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-5">
