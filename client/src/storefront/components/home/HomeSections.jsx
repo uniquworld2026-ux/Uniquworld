@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 import { ArrowRight } from 'lucide-react'
 import {
   blogPosts,
@@ -10,7 +11,7 @@ import {
   productRails,
   surprisePaths,
 } from '@/storefront/data/home'
-import { useFeaturedReviews } from '@/shared/catalog/useLiveCatalog'
+import { useFeaturedReviews, useStorefrontProducts } from '@/shared/catalog/useLiveCatalog'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
@@ -20,6 +21,26 @@ import { Reveal } from '@/storefront/components/ui/Reveal'
 import { Chip } from '@/storefront/components/ui/Chip'
 import { Input } from '@/storefront/components/ui/Input'
 import { GlassPanel } from '@/storefront/components/ui/GlassPanel'
+
+const HOME_FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1200&q=80'
+
+function SafeImg({ src, alt = '', className, loading = 'lazy', ...rest }) {
+  return (
+    <img
+      src={src || HOME_FALLBACK_IMAGE}
+      alt={alt}
+      className={className}
+      loading={loading}
+      onError={(e) => {
+        if (e.currentTarget.src !== HOME_FALLBACK_IMAGE) {
+          e.currentTarget.src = HOME_FALLBACK_IMAGE
+        }
+      }}
+      {...rest}
+    />
+  )
+}
 
 function ProductRail({ id, eyebrow, title, description, products, viewAllTo = '/categories' }) {
   return (
@@ -52,6 +73,62 @@ function ProductRail({ id, eyebrow, title, description, products, viewAllTo = '/
   )
 }
 
+/** Prefer live catalog products (real admin images); fall back to curated static rails. */
+function useHomeRailProducts(fallback = [], { featured, trending, newest, deals } = {}) {
+  const { products = [], isLoading } = useStorefrontProducts()
+
+  return useMemo(() => {
+    if (!products.length) return { products: fallback, isLoading }
+
+    let list = [...products]
+    if (featured) list = list.filter((p) => p.featured)
+    if (trending) list = list.filter((p) => p.trending || p.featured)
+    if (deals) {
+      list = list
+        .filter((p) => Number(p.compareAt) > Number(p.price))
+        .sort(
+          (a, b) =>
+            (Number(b.compareAt) - Number(b.price)) / Number(b.compareAt) -
+            (Number(a.compareAt) - Number(a.price)) / Number(a.compareAt),
+        )
+    }
+    if (newest) {
+      list = [...list].sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      )
+    }
+    if (!featured && !trending && !newest && !deals) {
+      list = [...list].sort(
+        (a, b) => Number(b.featured) - Number(a.featured) || Number(b.rating || 0) - Number(a.rating || 0),
+      )
+    }
+
+    // If a filter emptied the rail, still show live catalog products.
+    if (!list.length) {
+      list = [...products].sort(
+        (a, b) => Number(b.featured) - Number(a.featured) || Number(b.rating || 0) - Number(a.rating || 0),
+      )
+    }
+
+    const mapped = list.slice(0, 4).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      compareAt: p.compareAt,
+      tag: p.tag || (p.featured ? 'Featured' : p.trending ? 'Trending' : ''),
+      occasion: Array.isArray(p.occasion) ? p.occasion[0] : p.occasion || p.category,
+      rating: p.rating,
+      image: p.images?.[0] || p.image,
+      images: p.images,
+    }))
+
+    return {
+      products: mapped.length ? mapped : fallback,
+      isLoading,
+    }
+  }, [products, fallback, featured, trending, newest, deals, isLoading])
+}
+
 export function FeaturedCategories() {
   return (
     <Section id="featured-categories">
@@ -70,7 +147,7 @@ export function FeaturedCategories() {
                 to={cat.path}
                 className="group relative block aspect-[4/5] overflow-hidden rounded-2xl sm:aspect-[3/4]"
               >
-                <img
+                <SafeImg
                   src={cat.image}
                   alt=""
                   className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
@@ -95,7 +172,7 @@ export function PersonalizedBand() {
     <Section id="personalized-gifts" className="overflow-hidden py-0 sm:py-0 md:py-0">
       <div className="relative">
         <div className="absolute inset-0">
-          <img
+          <SafeImg
             src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=1800&q=80"
             alt=""
             className="h-full w-full object-cover"
@@ -141,7 +218,7 @@ export function CorporateBand() {
     <Section id="corporate-gifts" className="overflow-hidden py-0 sm:py-0 md:py-0">
       <div className="relative">
         <div className="absolute inset-0">
-          <img
+          <SafeImg
             src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=1800&q=80"
             alt=""
             className="h-full w-full object-cover"
@@ -206,7 +283,7 @@ export function OccasionCollections() {
                 className="group overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated"
               >
                 <div className="aspect-[16/11] overflow-hidden">
-                  <img
+                  <SafeImg
                     src={item.image}
                     alt=""
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
@@ -252,7 +329,7 @@ export function SurpriseDual() {
                 className="group relative block overflow-hidden rounded-2xl border border-hm-border"
               >
                 <div className="aspect-[16/10] overflow-hidden">
-                  <img
+                  <SafeImg
                     src={path.image}
                     alt=""
                     className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
@@ -277,46 +354,50 @@ export function SurpriseDual() {
 }
 
 export function BestSellers() {
+  const { products } = useHomeRailProducts(productRails.bestSellers, { featured: true })
   return (
     <ProductRail
       id="bestsellers"
       title="Best sellers"
       description="Loved pieces, packed with care."
-      products={productRails.bestSellers}
+      products={products}
     />
   )
 }
 
 export function NewArrivals() {
+  const { products } = useHomeRailProducts(productRails.newArrivals, { newest: true })
   return (
     <ProductRail
       id="new-arrivals"
       eyebrow="Just landed"
       title="New arrivals"
-      products={productRails.newArrivals}
+      products={products}
     />
   )
 }
 
 export function TrendingProducts() {
+  const { products } = useHomeRailProducts(productRails.trending, { trending: true })
   return (
     <ProductRail
       id="trending-products"
       eyebrow="In demand"
       title="Trending now"
-      products={productRails.trending}
+      products={products}
     />
   )
 }
 
 export function TodaysDeals() {
+  const { products } = useHomeRailProducts(productRails.deals, { deals: true })
   return (
     <ProductRail
       id="todays-deals"
       eyebrow="Limited"
       title="Today's deals"
       description="Quiet luxury, timed offers."
-      products={productRails.deals}
+      products={products}
     />
   )
 }
@@ -409,7 +490,7 @@ export function InstagramGallery() {
                 rel="noreferrer"
                 className="group relative block aspect-square overflow-hidden rounded-xl"
               >
-                <img
+                <SafeImg
                   src={post.image}
                   alt=""
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]"
@@ -451,7 +532,7 @@ export function BlogsSection() {
                 className="group overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated"
               >
                 <div className="aspect-[16/10] overflow-hidden">
-                  <img
+                  <SafeImg
                     src={post.image}
                     alt=""
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"

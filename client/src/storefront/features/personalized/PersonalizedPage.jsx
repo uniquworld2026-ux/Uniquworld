@@ -22,7 +22,7 @@ export const personalizedTypes = [
     subtitle: 'Frames, albums & prints',
     path: '/personalized/photo',
     image:
-      'https://images.unsplash.com/photo-1513519245088-0e12902e35a6?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=1200&q=80',
   },
   {
     id: 'audio-qr',

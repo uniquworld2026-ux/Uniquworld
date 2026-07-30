@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { cn } from '@/shared/utils/cn'
 
-export const BRAND_ICON_SRC = encodeURI('/brand/Uniquworld Logo Icon.png')
-export const BRAND_LOGO_SRC = encodeURI('/brand/Uniquworld Primery  Logo.png')
+export const BRAND_ICON_SRC = '/brand/uniquworld-icon.png'
+export const BRAND_LOGO_SRC = '/brand/uniquworld-logo.png'
 
 /**
  * Uniquworld logo for storefront chrome.

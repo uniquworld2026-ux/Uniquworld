@@ -1,16 +1,26 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { Heart, ShoppingBag } from 'lucide-react'
 import { formatCurrency } from '@/shared/lib/utils'
 import { useCart } from '@/storefront/hooks/useCart'
 import { StarRating } from '@/storefront/components/product/StarRating'
 import { cn } from '@/shared/utils/cn'
 
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=80'
+
 /** Simple product card — responsive for 2-col mobile grids */
 export function ProductCard({ product, className, href, priority = false }) {
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const image = product.image || product.images?.[0]
+  const preferred = product.image || product.images?.[0] || FALLBACK_IMAGE
+  const [failed, setFailed] = useState(false)
+  const image = failed ? FALLBACK_IMAGE : preferred
   const detailHref = href || `/products/${product.id}`
+
+  useEffect(() => {
+    setFailed(false)
+  }, [preferred])
 
   function handleAdd(e) {
     e.preventDefault()
@@ -41,6 +51,9 @@ export function ProductCard({ product, className, href, priority = false }) {
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={priority ? 'high' : 'auto'}
+          onError={() => {
+            if (!failed) setFailed(true)
+          }}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
         />
         {product.tag ? (

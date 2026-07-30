@@ -8,6 +8,22 @@ import { trendingCollections, occasions } from '@/storefront/data/home'
 
 const HERO_IMAGE =
   'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=1400&q=80'
+const HERO_FALLBACK =
+  'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1400&q=80'
+
+function HeroImg({ src, alt = '', className, ...rest }) {
+  return (
+    <img
+      src={src || HERO_FALLBACK}
+      alt={alt}
+      className={className}
+      onError={(e) => {
+        if (e.currentTarget.src !== HERO_FALLBACK) e.currentTarget.src = HERO_FALLBACK
+      }}
+      {...rest}
+    />
+  )
+}
 
 /**
  * FNP-style hero: horizontal rounded promo cards + occasion icon strip.
@@ -73,7 +89,7 @@ export function HeroBanner() {
                   </Link>
                 </div>
               </div>
-              <img
+              <HeroImg
                 src={HERO_IMAGE}
                 alt=""
                 className="relative mt-auto h-36 w-full object-cover sm:absolute sm:inset-y-0 sm:right-0 sm:mt-0 sm:h-full sm:w-[50%]"
@@ -88,7 +104,7 @@ export function HeroBanner() {
                 to={item.path}
                 className="group relative flex min-h-[240px] w-[min(78%,20rem)] shrink-0 snap-center overflow-hidden rounded-3xl border border-hm-border shadow-hm-card sm:min-h-[280px] sm:w-[52%] lg:w-[38%]"
               >
-                <img
+                <HeroImg
                   src={item.image}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"

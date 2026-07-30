@@ -98,7 +98,7 @@ export const occasionCollections = [
     description: 'Joy, wrapped with intention.',
     path: '/celebrations/birthday',
     image:
-      'https://images.unsplash.com/photo-1464349153735-7dbbaedae5be?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1000&q=80',
   },
   {
     id: 'anniversary',
@@ -169,7 +169,7 @@ export const productRails = {
       occasion: 'Evening rituals',
       rating: 4.8,
       image:
-        'https://images.unsplash.com/photo-1602874801006-e0c3f490f3c7?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?auto=format&fit=crop&w=900&q=80',
     },
     {
       id: '3',
@@ -203,7 +203,7 @@ export const productRails = {
       occasion: 'Daily ritual',
       rating: 4.6,
       image:
-        'https://images.unsplash.com/photo-1514228742587-6b155407828c?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
     },
     {
       id: '6',
@@ -213,7 +213,7 @@ export const productRails = {
       occasion: 'Self-care',
       rating: 4.8,
       image:
-        'https://images.unsplash.com/photo-1603006905005-c04abacfd0c0?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?auto=format&fit=crop&w=900&q=80',
     },
     {
       id: '7',
@@ -233,7 +233,7 @@ export const productRails = {
       occasion: 'Desk joy',
       rating: 4.7,
       image:
-        'https://images.unsplash.com/photo-1459411552884-841db9b3aa2a?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=900&q=80',
     },
   ],
   trending: [
@@ -245,7 +245,7 @@ export const productRails = {
       occasion: 'Photo gifts',
       rating: 4.9,
       image:
-        'https://images.unsplash.com/photo-1513519245088-0e12902e35a6?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=900&q=80',
     },
     {
       id: '10',
@@ -265,7 +265,7 @@ export const productRails = {
       occasion: 'Evening rituals',
       rating: 4.8,
       image:
-        'https://images.unsplash.com/photo-1602874801006-e0c3f490f3c7?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?auto=format&fit=crop&w=900&q=80',
     },
     {
       id: '4',
@@ -299,7 +299,7 @@ export const productRails = {
       occasion: 'Ends tonight',
       rating: 4.7,
       image:
-        'https://images.unsplash.com/photo-1564890367538-022cbf4fbaab?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=900&q=80',
     },
     {
       id: '3',
@@ -321,7 +321,7 @@ export const productRails = {
       occasion: 'Today only',
       rating: 4.6,
       image:
-        'https://images.unsplash.com/photo-1514228742587-6b155407828c?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
     },
   ],
 }
@@ -404,7 +404,7 @@ export const instagramPosts = [
   {
     id: 'ig6',
     image:
-      'https://images.unsplash.com/photo-1602874801006-e0c3f490f3c7?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?auto=format&fit=crop&w=600&q=80',
   },
 ]
 

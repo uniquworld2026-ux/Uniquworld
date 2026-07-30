@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   flexRender,
   getCoreRowModel,
@@ -17,7 +17,11 @@ import {
   productImportSampleRows,
   productsToCsvRows,
 } from '@/admin/features/products/productStore'
-import { useDeleteProduct, useProducts } from '@/admin/features/products/useProducts'
+import {
+  useDeleteProduct,
+  useDeleteProducts,
+  useProducts,
+} from '@/admin/features/products/useProducts'
 import { downloadCsv, parseCsv, readTextFile } from '@/admin/lib/bulkCsv'
 import { AdminPageStats, buildPageStats } from '@/admin/components/crud/AdminPageStats'
 import { Badge } from '@/shared/components/ui/Badge'
@@ -37,15 +41,35 @@ function statusLabel(status) {
   return PRODUCT_STATUS_LABELS[status] || status
 }
 
+function SelectionCheckbox({ checked, indeterminate, onChange, ariaLabel, disabled }) {
+  return (
+    <input
+      type="checkbox"
+      className="h-4 w-4 rounded border-admin-border text-admin-accent focus:ring-admin-ring disabled:opacity-50"
+      checked={checked}
+      disabled={disabled}
+      ref={(el) => {
+        if (el) el.indeterminate = Boolean(indeterminate)
+      }}
+      onChange={onChange}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={ariaLabel}
+    />
+  )
+}
+
 export function ProductsPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
   const { data = [], isLoading } = useProducts()
   const deleteMutation = useDeleteProduct()
+  const bulkDeleteMutation = useDeleteProducts()
   const [globalFilter, setGlobalFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [rowSelection, setRowSelection] = useState({})
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [flash, setFlash] = useState('')
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
@@ -68,6 +92,10 @@ export function ProductsPage() {
     return data.filter((p) => p.status === statusFilter)
   }, [data, statusFilter])
 
+  useEffect(() => {
+    setRowSelection({})
+  }, [statusFilter, globalFilter])
+
   const pageStats = useMemo(
     () =>
       buildPageStats(data, {
@@ -83,6 +111,27 @@ export function ProductsPage() {
 
   const columns = useMemo(
     () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <SelectionCheckbox
+            checked={table.getIsAllPageRowsSelected()}
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+            ariaLabel="Select all products on this page"
+          />
+        ),
+        cell: ({ row }) => (
+          <SelectionCheckbox
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={row.getToggleSelectedHandler()}
+            ariaLabel={`Select ${row.original.name}`}
+          />
+        ),
+        enableSorting: false,
+        enableGlobalFilter: false,
+      },
       {
         accessorKey: 'name',
         header: 'Product',
@@ -189,8 +238,11 @@ export function ProductsPage() {
   const table = useReactTable({
     data: filtered,
     columns,
-    state: { globalFilter },
+    state: { globalFilter, rowSelection },
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+    getRowId: (row) => String(row.id),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -198,10 +250,37 @@ export function ProductsPage() {
     initialState: { pagination: { pageSize: 8 } },
   })
 
+  const selectedRows = table.getSelectedRowModel().rows
+  const selectedCount = selectedRows.length
+  const selectedIds = selectedRows.map((row) => row.original.id)
+  const selectedNames = selectedRows.map((row) => row.original.name)
+
   async function confirmDelete() {
     if (!deleteTarget) return
     await deleteMutation.mutateAsync(deleteTarget.id)
+    setRowSelection((prev) => {
+      const next = { ...prev }
+      delete next[String(deleteTarget.id)]
+      return next
+    })
     setDeleteTarget(null)
+  }
+
+  async function confirmBulkDelete() {
+    if (!selectedIds.length) return
+    const result = await bulkDeleteMutation.mutateAsync(selectedIds)
+    setRowSelection({})
+    setBulkDeleteOpen(false)
+    if (result.errors?.length) {
+      setFlash(
+        `Deleted ${result.deleted} of ${result.total}. ${result.errors.length} failed.`,
+      )
+    } else {
+      setFlash(
+        `Deleted ${result.deleted} product${result.deleted === 1 ? '' : 's'}.`,
+      )
+    }
+    window.setTimeout(() => setFlash(''), 6000)
   }
 
   async function handleImportFile(file) {
@@ -333,16 +412,36 @@ export function ProductsPage() {
         </select>
       </div>
 
+      {selectedCount > 0 ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-admin-danger/25 bg-admin-danger/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-admin-text">
+            {selectedCount} product{selectedCount === 1 ? '' : 's'} selected
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setRowSelection({})}>
+              Clear selection
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="h-4 w-4" />
+              Delete selected
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-admin-border bg-admin-elevated shadow-admin">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="border-b border-admin-border bg-admin-muted/40">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-admin-text-muted"
+                      className={cn(
+                        'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-admin-text-muted',
+                        header.id === 'select' && 'w-12',
+                      )}
                     >
                       {header.isPlaceholder
                         ? null
@@ -373,7 +472,10 @@ export function ProductsPage() {
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-admin-border/60 transition-colors hover:bg-admin-muted/30"
+                    className={cn(
+                      'border-b border-admin-border/60 transition-colors hover:bg-admin-muted/30',
+                      row.getIsSelected() && 'bg-admin-accent/5',
+                    )}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3 align-middle">
@@ -389,6 +491,7 @@ export function ProductsPage() {
         <div className="flex items-center justify-between gap-3 border-t border-admin-border px-4 py-3">
           <p className="text-xs text-admin-text-muted">
             {filtered.length} product{filtered.length === 1 ? '' : 's'}
+            {selectedCount > 0 ? ` · ${selectedCount} selected` : ''}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -435,6 +538,41 @@ export function ProductsPage() {
             onClick={confirmDelete}
           >
             Delete
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        title={`Delete ${selectedCount} product${selectedCount === 1 ? '' : 's'}?`}
+      >
+        <p className="text-sm text-admin-text-muted">
+          This will permanently remove the selected products from the catalog.
+        </p>
+        {selectedNames.length > 0 ? (
+          <ul className="mt-3 max-h-40 list-disc space-y-1 overflow-y-auto pl-5 text-sm text-admin-text">
+            {selectedNames.slice(0, 12).map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+            {selectedNames.length > 12 ? (
+              <li className="list-none text-admin-text-muted">
+                +{selectedNames.length - 12} more
+              </li>
+            ) : null}
+          </ul>
+        ) : null}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setBulkDeleteOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            loading={bulkDeleteMutation.isPending}
+            onClick={confirmBulkDelete}
+          >
+            Delete selected
           </Button>
         </div>
       </Modal>

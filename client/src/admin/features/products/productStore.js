@@ -131,6 +131,25 @@ export async function deleteProduct(id) {
   return true
 }
 
+/** Delete many products sequentially; returns counts. */
+export async function deleteProducts(ids = []) {
+  const list = [...new Set((ids || []).filter(Boolean))]
+  let deleted = 0
+  const errors = []
+  for (const id of list) {
+    try {
+      await erpApi.remove('products', id)
+      deleted += 1
+    } catch (err) {
+      errors.push({ id, message: err?.message || 'Failed' })
+    }
+  }
+  if (typeof window !== 'undefined' && deleted > 0) {
+    window.dispatchEvent(new Event('hm-catalog-changed'))
+  }
+  return { deleted, errors, total: list.length }
+}
+
 export const productImportHeaders = [
   { key: 'name', label: 'name' },
   { key: 'sku', label: 'sku' },

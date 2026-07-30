@@ -89,8 +89,8 @@ export const catalogProducts = [
       'A trio of brushed brass candle holders with hand-poured soy votives. Soft, warm light for dinners and quiet evenings. Refills available.',
     features: ['Brushed brass', 'Soy wax included', 'Refillable', 'Gift boxed'],
     images: [
-      img('photo-1602874801006-e0c3f490f3c7'),
-      img('photo-1513519245088-0e12902e35a6'),
+      img('photo-1600618528240-fb9fc964b853'),
+      img('photo-1583847268964-b28dc8f51f92'),
       img('photo-1572726729207-a78d6feb5e92'),
     ],
     variants: {
@@ -215,7 +215,7 @@ export const catalogProducts = [
       'Thrown by hand with a speckled body and calm glaze. Holds 320ml. A daily ritual piece that also gifts beautifully.',
     features: ['Stoneware', 'Dishwasher safe', '320ml', 'Gift box'],
     images: [
-      img('photo-1514228742587-6b1558fcca3d'),
+      img('photo-1495474472287-4d71bcdd2085'),
       img('photo-1495474472287-4d71bcdd2085'),
       img('photo-1572116469696-31de0f17cc34'),
     ],
