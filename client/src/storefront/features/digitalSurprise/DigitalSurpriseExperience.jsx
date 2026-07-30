@@ -215,7 +215,212 @@ function CountdownTemplate({ name, sender, message, media, preview }) {
   )
 }
 
-/** Render one of 24 unique interactive templates */
+/** Carnival marquee — endless scrolling neon name strip */
+function MarqueeTemplate({ name, sender, message, media, preview }) {
+  const band = `${name}  ·  HAPPY BIRTHDAY  ·  ${name}  ·  `
+  return (
+    <Shell tone="bd-marquee">
+      <div className="relative z-10 overflow-hidden border-y-4 border-amber-300/80 bg-black/40 py-4">
+        <motion.div
+          className="flex whitespace-nowrap font-display text-4xl text-amber-300 sm:text-5xl"
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+        >
+          <span className="px-4">{band.repeat(4)}</span>
+          <span className="px-4">{band.repeat(4)}</span>
+        </motion.div>
+      </div>
+      <TitleBlock name={name} sender={sender} message={message} titleClass="text-amber-200" />
+      <div className="relative z-10 mx-auto mt-4 flex justify-center gap-2">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <motion.span
+            key={i}
+            className="h-3 w-3 rounded-full bg-amber-300"
+            animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
+            transition={{ duration: 0.9, delay: i * 0.12, repeat: Infinity }}
+          />
+        ))}
+      </div>
+      <MediaBlock media={media} />
+      {preview ? <PreviewBadge /> : null}
+    </Shell>
+  )
+}
+
+/** Scratch-style reveal — drag/tap cover away */
+function ScratchTemplate({ name, sender, message, media, preview }) {
+  const [revealed, setRevealed] = useState(0)
+  const open = revealed >= 5
+
+  return (
+    <Shell tone="bd-scratch">
+      <div className="relative z-10 mx-auto max-w-md px-5 pt-16">
+        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+          Scratch to reveal
+        </p>
+        <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/20 bg-slate-800 shadow-2xl">
+          <div className="min-h-[220px] p-8 text-center">
+            <h1 className="font-display text-4xl text-white">{name}</h1>
+            <p className="mt-3 text-slate-200">{message || 'Wishing you the happiest birthday!'}</p>
+            {sender ? <p className="mt-6 text-sm text-slate-400">— {sender}</p> : null}
+          </div>
+          {!open ? (
+            <button
+              type="button"
+              className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 text-slate-900"
+              onClick={() => setRevealed((v) => v + 1)}
+              onPointerMove={(e) => {
+                if (e.buttons === 1) setRevealed((v) => Math.min(5, v + 0.15))
+              }}
+            >
+              <motion.div
+                className="absolute inset-0 bg-slate-500"
+                style={{ clipPath: `inset(0 0 ${Math.min(100, revealed * 20)}% 0)` }}
+              />
+              <span className="relative z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-bold">
+                Tap / drag · {Math.min(100, Math.round(revealed * 20))}%
+              </span>
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <MediaBlock media={media} />
+      {preview ? <PreviewBadge /> : null}
+    </Shell>
+  )
+}
+
+/** Expanding pulse rings around the name */
+function PulseTemplate({ name, sender, message, media, preview }) {
+  return (
+    <Shell tone="bd-pulse">
+      <div className="relative z-10 flex min-h-[50svh] flex-col items-center justify-center px-5 pt-16">
+        <div className="relative flex h-56 w-56 items-center justify-center sm:h-64 sm:w-64">
+          {[0, 1, 2, 3].map((i) => (
+            <motion.span
+              key={i}
+              className="absolute inset-0 rounded-full border border-rose-300/50"
+              animate={{ scale: [0.55, 1.35], opacity: [0.7, 0] }}
+              transition={{ duration: 2.4, delay: i * 0.55, repeat: Infinity, ease: 'easeOut' }}
+            />
+          ))}
+          <motion.h1
+            className="relative z-10 max-w-[12rem] text-center font-display text-3xl text-rose-100 sm:text-4xl"
+            animate={{ scale: [1, 1.04, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+          >
+            {name}
+          </motion.h1>
+        </div>
+        {message ? <p className="mt-6 max-w-md text-center text-rose-100/85">{message}</p> : null}
+        {sender ? <p className="mt-4 text-sm text-rose-200/60">— {sender}</p> : null}
+      </div>
+      <MediaBlock media={media} />
+      {preview ? <PreviewBadge /> : null}
+    </Shell>
+  )
+}
+
+/** Instagram-style story chapters */
+function StoryTemplate({ name, sender, message, media, preview }) {
+  const slides = useMemo(
+    () => [
+      { kicker: 'Chapter 1', title: `Hey ${name}`, body: 'Today is all about you.' },
+      { kicker: 'Chapter 2', title: 'A little wish', body: message || 'May this year surprise you in the best ways.' },
+      { kicker: 'Finale', title: 'Happy Birthday', body: sender ? `With love — ${sender}` : 'Celebrate big.' },
+    ],
+    [name, message, sender],
+  )
+  const [i, setI] = useState(0)
+  const slide = slides[i]
+
+  return (
+    <Shell tone="bd-story">
+      <button
+        type="button"
+        className="relative z-10 mx-auto block w-full max-w-md px-4 pt-10 text-left"
+        onClick={() => setI((v) => (v + 1) % slides.length)}
+      >
+        <div className="mb-4 flex gap-1.5">
+          {slides.map((_, idx) => (
+            <span
+              key={idx}
+              className={cn('h-1 flex-1 rounded-full', idx <= i ? 'bg-sky-300' : 'bg-white/25')}
+            />
+          ))}
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide.kicker}
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            className="min-h-[280px] rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200">{slide.kicker}</p>
+            <h1 className="mt-3 font-display text-4xl text-white">{slide.title}</h1>
+            <p className="mt-4 text-base leading-relaxed text-sky-50/90">{slide.body}</p>
+            <p className="mt-10 text-xs text-white/50">Tap anywhere for next</p>
+          </motion.div>
+        </AnimatePresence>
+      </button>
+      <MediaBlock media={media} />
+      {preview ? <PreviewBadge /> : null}
+    </Shell>
+  )
+}
+
+/** Name center + orbiting gift markers */
+function OrbitTemplate({ name, sender, message, media, preview }) {
+  const orbs = [
+    { label: 'Gift', color: 'bg-amber-400', angle: 0 },
+    { label: 'Cake', color: 'bg-pink-400', angle: 72 },
+    { label: 'Wish', color: 'bg-sky-400', angle: 144 },
+    { label: 'Joy', color: 'bg-emerald-400', angle: 216 },
+    { label: 'Love', color: 'bg-violet-400', angle: 288 },
+  ]
+
+  return (
+    <Shell tone="bd-orbit">
+      <div className="relative z-10 mx-auto flex min-h-[52svh] max-w-lg flex-col items-center justify-center px-5 pt-14">
+        <div className="relative h-64 w-64 sm:h-72 sm:w-72">
+          <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+          >
+            {orbs.map((orb) => (
+              <div
+                key={orb.label}
+                className="absolute left-1/2 top-1/2"
+                style={{ transform: `rotate(${orb.angle}deg) translateY(-7.5rem)` }}
+              >
+                <div
+                  className={cn(
+                    'flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-slate-900 shadow-lg',
+                    orb.color,
+                  )}
+                >
+                  {orb.label}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-200/80">Orbit of joy</p>
+            <h1 className="mt-2 max-w-[10rem] font-display text-3xl text-white sm:text-4xl">{name}</h1>
+          </div>
+        </div>
+        {message ? <p className="mt-8 max-w-md text-center text-indigo-100/85">{message}</p> : null}
+        {sender ? <p className="mt-3 text-sm text-indigo-200/60">— {sender}</p> : null}
+      </div>
+      <MediaBlock media={media} />
+      {preview ? <PreviewBadge /> : null}
+    </Shell>
+  )
+}
+
+/** Render interactive digital surprise templates */
 export function DigitalSurpriseExperience({
   templateId,
   recipientName,
@@ -432,6 +637,16 @@ export function DigitalSurpriseExperience({
           {preview ? <PreviewBadge /> : null}
         </Shell>
       )
+    case 'bd-marquee':
+      return <MarqueeTemplate {...common} preview={preview} />
+    case 'bd-scratch':
+      return <ScratchTemplate {...common} preview={preview} />
+    case 'bd-pulse':
+      return <PulseTemplate {...common} preview={preview} />
+    case 'bd-story':
+      return <StoryTemplate {...common} preview={preview} />
+    case 'bd-orbit':
+      return <OrbitTemplate {...common} preview={preview} />
 
     case 'dw-diya':
       return (

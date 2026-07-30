@@ -39,6 +39,11 @@ export const digitalOccasions = [
       { id: 'bd-fireworks', name: 'Name Sky', hint: 'Firework finale' },
       { id: 'bd-karaoke', name: 'Happy Song', hint: 'Lyric scroll' },
       { id: 'bd-tunnel', name: 'Party Tunnel', hint: 'Confetti rush' },
+      { id: 'bd-marquee', name: 'Carnival Marquee', hint: 'Scrolling neon name' },
+      { id: 'bd-scratch', name: 'Scratch Reveal', hint: 'Wipe to uncover wish' },
+      { id: 'bd-pulse', name: 'Pulse Rings', hint: 'Heartbeat name glow' },
+      { id: 'bd-story', name: 'Story Slides', hint: 'Tap-through chapters' },
+      { id: 'bd-orbit', name: 'Gift Orbit', hint: 'Icons circle their name' },
     ],
   },
   {

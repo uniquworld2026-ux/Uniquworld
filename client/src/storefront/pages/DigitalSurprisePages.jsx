@@ -60,8 +60,8 @@ export function DigitalSurprisePage() {
           <Reveal>
             <SectionHeading
               eyebrow="Choose a card"
-              title="Three occasions · eight unique pages each"
-              description="Girlfriends Day, Birthday, and Diwali — every template is a different moving experience."
+              title="Three occasions · unique interactive pages"
+              description="Girlfriends Day, Birthday (13 styles), and Diwali — pick a template, preview once, unlock for ₹49."
             />
           </Reveal>
 

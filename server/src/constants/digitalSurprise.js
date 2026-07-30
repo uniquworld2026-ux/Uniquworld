@@ -33,6 +33,11 @@ const OCCASIONS = {
       'bd-fireworks',
       'bd-karaoke',
       'bd-tunnel',
+      'bd-marquee',
+      'bd-scratch',
+      'bd-pulse',
+      'bd-story',
+      'bd-orbit',
     ],
   },
   diwali: {
