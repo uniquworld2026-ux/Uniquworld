@@ -13,8 +13,8 @@ export function AdminUsersPage() {
   const createWrapped = {
     ...createMutation,
     mutateAsync: async (payload) => {
-      if (!payload.password || String(payload.password).length < 6) {
-        throw new Error('Password is required (min 6 characters) to create a login.')
+      if (!payload.password || !String(payload.password).trim()) {
+        throw new Error('Password is required to create a login.')
       }
       return createMutation.mutateAsync({
         ...payload,

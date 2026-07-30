@@ -342,36 +342,31 @@ export const primaryNav = [
     id: 'category',
     label: 'Category',
     path: '/categories',
-    image:
-      'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=240&q=80',
+    image: '/gifts/category.jpg',
   },
   {
     id: 'personalized',
     label: 'Personalized',
     path: '/personalized',
-    image:
-      'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=240&q=80',
+    image: '/gifts/relationship.jpg',
   },
   {
     id: 'handmade',
     label: 'Handmade',
     path: '/handmade',
-    image:
-      'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=240&q=80',
+    image: '/gifts/handmade.jpg',
   },
   {
     id: 'surprise',
     label: 'Surprise',
     path: '/surprise',
-    image:
-      'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=240&q=80',
+    image: '/gifts/surprise.jpg',
   },
   {
     id: 'store',
     label: 'Store',
     path: '/store',
-    image:
-      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=240&q=80',
+    image: '/gifts/store.jpg',
   },
 ]
 

@@ -3,7 +3,10 @@ import { ArrowRight } from 'lucide-react'
 import { PageHero } from '@/storefront/components/layout/PageHero'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
-import { giftCollectionGroups } from '@/storefront/features/personalized/giftCollectionGroups'
+import {
+  GIFT_IMAGE_FALLBACK,
+  giftCollectionGroups,
+} from '@/storefront/features/personalized/giftCollectionGroups'
 import { cn } from '@/shared/utils/cn'
 
 /** @deprecated kept for imports — prefer giftCollectionGroups */
@@ -13,20 +16,38 @@ export const personalizedTypes = giftCollectionGroups.flatMap((g) =>
     title: it.label,
     subtitle: g.title,
     path: it.path,
-    image: g.image,
+    image: it.image || g.image,
   })),
 )
+
+function handleImgError(e) {
+  if (e.currentTarget.dataset.fallback === '1') return
+  e.currentTarget.dataset.fallback = '1'
+  e.currentTarget.src = GIFT_IMAGE_FALLBACK
+}
 
 function SubCard({ item }) {
   return (
     <Link
       to={item.path}
-      className="group flex min-h-[4.5rem] items-center justify-between gap-2 rounded-xl border border-hm-border bg-hm-elevated px-3.5 py-3 shadow-hm-soft transition duration-300 hover:-translate-y-0.5 hover:border-hm-accent/40 hover:shadow-hm-card sm:min-h-[5rem] sm:px-4"
+      className="group overflow-hidden rounded-xl border border-hm-border bg-hm-elevated shadow-hm-soft transition duration-300 hover:-translate-y-0.5 hover:border-hm-accent/40 hover:shadow-hm-card"
     >
-      <span className="text-sm font-semibold leading-snug text-hm-primary group-hover:text-hm-accent">
-        {item.label}
-      </span>
-      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-hm-text-subtle transition group-hover:translate-x-0.5 group-hover:text-hm-accent" />
+      <div className="aspect-[4/3] overflow-hidden bg-hm-muted">
+        <img
+          src={item.image}
+          alt=""
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]"
+          loading="lazy"
+          decoding="async"
+          onError={handleImgError}
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <span className="line-clamp-2 text-left text-[13px] font-semibold leading-snug text-hm-primary group-hover:text-hm-accent">
+          {item.label}
+        </span>
+        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-hm-text-subtle transition group-hover:translate-x-0.5 group-hover:text-hm-accent" />
+      </div>
     </Link>
   )
 }
@@ -43,18 +64,18 @@ function CollectionBlock({ group, reverse = false }) {
           reverse && 'lg:[&>*:first-child]:order-2',
         )}
       >
-        {/* Large side card */}
         <Link
           to={group.path}
           className="group relative overflow-hidden rounded-2xl lg:col-span-4"
         >
-          <div className="aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[280px]">
+          <div className="aspect-[4/3] bg-hm-muted lg:aspect-auto lg:h-full lg:min-h-[280px]">
             <img
               src={group.image}
               alt=""
               className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
               loading="lazy"
               decoding="async"
+              onError={handleImgError}
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a2d4d]/90 via-[#0a2d4d]/35 to-transparent" />
@@ -73,7 +94,6 @@ function CollectionBlock({ group, reverse = false }) {
           </div>
         </Link>
 
-        {/* Small cards — 4 per row */}
         <div className="lg:col-span-8">
           <div className="mb-3 flex items-end justify-between gap-3 lg:hidden">
             <h2 className="font-display text-2xl text-hm-primary">
@@ -84,8 +104,8 @@ function CollectionBlock({ group, reverse = false }) {
             </h2>
           </div>
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
-            {group.items.map((item) => (
-              <SubCard key={item.id} item={item} />
+            {group.items.map((entry) => (
+              <SubCard key={entry.id} item={entry} />
             ))}
           </div>
         </div>
@@ -100,7 +120,7 @@ export function PersonalizedPage() {
       <PageHero
         eyebrow="Personalized"
         title="Gift collections for every moment"
-        description="Corporate kits, weddings, birthdays, handmade crafts, hampers, and more — pick a category, then a style. Four picks per row, ready to explore."
+        description="Corporate kits, weddings, birthdays, handmade crafts, hampers, and more — pick a category, then a style. Four image cards per row."
         actions={
           <>
             <Link to="/categories">
@@ -113,7 +133,6 @@ export function PersonalizedPage() {
         }
       />
 
-      {/* Quick jump chips */}
       <div className="sticky top-[var(--hm-header-offset,7.5rem)] z-20 border-b border-hm-border bg-hm-elevated/95 backdrop-blur-md">
         <Container className="py-2.5">
           <div className="flex gap-2 overflow-x-auto scrollbar-none [-webkit-overflow-scrolling:touch]">

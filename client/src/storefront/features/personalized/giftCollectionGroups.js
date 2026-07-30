@@ -1,7 +1,9 @@
 /**
  * Gift collection taxonomy for the Personalized hub.
- * Large category cards + 4-up subcategory cards.
+ * Images are local files under /public/gifts (always load).
  */
+
+const g = (file) => `/gifts/${file}`
 
 function slug(label) {
   return String(label || '')
@@ -11,10 +13,11 @@ function slug(label) {
     .replace(/^-|-$/g, '')
 }
 
-function item(label, path) {
+function item(label, imageFile, path) {
   return {
     id: slug(label),
     label,
+    image: g(imageFile),
     path: path || `/categories?q=${encodeURIComponent(label)}`,
   }
 }
@@ -26,20 +29,19 @@ export const giftCollectionGroups = [
     title: 'Corporate Gifts',
     description: 'Welcome kits, client gifts, and branded merchandise for teams.',
     path: '/corporate',
-    image:
-      'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=80',
+    image: g('corporate.jpg'),
     items: [
-      item('Employee Welcome Kits', '/corporate/welcome-kits'),
-      item('Joining Kits', '/corporate/joining-kits'),
-      item('Client Gifts', '/corporate'),
-      item('Executive Gifts', '/corporate/executive'),
-      item('Promotional Gifts', '/corporate/promo'),
-      item('Office Accessories', '/corporate/office'),
-      item('Corporate Gift Hampers', '/corporate'),
-      item('Conference Kits', '/corporate'),
-      item('Event Merchandise', '/corporate/merchandise'),
-      item('Awards & Trophies', '/corporate'),
-      item('Eco-Friendly Gifts', '/categories?q=Eco-Friendly'),
+      item('Employee Welcome Kits', 'thankyou.jpg', '/corporate/welcome-kits'),
+      item('Joining Kits', 'shopping.jpg', '/corporate/joining-kits'),
+      item('Client Gifts', 'gift-red.jpg', '/corporate'),
+      item('Executive Gifts', 'watch.jpg', '/corporate/executive'),
+      item('Promotional Gifts', 'tech.jpg', '/corporate/promo'),
+      item('Office Accessories', 'corporate.jpg', '/corporate/office'),
+      item('Corporate Gift Hampers', 'hamper.jpg', '/corporate'),
+      item('Conference Kits', 'relationship.jpg', '/corporate'),
+      item('Event Merchandise', 'celebration.jpg', '/corporate/merchandise'),
+      item('Awards & Trophies', 'fashion.jpg', '/corporate'),
+      item('Eco-Friendly Gifts', 'eco.jpg', '/categories?q=Eco-Friendly'),
     ],
   },
   {
@@ -48,17 +50,16 @@ export const giftCollectionGroups = [
     title: 'Wedding Gifts',
     description: 'Sets, return gifts, and keepsakes for the big day.',
     path: '/functions/wedding',
-    image:
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=900&q=80',
+    image: g('wedding.jpg'),
     items: [
-      item('Wedding Gift Sets', '/functions/wedding'),
-      item('Return Gifts', '/functions/wedding'),
-      item('Bride Gifts', '/functions/wedding'),
-      item('Groom Gifts', '/functions/wedding'),
-      item('Bridesmaid Gifts', '/functions/wedding'),
-      item('Groomsmen Gifts', '/functions/wedding'),
-      item('Wedding Hampers', '/functions/wedding'),
-      item('Invitation Gifts', '/functions/wedding'),
+      item('Wedding Gift Sets', 'wedding.jpg', '/functions/wedding'),
+      item('Return Gifts', 'gift-red.jpg', '/functions/wedding'),
+      item('Bride Gifts', 'flowers.jpg', '/functions/wedding'),
+      item('Groom Gifts', 'watch.jpg', '/functions/wedding'),
+      item('Bridesmaid Gifts', 'fashion.jpg', '/functions/wedding'),
+      item('Groomsmen Gifts', 'thankyou.jpg', '/functions/wedding'),
+      item('Wedding Hampers', 'hamper.jpg', '/functions/wedding'),
+      item('Invitation Gifts', 'ring.jpg', '/functions/wedding'),
     ],
   },
   {
@@ -67,16 +68,15 @@ export const giftCollectionGroups = [
     title: 'Birthday Gifts',
     description: 'Boxes, sweets, flowers, and personalized surprises.',
     path: '/celebrations/birthday',
-    image:
-      'https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&w=900&q=80',
+    image: g('birthday.jpg'),
     items: [
-      item('Birthday Gift Boxes', '/celebrations/birthday'),
-      item('Cakes', '/celebrations/birthday'),
-      item('Chocolates', '/celebrations/birthday'),
-      item('Flowers', '/celebrations/birthday'),
-      item('Soft Toys', '/celebrations/birthday'),
-      item('Personalized Birthday Gifts', '/personalized'),
-      item('Surprise Boxes', '/surprise'),
+      item('Birthday Gift Boxes', 'gift-red.jpg', '/celebrations/birthday'),
+      item('Cakes', 'cake.jpg', '/celebrations/birthday'),
+      item('Chocolates', 'chocolate.jpg', '/celebrations/birthday'),
+      item('Flowers', 'flowers.jpg', '/celebrations/birthday'),
+      item('Soft Toys', 'kids.jpg', '/celebrations/birthday'),
+      item('Personalized Birthday Gifts', 'relationship.jpg', '/personalized'),
+      item('Surprise Boxes', 'surprise.jpg', '/surprise'),
     ],
   },
   {
@@ -85,14 +85,13 @@ export const giftCollectionGroups = [
     title: 'Anniversary Gifts',
     description: 'Romantic picks for couples and shared memories.',
     path: '/celebrations/anniversary',
-    image:
-      'https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=900&q=80',
+    image: g('anniversary.jpg'),
     items: [
-      item('Couple Gifts', '/celebrations/anniversary'),
-      item('Personalized Frames', '/personalized/photo'),
-      item('Memory Albums', '/personalized/photo'),
-      item('Romantic Gift Boxes', '/celebrations/anniversary'),
-      item('Flowers & Chocolates', '/celebrations/anniversary'),
+      item('Couple Gifts', 'anniversary.jpg', '/celebrations/anniversary'),
+      item('Personalized Frames', 'relationship.jpg', '/personalized/photo'),
+      item('Memory Albums', 'craft.jpg', '/personalized/photo'),
+      item('Romantic Gift Boxes', 'gift-red.jpg', '/celebrations/anniversary'),
+      item('Flowers & Chocolates', 'flowers.jpg', '/celebrations/anniversary'),
     ],
   },
   {
@@ -101,14 +100,13 @@ export const giftCollectionGroups = [
     title: 'Baby Gifts',
     description: 'Soft, sweet, and personalized for little ones.',
     path: '/functions/baby-shower',
-    image:
-      'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4f8?auto=format&fit=crop&w=900&q=80',
+    image: g('baby.jpg'),
     items: [
-      item('Baby Shower Gifts', '/functions/baby-shower'),
-      item('Newborn Gift Sets', '/functions/baby-shower'),
-      item('Kids Toys', '/categories?q=Toys'),
-      item('Baby Essentials', '/functions/baby-shower'),
-      item('Personalized Baby Gifts', '/personalized'),
+      item('Baby Shower Gifts', 'baby.jpg', '/functions/baby-shower'),
+      item('Newborn Gift Sets', 'thankyou.jpg', '/functions/baby-shower'),
+      item('Kids Toys', 'kids.jpg', '/categories?q=Toys'),
+      item('Baby Essentials', 'spa.jpg', '/functions/baby-shower'),
+      item('Personalized Baby Gifts', 'relationship.jpg', '/personalized'),
     ],
   },
   {
@@ -117,16 +115,15 @@ export const giftCollectionGroups = [
     title: 'Home & Living',
     description: 'Decor, aroma, plants, and handmade home accents.',
     path: '/categories?q=Home',
-    image:
-      'https://images.unsplash.com/photo-1616486338812-3dadae25e6cd?auto=format&fit=crop&w=900&q=80',
+    image: g('home.jpg'),
     items: [
-      item('Home Decor'),
-      item('Wall Art'),
-      item('Resin Art', '/handmade'),
-      item('Candles'),
-      item('Aroma Products'),
-      item('Indoor Plants'),
-      item('Decorative Lights'),
+      item('Home Decor', 'home.jpg'),
+      item('Wall Art', 'craft.jpg'),
+      item('Resin Art', 'handmade.jpg', '/handmade'),
+      item('Candles', 'spa.jpg'),
+      item('Aroma Products', 'plant.jpg'),
+      item('Indoor Plants', 'plant.jpg'),
+      item('Decorative Lights', 'decor.jpg'),
     ],
   },
   {
@@ -135,16 +132,15 @@ export const giftCollectionGroups = [
     title: 'Handmade Crafts',
     description: 'Cards, paintings, crochet, resin, clay, and wood.',
     path: '/handmade',
-    image:
-      'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=900&q=80',
+    image: g('handmade.jpg'),
     items: [
-      item('Handmade Cards', '/handmade'),
-      item('Handmade Paintings', '/handmade'),
-      item('Crochet Products', '/handmade'),
-      item('Resin Crafts', '/handmade'),
-      item('Clay Art', '/handmade'),
-      item('Macrame', '/handmade'),
-      item('Wooden Crafts', '/handmade'),
+      item('Handmade Cards', 'craft.jpg', '/handmade'),
+      item('Handmade Paintings', 'craft.jpg', '/handmade'),
+      item('Crochet Products', 'yarn.jpg', '/handmade'),
+      item('Resin Crafts', 'handmade.jpg', '/handmade'),
+      item('Clay Art', 'pottery.jpg', '/handmade'),
+      item('Macrame', 'textile.jpg', '/handmade'),
+      item('Wooden Crafts', 'ceramic.jpg', '/handmade'),
     ],
   },
   {
@@ -153,15 +149,14 @@ export const giftCollectionGroups = [
     title: 'Gift Hampers',
     description: 'Chocolate, dry fruit, healthy, luxury, and festival baskets.',
     path: '/store/hamper-builder',
-    image:
-      'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&w=900&q=80',
+    image: g('hamper.jpg'),
     items: [
-      item('Chocolate Hampers'),
-      item('Dry Fruit Hampers'),
-      item('Healthy Hampers'),
-      item('Luxury Hampers'),
-      item('Festival Hampers', '/festivals'),
-      item('Corporate Hampers', '/corporate'),
+      item('Chocolate Hampers', 'chocolate.jpg'),
+      item('Dry Fruit Hampers', 'food.jpg'),
+      item('Healthy Hampers', 'plant.jpg'),
+      item('Luxury Hampers', 'thankyou.jpg'),
+      item('Festival Hampers', 'festival.jpg', '/festivals'),
+      item('Corporate Hampers', 'corporate.jpg', '/corporate'),
     ],
   },
   {
@@ -170,16 +165,15 @@ export const giftCollectionGroups = [
     title: 'Fashion & Accessories',
     description: 'Jewelry, watches, bags, and finishing touches.',
     path: '/categories?q=Fashion',
-    image:
-      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
+    image: g('fashion.jpg'),
     items: [
-      item('Jewelry'),
-      item('Watches'),
-      item('Wallets'),
-      item('Handbags'),
-      item('Sunglasses'),
-      item('Perfumes'),
-      item('Belts'),
+      item('Jewelry', 'fashion.jpg'),
+      item('Watches', 'watch.jpg'),
+      item('Wallets', 'shopping.jpg'),
+      item('Handbags', 'shopping.jpg'),
+      item('Sunglasses', 'watch.jpg'),
+      item('Perfumes', 'spa.jpg'),
+      item('Belts', 'gift-red.jpg'),
     ],
   },
   {
@@ -188,15 +182,14 @@ export const giftCollectionGroups = [
     title: 'Tech Gifts',
     description: 'Gadgets and accessories they will actually use.',
     path: '/categories?q=Tech',
-    image:
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80',
+    image: g('tech.jpg'),
     items: [
-      item('Smart Gadgets'),
-      item('Bluetooth Speakers'),
-      item('Headphones'),
-      item('Power Banks'),
-      item('Smart Watches'),
-      item('Mobile Accessories'),
+      item('Smart Gadgets', 'watch.jpg'),
+      item('Bluetooth Speakers', 'tech.jpg'),
+      item('Headphones', 'tech.jpg'),
+      item('Power Banks', 'corporate.jpg'),
+      item('Smart Watches', 'watch.jpg'),
+      item('Mobile Accessories', 'shopping.jpg'),
     ],
   },
   {
@@ -205,14 +198,13 @@ export const giftCollectionGroups = [
     title: 'Kitchen & Dining',
     description: 'Mugs, bottles, and everyday kitchen favorites.',
     path: '/categories?q=Kitchen',
-    image:
-      'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=900&q=80',
+    image: g('kitchen.jpg'),
     items: [
-      item('Coffee Mugs'),
-      item('Bottles'),
-      item('Lunch Boxes'),
-      item('Kitchen Accessories'),
-      item('Tea & Coffee Sets'),
+      item('Coffee Mugs', 'mug.jpg'),
+      item('Bottles', 'plant.jpg'),
+      item('Lunch Boxes', 'food.jpg'),
+      item('Kitchen Accessories', 'home.jpg'),
+      item('Tea & Coffee Sets', 'mug.jpg'),
     ],
   },
   {
@@ -221,14 +213,13 @@ export const giftCollectionGroups = [
     title: 'Kids & Toys',
     description: 'Play, learn, and soft cuddles for little ones.',
     path: '/categories?q=Kids',
-    image:
-      'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4f8?auto=format&fit=crop&w=900&q=80',
+    image: g('kids.jpg'),
     items: [
-      item('Educational Toys'),
-      item('Soft Toys'),
-      item('Activity Kits'),
-      item('Puzzles'),
-      item('Stationery'),
+      item('Educational Toys', 'decor.jpg'),
+      item('Soft Toys', 'kids.jpg'),
+      item('Activity Kits', 'handmade.jpg'),
+      item('Puzzles', 'craft.jpg'),
+      item('Stationery', 'relationship.jpg'),
     ],
   },
   {
@@ -237,14 +228,13 @@ export const giftCollectionGroups = [
     title: 'Eco-Friendly Gifts',
     description: 'Sustainable picks with a lighter footprint.',
     path: '/categories?q=Eco',
-    image:
-      'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=900&q=80',
+    image: g('eco.jpg'),
     items: [
-      item('Bamboo Products'),
-      item('Seed Pens'),
-      item('Plant Kits'),
-      item('Jute Bags'),
-      item('Recycled Gifts'),
+      item('Bamboo Products', 'eco.jpg'),
+      item('Seed Pens', 'plant.jpg'),
+      item('Plant Kits', 'plant.jpg'),
+      item('Jute Bags', 'textile.jpg'),
+      item('Recycled Gifts', 'handmade.jpg'),
     ],
   },
   {
@@ -253,17 +243,16 @@ export const giftCollectionGroups = [
     title: 'Festival Gifts',
     description: 'Seasonal edits for every celebration on the calendar.',
     path: '/festivals',
-    image:
-      'https://images.unsplash.com/photo-1604608672516-f1b9b1d37076?auto=format&fit=crop&w=900&q=80',
+    image: g('festival.jpg'),
     items: [
-      item('Diwali Gifts', '/festivals/diwali'),
-      item('Pongal Gifts', '/festivals/pongal'),
-      item('Christmas Gifts', '/festivals/christmas'),
-      item('New Year Gifts', '/festivals/new-year'),
-      item('Holi Gifts', '/festivals/holi'),
-      item('Eid Gifts', '/festivals/eid'),
-      item('Raksha Bandhan Gifts', '/festivals/raksha-bandhan'),
-      item("Valentine's Gifts", '/festivals/valentines'),
+      item('Diwali Gifts', 'festival.jpg', '/festivals/diwali'),
+      item('Pongal Gifts', 'food.jpg', '/festivals/pongal'),
+      item('Christmas Gifts', 'gift-red.jpg', '/festivals/christmas'),
+      item('New Year Gifts', 'celebration.jpg', '/festivals/new-year'),
+      item('Holi Gifts', 'craft.jpg', '/festivals/holi'),
+      item('Eid Gifts', 'thankyou.jpg', '/festivals/eid'),
+      item('Raksha Bandhan Gifts', 'fashion.jpg', '/festivals/raksha-bandhan'),
+      item("Valentine's Gifts", 'anniversary.jpg', '/festivals/valentines'),
     ],
   },
   {
@@ -272,21 +261,20 @@ export const giftCollectionGroups = [
     title: 'Relationship Gifts',
     description: 'Thoughtful finds for every person who matters.',
     path: '/relationships',
-    image:
-      'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=80',
+    image: g('relationship.jpg'),
     items: [
-      item('Gifts for Mother', '/relationships/mother'),
-      item('Gifts for Father', '/relationships/father'),
-      item('Gifts for Husband', '/relationships/husband'),
-      item('Gifts for Wife', '/relationships/wife'),
-      item('Gifts for Boyfriend', '/relationships/boyfriend'),
-      item('Gifts for Girlfriend', '/relationships/girlfriend'),
-      item('Gifts for Brother', '/relationships/brother'),
-      item('Gifts for Sister', '/relationships/sister'),
-      item('Gifts for Friends', '/relationships/best-friend'),
-      item('Gifts for Grandparents', '/relationships/grandparents'),
-      item('Gifts for Teachers', '/relationships/teacher'),
-      item('Gifts for Boss', '/relationships/boss'),
+      item('Gifts for Mother', 'flowers.jpg', '/relationships/mother'),
+      item('Gifts for Father', 'watch.jpg', '/relationships/father'),
+      item('Gifts for Husband', 'thankyou.jpg', '/relationships/husband'),
+      item('Gifts for Wife', 'fashion.jpg', '/relationships/wife'),
+      item('Gifts for Boyfriend', 'tech.jpg', '/relationships/boyfriend'),
+      item('Gifts for Girlfriend', 'anniversary.jpg', '/relationships/girlfriend'),
+      item('Gifts for Brother', 'shopping.jpg', '/relationships/brother'),
+      item('Gifts for Sister', 'spa.jpg', '/relationships/sister'),
+      item('Gifts for Friends', 'party.jpg', '/relationships/best-friend'),
+      item('Gifts for Grandparents', 'home.jpg', '/relationships/grandparents'),
+      item('Gifts for Teachers', 'mug.jpg', '/relationships/teacher'),
+      item('Gifts for Boss', 'corporate.jpg', '/relationships/boss'),
     ],
   },
   {
@@ -295,15 +283,14 @@ export const giftCollectionGroups = [
     title: 'Thank You Gifts',
     description: 'Say thank you with something they will keep.',
     path: '/thank-you',
-    image:
-      'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=80',
+    image: g('thankyou.jpg'),
     items: [
-      item('Thank You Teacher', '/thank-you/teacher'),
-      item('Thank You Doctor', '/thank-you/doctor'),
-      item('Thank You Customer', '/thank-you/customer'),
-      item('Thank You Employee', '/thank-you/employee'),
-      item('Thank You Friend', '/thank-you/friend'),
-      item('Thank You Boss', '/thank-you/boss'),
+      item('Thank You Teacher', 'mug.jpg', '/thank-you/teacher'),
+      item('Thank You Doctor', 'spa.jpg', '/thank-you/doctor'),
+      item('Thank You Customer', 'gift-red.jpg', '/thank-you/customer'),
+      item('Thank You Employee', 'corporate.jpg', '/thank-you/employee'),
+      item('Thank You Friend', 'relationship.jpg', '/thank-you/friend'),
+      item('Thank You Boss', 'watch.jpg', '/thank-you/boss'),
     ],
   },
   {
@@ -312,16 +299,15 @@ export const giftCollectionGroups = [
     title: 'Celebration Gifts',
     description: 'Milestones, promotions, and big life moments.',
     path: '/celebrations',
-    image:
-      'https://images.unsplash.com/photo-1530103861634-7bde0407bf21?auto=format&fit=crop&w=900&q=80',
+    image: g('celebration.jpg'),
     items: [
-      item('Congratulations Gifts', '/celebrations/congratulations'),
-      item('Promotion Gifts', '/celebrations/promotion'),
-      item('Graduation Gifts', '/functions/graduation'),
-      item('Housewarming Gifts', '/functions/housewarming'),
-      item('Retirement Gifts', '/functions/retirement'),
-      item('Farewell Gifts', '/functions/farewell'),
-      item('Achievement Gifts', '/celebrations/achievement'),
+      item('Congratulations Gifts', 'celebration.jpg', '/celebrations/congratulations'),
+      item('Promotion Gifts', 'corporate.jpg', '/celebrations/promotion'),
+      item('Graduation Gifts', 'thankyou.jpg', '/functions/graduation'),
+      item('Housewarming Gifts', 'home.jpg', '/functions/housewarming'),
+      item('Retirement Gifts', 'watch.jpg', '/functions/retirement'),
+      item('Farewell Gifts', 'flowers.jpg', '/functions/farewell'),
+      item('Achievement Gifts', 'fashion.jpg', '/celebrations/achievement'),
     ],
   },
   {
@@ -330,14 +316,15 @@ export const giftCollectionGroups = [
     title: 'Party Supplies',
     description: 'Balloons, décor, props, and return-gift ready bags.',
     path: '/categories?q=Party',
-    image:
-      'https://images.unsplash.com/photo-1530103861634-7bde0407bf21?auto=format&fit=crop&w=900&q=80',
+    image: g('party.jpg'),
     items: [
-      item('Balloons'),
-      item('Decorations'),
-      item('Party Props'),
-      item('Cake Toppers'),
-      item('Return Gift Bags'),
+      item('Balloons', 'party.jpg'),
+      item('Decorations', 'decor.jpg'),
+      item('Party Props', 'surprise.jpg'),
+      item('Cake Toppers', 'cake.jpg'),
+      item('Return Gift Bags', 'shopping.jpg'),
     ],
   },
 ]
+
+export const GIFT_IMAGE_FALLBACK = g('gift-red.jpg')

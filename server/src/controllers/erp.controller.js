@@ -82,8 +82,8 @@ const prepareAdminUserPayload = async (body, { requirePassword = false } = {}) =
   delete payload.password;
 
   if (password) {
-    if (String(password).length < 6) {
-      throw ApiError.badRequest('Password must be at least 6 characters');
+    if (!String(password).trim()) {
+      throw ApiError.badRequest('Password is required');
     }
     payload.passwordHash = await hashPassword(String(password));
   } else if (requirePassword) {

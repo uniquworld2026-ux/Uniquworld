@@ -11,24 +11,23 @@ import {
 import { Button } from '@/shared/components/ui/Button'
 import { cn } from '@/shared/utils/cn'
 
-const HERO_IMG =
-  'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1600&q=80'
+const HERO_IMG = '/gifts/handmade.jpg'
 
 const GALLERY = [
   {
-    src: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80',
+    src: '/gifts/craft.jpg',
     label: 'Hand-painted keepsakes',
   },
   {
-    src: 'https://images.unsplash.com/photo-1493106819501-66d381c466f1?auto=format&fit=crop&w=900&q=80',
+    src: '/gifts/pottery.jpg',
     label: 'Home pottery & clay',
   },
   {
-    src: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=900&q=80',
+    src: '/gifts/textile.jpg',
     label: 'Textile & embroidery',
   },
   {
-    src: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=900&q=80',
+    src: '/gifts/ceramic.jpg',
     label: 'Ceramic & clay craft',
   },
 ]
@@ -196,8 +195,7 @@ export function HandmadePage() {
                     decoding="async"
                     className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
                     onError={(e) => {
-                      e.currentTarget.src =
-                        'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=900&q=80'
+                      e.currentTarget.src = '/gifts/handmade.jpg'
                     }}
                   />
                 </div>

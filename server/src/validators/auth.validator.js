@@ -3,11 +3,8 @@ const { OTP_PURPOSE, ROLES } = require('../types/enums');
 
 const passwordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(128)
-  .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-  .regex(/[a-z]/, 'Password must contain a lowercase letter')
-  .regex(/[0-9]/, 'Password must contain a number');
+  .min(1, 'Password is required')
+  .max(128, 'Password must be at most 128 characters');
 
 const registerSchema = z.object({
   email: z.string().email().max(255).transform((v) => v.toLowerCase()),

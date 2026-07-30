@@ -8,7 +8,7 @@ import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
 import { useCart } from '@/storefront/hooks/useCart'
 import { accountApi, authApi } from '@/storefront/api/account'
 import { getErrorMessage } from '@/shared/lib/axios'
-import { PASSWORD_HINT, validatePassword } from '@/shared/lib/password'
+import { validatePassword } from '@/shared/lib/password'
 import { formatINR, loadRazorpay } from '@/storefront/lib/commerce'
 
 function AuthShell({ title, subtitle, children, footer }) {
@@ -242,7 +242,6 @@ export function SignupPage() {
           })}
           error={errors.password?.message}
         />
-        <p className="text-xs text-hm-text-muted">{PASSWORD_HINT}</p>
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Creating…' : 'Create account'}
