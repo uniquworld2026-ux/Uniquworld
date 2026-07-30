@@ -68,30 +68,38 @@ export function DigitalSurprisePage() {
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {digitalOccasions.map((occ, i) => (
               <Reveal key={occ.id} delay={i * 0.08}>
-                <Link
-                  to={`/surprise/digital/${occ.slug}`}
-                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated transition hover:border-hm-accent/40"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={occ.image}
-                      alt=""
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-                      loading="lazy"
-                    />
-                  </div>
+                <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated transition hover:border-hm-accent/40">
+                  <Link to={`/surprise/digital/${occ.slug}`} className="block overflow-hidden">
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <img
+                        src={occ.image}
+                        alt=""
+                        className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                        loading="lazy"
+                      />
+                    </div>
+                  </Link>
                   <div className="flex flex-1 flex-col p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-hm-accent">
                       {occ.dateLabel}
                     </p>
-                    <h2 className="mt-1 font-display text-2xl text-hm-text">{occ.title}</h2>
+                    <Link to={`/surprise/digital/${occ.slug}`}>
+                      <h2 className="mt-1 font-display text-2xl text-hm-text transition group-hover:text-hm-primary">
+                        {occ.title}
+                      </h2>
+                    </Link>
                     <p className="mt-2 flex-1 text-sm text-hm-text-muted">{occ.headline}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-hm-primary">
-                      Create for {formatINR(DIGITAL_PRICE_INR)}
-                      <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                    </span>
+                    <p className="mt-3 text-xs text-hm-text-subtle">
+                      {occ.templates.length} unique templates · 30-day private link
+                    </p>
+                    <Link to={`/surprise/digital/${occ.slug}`} className="mt-4 block">
+                      <Button type="button" variant="primary" className="w-full gap-1.5">
+                        Pay now · {formatINR(DIGITAL_PRICE_INR)}
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
-                </Link>
+                </article>
               </Reveal>
             ))}
           </div>
@@ -318,23 +326,47 @@ export function DigitalSurpriseCustomizePage() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-sm font-semibold text-hm-text">Choose a unique page style</h2>
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {occasion.templates.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTemplateId(t.id)}
-                      className={cn(
-                        'rounded-xl border px-3 py-3 text-left transition',
-                        templateId === t.id
-                          ? 'border-hm-accent bg-hm-accent-muted'
-                          : 'border-hm-border bg-hm-elevated hover:border-hm-accent/40',
-                      )}
-                    >
-                      <p className="text-xs font-semibold text-hm-text">{t.name}</p>
-                      <p className="mt-0.5 text-[10px] text-hm-text-muted">{t.hint}</p>
-                    </button>
-                  ))}
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {occasion.templates.map((t) => {
+                    const selected = templateId === t.id
+                    return (
+                      <div
+                        key={t.id}
+                        className={cn(
+                          'flex flex-col rounded-xl border px-3 py-3 text-left transition',
+                          selected
+                            ? 'border-hm-accent bg-hm-accent-muted ring-1 ring-hm-accent/30'
+                            : 'border-hm-border bg-hm-elevated',
+                        )}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setTemplateId(t.id)}
+                          className="text-left"
+                        >
+                          <p className="text-xs font-semibold text-hm-text">{t.name}</p>
+                          <p className="mt-0.5 text-[10px] text-hm-text-muted">{t.hint}</p>
+                        </button>
+                        <Button
+                          type="button"
+                          variant={selected ? 'primary' : 'outline'}
+                          size="sm"
+                          className="mt-2 w-full text-[11px]"
+                          disabled={busy}
+                          onClick={() => {
+                            setTemplateId(t.id)
+                            // Scroll to checkout actions so Pay now is obvious
+                            document.getElementById('ds-pay-now')?.scrollIntoView({
+                              behavior: 'smooth',
+                              block: 'center',
+                            })
+                          }}
+                        >
+                          Pay now · {formatINR(DIGITAL_PRICE_INR)}
+                        </Button>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -410,12 +442,12 @@ export function DigitalSurpriseCustomizePage() {
 
               {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
 
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div id="ds-pay-now" className="flex flex-col gap-2 sm:flex-row">
                 <Button type="button" variant="outline" className="flex-1" onClick={openPreview} disabled={busy}>
                   {previewUsed ? 'Preview used' : 'Demo preview (once)'}
                 </Button>
-                <Button type="button" variant="primary" className="flex-1" onClick={payAndPublish} disabled={busy}>
-                  {busy ? 'Processing…' : `Pay ${formatINR(DIGITAL_PRICE_INR)} & create link`}
+                <Button type="button" variant="primary" className="flex-1 gap-1.5" onClick={payAndPublish} disabled={busy}>
+                  {busy ? 'Processing…' : `Pay now · ${formatINR(DIGITAL_PRICE_INR)}`}
                 </Button>
               </div>
             </div>
