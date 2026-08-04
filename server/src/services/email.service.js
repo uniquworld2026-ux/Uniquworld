@@ -303,6 +303,21 @@ const sendProductActivityEmail = async ({
   return sendMail({ to, subject, html, text });
 };
 
+const sendStorePartnerWelcomeEmail = async ({ to, firstName, storeName }) => {
+  const { subject, html, text } = templates.storePartnerWelcomeEmail({ firstName, storeName });
+  return sendMail({ to, subject, html, text });
+};
+
+const sendStorePartnerInviteEmail = async ({ to, firstName, storeName, tempPassword, loginUrl }) => {
+  const { subject, html, text } = templates.storePartnerInviteEmail({
+    firstName,
+    storeName,
+    tempPassword,
+    loginUrl,
+  });
+  return sendMail({ to, subject, html, text });
+};
+
 module.exports = {
   sendMail,
   sendOtpEmail,
@@ -311,6 +326,8 @@ module.exports = {
   sendOrderEmail,
   sendNotificationEmail,
   sendProductActivityEmail,
+  sendStorePartnerWelcomeEmail,
+  sendStorePartnerInviteEmail,
   isSmtpConfigured,
   isResendConfigured,
   isEmailConfigured,

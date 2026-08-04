@@ -62,6 +62,7 @@ export function CartProvider({ children }) {
             price: product.price,
             image: product.image || product.images?.[0],
             tag: product.tag,
+            channel: product.channel || product.meta?.channel,
             meta: product.meta,
             qty: addQty,
           },

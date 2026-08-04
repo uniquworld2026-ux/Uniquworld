@@ -26,6 +26,12 @@ const ROLE_DEFS = [
     slug: ROLES.CORPORATE,
     description: 'B2B corporate buyer',
   },
+  {
+    id: ROLE_IDS.STORE_OWNER,
+    name: 'Store Owner',
+    slug: ROLES.STORE_OWNER,
+    description: 'Marketplace store partner',
+  },
 ];
 
 const findBySlug = async (slug) => {

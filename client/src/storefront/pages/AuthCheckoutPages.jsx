@@ -449,7 +449,12 @@ export function CheckoutPage() {
   }
 
   const shippingEstimate = subtotal >= 999 ? 0 : 49
-  const total = subtotal + shippingEstimate
+  const storeSubtotal = items.reduce((sum, item) => {
+    const isStore = item.channel === 'store' || item.meta?.channel === 'store' || item.meta?.storeId
+    return isStore ? sum + item.price * item.qty : sum
+  }, 0)
+  const platformFeeEstimate = Math.round(storeSubtotal * 0.1 * 100) / 100
+  const total = subtotal + platformFeeEstimate + shippingEstimate
 
   const openRazorpay = async (payment, order) => {
     const ok = await loadRazorpay()
@@ -516,6 +521,9 @@ export function CheckoutPage() {
           price: item.price,
           quantity: item.qty,
           image: item.image,
+          channel: item.channel || item.meta?.channel,
+          storeId: item.meta?.storeId || item.storeId,
+          storeProductId: item.meta?.storeProductId || (item.channel === 'store' ? item.id : undefined),
           meta: item.meta,
         })),
         paymentMethod,
@@ -635,6 +643,12 @@ export function CheckoutPage() {
               <span>Subtotal</span>
               <span>{formatINR(subtotal)}</span>
             </div>
+            {platformFeeEstimate > 0 ? (
+              <div className="flex justify-between">
+                <span>Platform fee (10%)</span>
+                <span>{formatINR(platformFeeEstimate)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between">
               <span>Shipping</span>
               <span>{shippingEstimate === 0 ? 'Free' : formatINR(shippingEstimate)}</span>

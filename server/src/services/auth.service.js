@@ -270,6 +270,16 @@ const verifyOtp = async ({ email, code, purpose }, meta = {}) => {
       throw ApiError.forbidden('Account is inactive');
     }
 
+    // Activate marketplace store after owner verifies email
+    if (user.role_slug === ROLES.STORE_OWNER) {
+      try {
+        const storePartnerService = require('./storePartner.service');
+        await storePartnerService.activateStoreAfterEmailVerify(user.id);
+      } catch (err) {
+        logger.warn('Store activation after verify failed', { userId: user.id, message: err.message });
+      }
+    }
+
     // Sign in after first OTP so the browser keeps the session
     await userRepository.touchLastLogin(user.id);
     const tokens = await tokenService.issueTokenPair(user, meta);
@@ -277,7 +287,10 @@ const verifyOtp = async ({ email, code, purpose }, meta = {}) => {
     return {
       verified: true,
       purpose,
-      message: 'Email verified. You are signed in.',
+      message:
+        user.role_slug === ROLES.STORE_OWNER
+          ? 'Email verified. Your store is ready — sign in to upload products and manage sales.'
+          : 'Email verified. You are signed in.',
       user: toPublicUser({ ...user, permissions: tokens.permissions }),
       tokens: {
         accessToken: tokens.accessToken,
@@ -454,4 +467,5 @@ module.exports = {
   resendOtp,
   googleLogin,
   me,
+  createAndSendOtp,
 };

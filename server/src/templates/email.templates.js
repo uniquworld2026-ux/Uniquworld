@@ -407,6 +407,76 @@ function digitalSurpriseEmail({ buyerName, recipientName, occasionTitle, shareUr
   return { subject, html, text };
 }
 
+function storePartnerWelcomeEmail({ firstName, storeName }) {
+  const name = escapeHtml(firstName || 'there');
+  const store = escapeHtml(storeName || 'your store');
+  const subject = `Welcome to ${brand.name} Store Partners`;
+  const html = layout({
+    preheader: 'Verify your email to start selling on Uniquworld Store.',
+    title: subject,
+    bodyHtml: `
+      ${heading('Store partner registration')}
+      ${paragraph(`Hi ${name},`)}
+      ${paragraph(
+        `Thanks for registering <strong>${store}</strong> on ${brand.name}. Verify your email with the OTP we sent — then you can upload products, manage inventory, and track sales.`,
+        { muted: true, top: 10 },
+      )}
+      ${paragraph(
+        'When customers buy your products, they pay the product price + 10% platform fee + shipping. You receive the full product amount after the order is delivered, and can withdraw to your bank anytime.',
+        { muted: true, top: 14 },
+      )}
+    `,
+    footerNote: 'Questions about selling? Reply to this email.',
+  });
+  const text = `Hi ${firstName || 'there'},\n\nThanks for registering ${storeName || 'your store'} on ${brand.name}. Verify your email OTP to unlock your dashboard.\n\n— ${brand.name}`;
+  return { subject, html, text };
+}
+
+function storePartnerInviteEmail({ firstName, storeName, tempPassword, loginUrl }) {
+  const name = escapeHtml(firstName || 'there');
+  const store = escapeHtml(storeName || 'your store');
+  const href = escapeHtml(loginUrl || `${config.clientUrl}/store/partner/login`);
+  const passwordBlock = tempPassword
+    ? `${paragraph(`Temporary password: <strong>${escapeHtml(tempPassword)}</strong>`, { muted: true, top: 10 })}
+       ${paragraph('Please change it after your first login.', { muted: true, top: 6 })}`
+    : '';
+  const subject = `Your ${brand.name} store account is ready`;
+  const html = layout({
+    preheader: `${storeName || 'Your store'} is live on Uniquworld.`,
+    title: subject,
+    bodyHtml: `
+      ${heading('Store owner invite')}
+      ${paragraph(`Hi ${name},`)}
+      ${paragraph(
+        `An admin created <strong>${store}</strong> for you on ${brand.name}. Sign in to upload products and manage sales.`,
+        { muted: true, top: 10 },
+      )}
+      ${passwordBlock}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 8px;">
+        <tr>
+          <td style="border-radius:10px;background-color:${brand.accent};">
+            <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:${brand.white};text-decoration:none;">
+              Open store dashboard
+            </a>
+          </td>
+        </tr>
+      </table>
+    `,
+  });
+  const text = [
+    `Hi ${firstName || 'there'},`,
+    '',
+    `Your store "${storeName}" is ready on ${brand.name}.`,
+    tempPassword ? `Temporary password: ${tempPassword}` : '',
+    `Login: ${loginUrl || `${config.clientUrl}/store/partner/login`}`,
+    '',
+    `— ${brand.name}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { subject, html, text };
+}
+
 module.exports = {
   otpEmail,
   welcomeEmail,
@@ -415,4 +485,6 @@ module.exports = {
   notificationEmail,
   productActivityEmail,
   digitalSurpriseEmail,
+  storePartnerWelcomeEmail,
+  storePartnerInviteEmail,
 };

@@ -64,6 +64,7 @@ const toOrder = (row, extras = {}) => {
     taxAmount: Number(row.tax_amount),
     shippingAmount: Number(row.shipping_amount),
     discountAmount: Number(row.discount_amount),
+    platformFeeAmount: Number(row.platform_fee_amount || 0),
     totalAmount: Number(row.total_amount),
     shippingAddressId: row.shipping_address_id,
     billingAddressId: row.billing_address_id,
@@ -94,6 +95,7 @@ const createWithItems = async ({
   taxAmount = 0,
   shippingAmount = 0,
   discountAmount = 0,
+  platformFeeAmount = 0,
   totalAmount,
   shippingAddressId,
   billingAddressId,
@@ -110,9 +112,9 @@ const createWithItems = async ({
     const orderResult = await client.query(
       `INSERT INTO orders (
          order_number, user_id, status, subtotal, tax_amount, shipping_amount,
-         discount_amount, total_amount, shipping_address_id, billing_address_id,
+         discount_amount, platform_fee_amount, total_amount, shipping_address_id, billing_address_id,
          shipping_address_snap, billing_address_snap, notes
-       ) VALUES ($1,$2,'pending',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       ) VALUES ($1,$2,'pending',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [
         orderNumber,
@@ -121,6 +123,7 @@ const createWithItems = async ({
         taxAmount,
         shippingAmount,
         discountAmount,
+        platformFeeAmount,
         totalAmount,
         shippingAddressId || null,
         billingAddressId || null,
@@ -136,8 +139,9 @@ const createWithItems = async ({
       const itemResult = await client.query(
         `INSERT INTO order_items (
            order_id, product_id, variant_id, product_name, sku,
-           unit_price, quantity, total_price, image_url, meta
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+           unit_price, quantity, total_price, image_url, meta,
+           store_id, store_product_id, platform_fee, store_earning
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          RETURNING *`,
         [
           order.id,
@@ -150,6 +154,10 @@ const createWithItems = async ({
           item.totalPrice,
           item.imageUrl || null,
           JSON.stringify(item.meta || {}),
+          item.storeId || null,
+          item.storeProductId || null,
+          item.platformFee || 0,
+          item.storeEarning || 0,
         ]
       );
       createdItems.push(toOrderItem(itemResult.rows[0]));
@@ -309,6 +317,16 @@ const updateStatus = async (orderId, status, note = null, userId = null) => {
      VALUES ($1, $2, $3, $4)`,
     [orderId, status, note, userId]
   );
+
+  if (status === 'delivered') {
+    try {
+      const storePartnerRepository = require('./storePartner.repository');
+      await storePartnerRepository.creditEarningsForOrder(orderId);
+    } catch (_err) {
+      // Earnings credit is best-effort; order status already updated
+    }
+  }
+
   return toOrder(result.rows[0]);
 };
 

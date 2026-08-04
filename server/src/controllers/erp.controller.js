@@ -367,6 +367,14 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
      VALUES ($1, $2, $3)`,
     [req.params.id, status, note || `Status set to ${status}`]
   );
+  if (status === 'delivered') {
+    try {
+      const storePartnerRepository = require('../repositories/storePartner.repository');
+      await storePartnerRepository.creditEarningsForOrder(req.params.id);
+    } catch (_err) {
+      // ignore — order already updated
+    }
+  }
   return ApiResponse.ok(res, { item: rowToApi(result.rows[0]) }, 'Order updated');
 });
 
@@ -609,11 +617,23 @@ const listPublicStoreProducts = asyncHandler(async (req, res) => {
 
 const getPublicStoreProduct = asyncHandler(async (req, res) => {
   const result = await query(
-    `SELECT * FROM store_products WHERE slug = $1 AND status = 'published' LIMIT 1`,
+    `SELECT sp.*, s.name AS store_name, s.code AS store_code, s.id AS store_id_joined
+     FROM store_products sp
+     LEFT JOIN stores s ON s.id = sp.store_id
+     WHERE sp.slug = $1 AND sp.status = 'published'
+     LIMIT 1`,
     [req.params.slug]
   );
   if (!result.rows[0]) throw ApiError.notFound('Product not found');
-  return ApiResponse.ok(res, { item: rowToApi(result.rows[0]) });
+  const row = result.rows[0];
+  return ApiResponse.ok(res, {
+    item: {
+      ...rowToApi(row),
+      storeId: row.store_id || row.store_id_joined || null,
+      storeName: row.store_name || null,
+      storeCode: row.store_code || null,
+    },
+  });
 });
 
 /** Public gift catalog (admin Product Management → storefront) */

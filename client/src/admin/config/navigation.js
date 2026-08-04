@@ -114,6 +114,12 @@ export const adminNavigation = [
         path: '/admin/store-products',
         icon: Boxes,
       },
+      {
+        id: 'store-withdrawals',
+        label: 'Store Withdrawals',
+        path: '/admin/store-withdrawals',
+        icon: CreditCard,
+      },
     ],
   },
   {

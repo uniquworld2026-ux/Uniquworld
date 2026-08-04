@@ -54,6 +54,13 @@ export function StoreProductDetailsPage() {
       slug: product.slug,
       tag: product.category || 'Store',
       channel: 'store',
+      meta: {
+        channel: 'store',
+        storeId: product.storeId || null,
+        storeProductId: product.id,
+        storeCode: product.storeCode || null,
+        storeName: product.storeName || null,
+      },
     }
   }, [product, images])
 
@@ -131,6 +138,14 @@ export function StoreProductDetailsPage() {
             {product.category || 'Store'}
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-hm-text">{product.name}</h1>
+          {product.storeName ? (
+            <p className="mt-1 text-sm text-hm-text-muted">
+              Sold by{' '}
+              <Link to={`/store?store=${product.storeCode || ''}`} className="text-hm-accent">
+                {product.storeName}
+              </Link>
+            </p>
+          ) : null}
           {product.sku ? (
             <p className="mt-1 text-sm text-hm-text-muted">SKU · {product.sku}</p>
           ) : null}
@@ -145,6 +160,9 @@ export function StoreProductDetailsPage() {
               </span>
             ) : null}
           </div>
+          <p className="mt-2 text-xs text-hm-text-muted">
+            Checkout adds 10% platform fee + shipping. The store receives the full product price after delivery.
+          </p>
 
           {product.description ? (
             <p className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-hm-text-muted">

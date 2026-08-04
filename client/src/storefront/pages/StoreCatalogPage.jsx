@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { PageHero } from '@/storefront/components/layout/PageHero'
 import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
@@ -8,19 +8,23 @@ import { getErrorMessage } from '@/shared/lib/axios'
 
 /**
  * /store — powered by the separate store_products catalog (not main products).
+ * Optional ?store=code filters to one partner store.
  */
 export function StoreHubPage() {
+  const [searchParams] = useSearchParams()
+  const storeCode = searchParams.get('store') || ''
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     storePublicApi
-      .listProducts()
+      .listProducts(storeCode ? { store: storeCode } : undefined)
       .then(setItems)
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false))
-  }, [])
+  }, [storeCode])
 
   const products = items.map((p) => {
     const gallery = Array.isArray(p.gallery) ? p.gallery.filter(Boolean) : []
@@ -32,7 +36,7 @@ export function StoreHubPage() {
       compareAt: p.compareAtPrice != null ? Number(p.compareAtPrice) : undefined,
       image: p.imageUrl || images[0],
       images,
-      tag: p.category || 'Store',
+      tag: p.storeName || p.category || 'Store',
       slug: p.slug,
       category: p.category,
       rating: 4.6,
@@ -44,12 +48,30 @@ export function StoreHubPage() {
     <div>
       <PageHero
         eyebrow="Store & Wholesale"
-        title="Store catalog"
-        description="Curated wholesale and store products, separate from the main gift shop."
+        title={storeCode ? `Store · ${storeCode}` : 'Store catalog'}
+        description={
+          storeCode
+            ? `Products from partner store ${storeCode}.`
+            : 'Partner and wholesale products. Register your shop to sell here.'
+        }
         actions={
-          <Link to="/store/bulk">
-            <Button variant="outline" size="sm">Bulk orders</Button>
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/store/vendor">
+              <Button size="sm">Become a partner</Button>
+            </Link>
+            <Link to="/store/partner/login">
+              <Button variant="outline" size="sm">Partner login</Button>
+            </Link>
+            {storeCode ? (
+              <Link to="/store">
+                <Button variant="outline" size="sm">All stores</Button>
+              </Link>
+            ) : (
+              <Link to="/store/bulk">
+                <Button variant="outline" size="sm">Bulk orders</Button>
+              </Link>
+            )}
+          </div>
         }
       />
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">

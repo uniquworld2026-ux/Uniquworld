@@ -7,7 +7,8 @@ VALUES
   ('11111111-1111-1111-1111-111111111001', 'Super Admin', 'super_admin', 'Full system access', TRUE),
   ('11111111-1111-1111-1111-111111111002', 'Admin', 'admin', 'Store administration', TRUE),
   ('11111111-1111-1111-1111-111111111003', 'Customer', 'customer', 'Default storefront user', TRUE),
-  ('11111111-1111-1111-1111-111111111004', 'Corporate', 'corporate', 'B2B corporate buyer', TRUE)
+  ('11111111-1111-1111-1111-111111111004', 'Corporate', 'corporate', 'B2B corporate buyer', TRUE),
+  ('11111111-1111-1111-1111-111111111005', 'Store Owner', 'store_owner', 'Marketplace store partner', TRUE)
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO permissions (name, slug, module, description) VALUES

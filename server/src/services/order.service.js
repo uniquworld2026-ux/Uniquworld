@@ -49,7 +49,8 @@ const placeOrder = async (userId, payload) => {
     throw ApiError.badRequest('Shipping address is required');
   }
 
-  const normalizedItems = items.map((item) => {
+  const normalizedItems = []
+  for (const item of items) {
     const quantity = Number(item.quantity) || 1;
     const unitPrice = Number(item.unitPrice ?? item.price);
     if (!item.productName && !item.name) {
@@ -58,24 +59,58 @@ const placeOrder = async (userId, payload) => {
     if (Number.isNaN(unitPrice) || unitPrice < 0) {
       throw ApiError.badRequest('Invalid item price');
     }
-    return {
+    const meta = item.meta || {};
+    let storeId = item.storeId || meta.storeId || null;
+    let storeProductId = item.storeProductId || meta.storeProductId || null;
+    const looksLikeStore =
+      Boolean(storeId || storeProductId || item.channel === 'store' || meta.channel === 'store');
+
+    if (looksLikeStore && (!storeId || !storeProductId)) {
+      const { query } = require('../config/database');
+      const idOrSlug = storeProductId || item.productId || item.id || item.catalogKey;
+      if (idOrSlug) {
+        const found = await query(
+          `SELECT id, store_id FROM store_products
+           WHERE id::text = $1 OR slug = $1
+           LIMIT 1`,
+          [String(idOrSlug)]
+        );
+        if (found.rows[0]) {
+          storeProductId = found.rows[0].id;
+          storeId = storeId || found.rows[0].store_id;
+        }
+      }
+    }
+
+    const totalPrice = unitPrice * quantity;
+    const isStoreItem = Boolean(storeId || storeProductId);
+    const platformFee = isStoreItem
+      ? Math.round(totalPrice * config.commerce.storePlatformFeePercent * 100) / 100
+      : 0;
+    normalizedItems.push({
       productId: item.productId || null,
       variantId: item.variantId || null,
       productName: item.productName || item.name,
       sku: item.sku || String(item.id || item.catalogKey || ''),
       unitPrice,
       quantity,
-      totalPrice: unitPrice * quantity,
+      totalPrice,
       imageUrl: item.imageUrl || item.image || null,
-      meta: item.meta || {},
-    };
-  });
+      meta: { ...meta, channel: isStoreItem ? 'store' : meta.channel },
+      storeId,
+      storeProductId,
+      platformFee,
+      storeEarning: isStoreItem ? totalPrice : 0,
+    });
+  }
 
   const subtotal = normalizedItems.reduce((sum, i) => sum + i.totalPrice, 0);
+  const platformFeeAmount = normalizedItems.reduce((sum, i) => sum + (i.platformFee || 0), 0);
   const shippingAmount = calcShipping(subtotal);
   const taxAmount = 0;
   const discountAmount = 0;
-  const totalAmount = subtotal + shippingAmount + taxAmount - discountAmount;
+  // Customer pays: product + 10% platform fee + shipping. Shop owner later receives product amount.
+  const totalAmount = subtotal + platformFeeAmount + shippingAmount + taxAmount - discountAmount;
 
   const method = paymentMethod === 'cod' ? 'cod' : paymentMethod;
   if (method === 'cod' && !config.commerce.codEnabled) {
@@ -101,6 +136,7 @@ const placeOrder = async (userId, payload) => {
     taxAmount,
     shippingAmount,
     discountAmount,
+    platformFeeAmount,
     totalAmount,
     shippingAddressId,
     billingAddressId: shippingAddressId,

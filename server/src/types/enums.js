@@ -3,6 +3,7 @@ const ROLES = Object.freeze({
   ADMIN: 'admin',
   CUSTOMER: 'customer',
   CORPORATE: 'corporate',
+  STORE_OWNER: 'store_owner',
 });
 
 const USER_STATUS = Object.freeze({
@@ -25,6 +26,7 @@ const ROLE_IDS = Object.freeze({
   ADMIN: '11111111-1111-1111-1111-111111111002',
   CUSTOMER: '11111111-1111-1111-1111-111111111003',
   CORPORATE: '11111111-1111-1111-1111-111111111004',
+  STORE_OWNER: '11111111-1111-1111-1111-111111111005',
 });
 
 module.exports = {

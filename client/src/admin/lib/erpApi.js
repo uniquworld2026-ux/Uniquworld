@@ -71,4 +71,19 @@ export const storePublicApi = {
     api.get('/store/products', { params }).then((r) => r.data.data.items),
   getProduct: (slug) =>
     api.get(`/store/products/${slug}`).then((r) => r.data.data.item),
+  listByStore: (code, params) =>
+    api.get(`/store/by/${encodeURIComponent(code)}`, { params }).then((r) => r.data.data),
+}
+
+export const storePartnerAdminApi = {
+  listStores: (params) =>
+    api.get('/store-partners/admin/stores', adminConfig({ params })).then((r) => r.data.data.items),
+  getStore: (id) =>
+    api.get(`/store-partners/admin/stores/${id}`, adminConfig()).then((r) => r.data.data),
+  createPartner: (body) =>
+    api.post('/store-partners/admin/partners', body, adminConfig()).then((r) => r.data.data),
+  listWithdrawals: (params) =>
+    api.get('/store-partners/admin/withdrawals', adminConfig({ params })).then((r) => r.data.data.items),
+  updateWithdrawal: (id, body) =>
+    api.patch(`/store-partners/admin/withdrawals/${id}`, body, adminConfig()).then((r) => r.data.data.item),
 }

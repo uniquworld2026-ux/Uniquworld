@@ -22,6 +22,7 @@ import {
   StoreProductCreatePage,
   StoreProductEditPage,
 } from '@/admin/features/stores/StoreProductFormPages'
+import { StoreWithdrawalsPage } from '@/admin/features/stores/StoreWithdrawalsPage'
 import { OrdersPage } from '@/admin/features/orders/OrdersPage'
 import { PaymentsPage } from '@/admin/features/payments/PaymentsPage'
 import { ShippingPage } from '@/admin/features/shipping/ShippingPage'
@@ -45,7 +46,7 @@ import { AuditLogsPage } from '@/admin/features/audit/AuditLogsPage'
 import { DesignSystemPage } from '@/storefront/pages/DesignSystemPage'
 import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
-import { storefrontRouteTree, surpriseFullscreenRoutes } from '@/storefront/config/routes'
+import { storefrontRouteTree, surpriseFullscreenRoutes, partnerPortalRoutes } from '@/storefront/config/routes'
 import { adminFlatNav } from '@/admin/config/navigation'
 
 const implementedAdminPaths = new Set([
@@ -61,6 +62,7 @@ const implementedAdminPaths = new Set([
   '/admin/stores',
   '/admin/store-products',
   '/admin/store-products/new',
+  '/admin/store-withdrawals',
   '/admin/orders',
   '/admin/payments',
   '/admin/shipping',
@@ -91,6 +93,7 @@ export function AppRouter() {
   return (
     <Routes>
       {surpriseFullscreenRoutes}
+      {partnerPortalRoutes}
       {storefrontRouteTree}
 
       <Route path="/design-system" element={<DesignSystemPage />} />
@@ -120,6 +123,7 @@ export function AppRouter() {
         <Route path="store-products" element={<StoreProductsPage />} />
         <Route path="store-products/new" element={<StoreProductCreatePage />} />
         <Route path="store-products/:id/edit" element={<StoreProductEditPage />} />
+        <Route path="store-withdrawals" element={<StoreWithdrawalsPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="shipping" element={<ShippingPage />} />

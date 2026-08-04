@@ -56,6 +56,17 @@ import { DigitalSurpriseDemoPage } from '@/storefront/pages/DigitalSurpriseDemoP
 import { StoreHubPage } from '@/storefront/pages/StoreCatalogPage'
 import { StoreProductDetailsPage } from '@/storefront/pages/StoreProductDetailsPage'
 import { HandmadePage } from '@/storefront/pages/HandmadePage'
+import {
+  PartnerRegisterPage,
+  PartnerLoginPage,
+  PartnerGuard,
+  PartnerLayout,
+  PartnerOverviewPage,
+  PartnerProductsPage,
+  PartnerSalesPage,
+  PartnerEarningsPage,
+  PartnerProfilePage,
+} from '@/storefront/pages/PartnerPortalPages'
 import { StorefrontLayout } from '@/storefront/layouts/StorefrontLayout'
 import { NotFoundPage } from '@/storefront/pages/NotFoundPage'
 
@@ -151,7 +162,6 @@ const plannedLeaves = [
   ['store/wholesale', 'Wholesale Orders'],
   ['store/dealer', 'Dealer Pricing'],
   ['store/distributor', 'Distributor Registration'],
-  ['store/vendor', 'Vendor Registration'],
   ['store/marketplace', 'Marketplace'],
   ['store/gift-box-builder', 'Gift Box Builder'],
   ['store/hamper-builder', 'Build Your Own Hamper'],
@@ -209,6 +219,7 @@ export const storefrontRouteTree = (
     <Route path="store" element={<StoreHubPage />} />
     <Route path="store/p/:slug" element={<StoreProductDetailsPage />} />
     <Route path="store/bulk" element={<BulkOrdersPage />} />
+    <Route path="store/vendor" element={<PartnerRegisterPage />} />
     <Route path="discover" element={<DiscoverHubPage />} />
     <Route path="gift-ideas" element={<GiftIdeasPage />} />
     <Route path="track-order" element={<TrackOrderPage />} />
@@ -273,5 +284,26 @@ export const surpriseFullscreenRoutes = (
   <>
     <Route path="/surprise/digital/:occasionSlug/demo" element={<DigitalSurpriseDemoPage />} />
     <Route path="/surprise/s/:slug" element={<DigitalSurpriseLivePage />} />
+  </>
+)
+
+/** Store partner dashboard — own chrome, no storefront header */
+export const partnerPortalRoutes = (
+  <>
+    <Route path="/store/partner/login" element={<PartnerLoginPage />} />
+    <Route
+      path="/store/partner"
+      element={
+        <PartnerGuard>
+          <PartnerLayout />
+        </PartnerGuard>
+      }
+    >
+      <Route index element={<PartnerOverviewPage />} />
+      <Route path="products" element={<PartnerProductsPage />} />
+      <Route path="sales" element={<PartnerSalesPage />} />
+      <Route path="earnings" element={<PartnerEarningsPage />} />
+      <Route path="profile" element={<PartnerProfilePage />} />
+    </Route>
   </>
 )

@@ -51,6 +51,7 @@ router.use('/auth', authRoutes);
 router.use('/account', accountRoutes);
 router.use('/erp', erpRoutes);
 router.use('/store', storeRoutes);
+router.use('/store-partners', require('./storePartner.routes'));
 router.use('/catalog', require('./catalog.routes'));
 router.use('/digital-surprises', require('./digitalSurprise.routes'));
 
