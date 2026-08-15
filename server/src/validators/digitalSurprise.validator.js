@@ -11,6 +11,7 @@ const createDigitalSurpriseSchema = z.object({
   instagramUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
   videoUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
   photoUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
+  musicUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
 });
 
 const verifyDigitalPaymentSchema = z.object({

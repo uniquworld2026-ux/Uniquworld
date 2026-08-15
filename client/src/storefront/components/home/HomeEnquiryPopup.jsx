@@ -144,7 +144,7 @@ export function HomeEnquiryPopup() {
         <button
           type="button"
           onClick={reopen}
-          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] z-[70] inline-flex min-h-11 items-center gap-2 rounded-full bg-hm-primary px-4 py-3 text-sm font-semibold text-white shadow-hm-elevated hover:bg-hm-primary-hover"
+          className="fixed bottom-[calc(var(--uw-bottom-nav-h)+0.75rem)] right-[max(1rem,env(safe-area-inset-right))] z-[70] inline-flex min-h-11 items-center gap-2 rounded-full bg-hm-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-hm-elevated hover:bg-hm-primary-hover lg:bottom-[max(1.25rem,env(safe-area-inset-bottom))] lg:right-[max(1.25rem,env(safe-area-inset-right))] lg:px-4 lg:py-3"
           aria-label="Open enquiry form"
         >
           <MessageCircle className="h-4 w-4" />

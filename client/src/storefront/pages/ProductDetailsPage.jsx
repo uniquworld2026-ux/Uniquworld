@@ -271,7 +271,7 @@ export function ProductDetailsPage() {
   }
 
   return (
-    <div className="pb-24 pt-3 lg:pb-10">
+    <div className="pb-[calc(5.5rem+var(--uw-bottom-nav-h))] pt-3 lg:pb-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
         <button
           type="button"
@@ -711,7 +711,7 @@ export function ProductDetailsPage() {
 
       {typeof document !== 'undefined'
         ? createPortal(
-            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hm-border bg-hm-elevated/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-lg sm:hidden">
+            <div className="fixed inset-x-0 bottom-[var(--uw-bottom-nav-h)] z-[45] border-t border-hm-border bg-hm-elevated/95 p-3 backdrop-blur-lg sm:hidden">
               <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
                 <Button variant="outline" size="lg" onClick={() => handleAddToBag('add')}>
                   <ShoppingBag className="h-4 w-4" />

@@ -13,7 +13,7 @@ import { formatINR, loadRazorpay } from '@/storefront/lib/commerce'
 
 function AuthShell({ title, subtitle, children, footer }) {
   return (
-    <div className="mx-auto flex min-h-[80svh] max-w-md flex-col justify-center px-5 py-24 sm:px-8">
+    <div className="mx-auto flex min-h-[70svh] max-w-md flex-col justify-center px-5 py-12 sm:min-h-[80svh] sm:px-8 sm:py-24">
       <BrandLogo priority imgClassName="h-11 sm:h-12" />
       <h1 className="mt-8 font-display text-4xl text-hm-text">{title}</h1>
       {subtitle ? <p className="mt-2 text-sm text-hm-text-muted">{subtitle}</p> : null}

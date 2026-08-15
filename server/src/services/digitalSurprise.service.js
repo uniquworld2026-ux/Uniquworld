@@ -94,6 +94,7 @@ const createDraft = async (payload, user = null) => {
       instagramUrl: payload.instagramUrl?.trim() || null,
       videoUrl: payload.videoUrl?.trim() || null,
       photoUrl: payload.photoUrl?.trim() || null,
+      musicUrl: payload.musicUrl?.trim() || null,
     },
     buyerEmail,
     buyerPhone: payload.buyerPhone?.trim() || null,

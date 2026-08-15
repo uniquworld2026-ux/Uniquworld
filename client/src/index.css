@@ -66,21 +66,35 @@
   --admin-sidebar-collapsed: 80px;
   --admin-header-height: 64px;
 
-  /* Sticky header clearance: announcement + utility + compact nav strip */
+  /* Sticky header clearance — compact on phones (no category strip) */
   --hm-header-offset: 7.25rem;
+  --uw-bottom-nav-h: 0px;
 
   color-scheme: light;
 }
 
 @media (min-width: 640px) {
   :root {
-    --hm-header-offset: 7.75rem;
+    --hm-header-offset: 7.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   :root {
     --hm-header-offset: 8.25rem;
+  }
+}
+
+/* Phone / tablet: reserve space for the fixed bottom nav */
+.has-mobile-bottom-nav {
+  --uw-bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--uw-bottom-nav-h);
+}
+
+@media (min-width: 1024px) {
+  .has-mobile-bottom-nav {
+    --uw-bottom-nav-h: 0px;
+    padding-bottom: 0;
   }
 }
 

@@ -264,7 +264,7 @@ export function ProductsPage() {
             aria-label="Close"
             onClick={() => setMobileFilters(false)}
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85svh] overflow-y-auto rounded-t-3xl border border-hm-border bg-hm-elevated p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="absolute inset-x-0 bottom-0 max-h-[85svh] overflow-y-auto rounded-t-3xl border border-hm-border bg-hm-elevated p-5 pb-[max(1.25rem,calc(var(--uw-bottom-nav-h)+0.75rem))]">
             <div className="mb-4 flex items-center justify-between">
               <p className="font-semibold text-hm-text">Filters</p>
               <button

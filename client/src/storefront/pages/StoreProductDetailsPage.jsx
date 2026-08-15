@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Minus, Plus, ShoppingBag } from 'lucide-react'
 import { storePublicApi } from '@/admin/lib/erpApi'
@@ -94,7 +95,7 @@ export function StoreProductDetailsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="mx-auto max-w-7xl px-4 pt-6 pb-[calc(5.5rem+var(--uw-bottom-nav-h))] sm:px-8 sm:pt-12 lg:pb-12">
       <button
         type="button"
         onClick={() => navigate('/store')}
@@ -174,7 +175,7 @@ export function StoreProductDetailsPage() {
             Stock · {product.stock > 0 ? `${product.stock} available` : 'Out of stock'}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <div className="mt-8 hidden flex-wrap items-center gap-4 sm:flex">
             <div className="inline-flex items-center rounded-xl border border-hm-border">
               <button
                 type="button"
@@ -209,6 +210,23 @@ export function StoreProductDetailsPage() {
           </div>
         </div>
       </div>
+
+      {typeof document !== 'undefined'
+        ? createPortal(
+            <div className="fixed inset-x-0 bottom-[var(--uw-bottom-nav-h)] z-[45] border-t border-hm-border bg-hm-elevated/95 p-3 backdrop-blur-lg sm:hidden">
+              <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
+                <Button variant="outline" size="lg" onClick={handleAdd} disabled={!product.stock}>
+                  <ShoppingBag className="h-4 w-4" />
+                  Add
+                </Button>
+                <Button variant="primary" size="lg" onClick={handleBuy} disabled={!product.stock}>
+                  Buy now
+                </Button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { resolveMediaEmbeds } from '@/storefront/features/digitalSurprise/mediaEmbeds'
 import { DS_GRADIENTS } from '@/storefront/features/digitalSurprise/gradients'
+import { MilkMochaInteractive } from '@/storefront/features/digitalSurprise/templates/MilkMochaInteractive'
+import { YoutubeBackgroundMusic } from '@/storefront/features/digitalSurprise/YoutubeBackgroundMusic'
 import { cn } from '@/shared/utils/cn'
 
 function MediaBlock({ media }) {
@@ -433,6 +435,7 @@ export function DigitalSurpriseExperience({
   const common = { name, sender: senderName, message, media }
   const tone = templateId
 
+  const tree = (() => {
   switch (templateId) {
     case 'gf-bloom':
       return (
@@ -539,6 +542,8 @@ export function DigitalSurpriseExperience({
         </Shell>
       )
 
+    case 'bd-mocha':
+      return <MilkMochaInteractive {...common} preview={preview} fullscreen={preview} />
     case 'bd-cake':
       return (
         <Shell tone={tone}>
@@ -761,4 +766,12 @@ export function DigitalSurpriseExperience({
         </Shell>
       )
   }
+  })()
+
+  return (
+    <>
+      {tree}
+      <YoutubeBackgroundMusic url={media?.musicUrl} />
+    </>
+  )
 }

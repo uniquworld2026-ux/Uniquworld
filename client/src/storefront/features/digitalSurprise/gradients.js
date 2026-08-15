@@ -8,6 +8,7 @@ export const DS_GRADIENTS = {
   'gf-balloons': 'linear-gradient(180deg,#ffe4ec,#ffb7c5)',
   'gf-scrapbook': 'linear-gradient(135deg,#f3e7d3,#d4b896)',
   'gf-neon': 'linear-gradient(180deg,#050510,#1a0a2e)',
+  'bd-mocha': 'linear-gradient(180deg,#f7c6d4,#fde4ec 40%,#f9a8d4)',
   'bd-cake': 'linear-gradient(180deg,#1e1630,#4a3060)',
   'bd-balloons': 'linear-gradient(160deg,#0f766e,#134e4a)',
   'bd-unwrap': 'linear-gradient(180deg,#3b1d0f,#7c2d12)',

@@ -573,8 +573,6 @@ function ProfilePage() {
 }
 
 export {
-  PartnerRegisterPage,
-  PartnerLoginPage,
   PartnerGuard,
   PartnerLayout,
   OverviewPage as PartnerOverviewPage,

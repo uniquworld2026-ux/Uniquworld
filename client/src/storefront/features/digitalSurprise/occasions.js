@@ -31,6 +31,7 @@ export const digitalOccasions = [
     image: '/gifts/birthday.jpg',
     accent: '#d4af37',
     templates: [
+      { id: 'bd-mocha', name: 'ft. Tuji Bunny - interactive', hint: '6-card animated GIF story' },
       { id: 'bd-cake', name: 'Candle Wish', hint: 'Blow & confetti' },
       { id: 'bd-balloons', name: 'Balloon Pop', hint: 'Tap to celebrate' },
       { id: 'bd-countdown', name: 'Countdown', hint: '3…2…1 surprise' },

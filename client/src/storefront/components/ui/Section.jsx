@@ -11,7 +11,7 @@ export function Section({
   return (
     <Comp
       className={cn(
-        'relative py-14 sm:py-16 md:py-20',
+        'relative py-8 sm:py-14 md:py-20',
         muted && 'bg-hm-muted/40',
         bordered && 'border-y border-hm-border',
         className,

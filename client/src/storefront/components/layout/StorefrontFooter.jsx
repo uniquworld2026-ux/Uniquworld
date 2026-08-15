@@ -68,7 +68,7 @@ export function StorefrontFooter() {
   const year = new Date().getFullYear()
 
   return (
-    <footer id="footer" className="relative mt-16 text-hm-text">
+    <footer id="footer" className="relative mt-10 text-hm-text lg:mt-16">
       {/* Atmosphere wash */}
       <div
         aria-hidden
@@ -195,7 +195,7 @@ export function StorefrontFooter() {
 
       {/* Bottom bar */}
       <div className="border-t border-hm-border bg-hm-primary text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p className="text-center text-xs leading-relaxed text-white/65 sm:text-left">
             © {year} Uniquworld. Make a Moment, Unique the world.
           </p>

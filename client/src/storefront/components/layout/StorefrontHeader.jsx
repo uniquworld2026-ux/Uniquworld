@@ -85,7 +85,7 @@ export function StorefrontHeader() {
                 </button>
               </div>
 
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))]">
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4 pb-[max(1.5rem,calc(var(--uw-bottom-nav-h)+1rem))] pl-[max(1rem,env(safe-area-inset-left))]">
                 <form onSubmit={onSearch} className="relative mb-4">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hm-text-subtle" />
                   <input
@@ -204,7 +204,7 @@ export function StorefrontHeader() {
           </div>
         </div>
 
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center gap-1.5 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
           <button
             type="button"
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted lg:hidden"
@@ -215,28 +215,25 @@ export function StorefrontHeader() {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          <BrandLogo priority className="min-w-0 shrink-0" imgClassName="h-8 sm:h-10" />
+          <BrandLogo
+            priority
+            className="min-w-0 shrink-0"
+            imgClassName="h-7 w-auto max-w-[7.5rem] object-contain object-left sm:h-10 sm:max-w-none"
+          />
 
-          <form onSubmit={onSearch} className="relative hidden min-w-0 flex-1 md:block">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-hm-text-subtle" />
+          <form onSubmit={onSearch} className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hm-text-subtle sm:left-3.5" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search gifts, occasions, surprises..."
-              className="h-11 w-full rounded-xl border border-hm-border bg-white/80 pl-10 pr-4 text-sm text-hm-text outline-none transition placeholder:text-hm-text-subtle focus:border-hm-accent focus:ring-2 focus:ring-hm-ring"
+              placeholder="Search gifts…"
+              className="h-10 w-full rounded-xl border border-hm-border bg-white/80 pl-9 pr-3 text-sm text-hm-text outline-none transition placeholder:text-hm-text-subtle focus:border-hm-accent focus:ring-2 focus:ring-hm-ring sm:h-11 sm:pl-10 sm:pr-4"
               aria-label="Search"
             />
           </form>
 
-          <div className="ml-auto flex min-w-0 shrink-0 items-center">
-            <Link
-              to="/search"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted md:hidden"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5" />
-            </Link>
+          <div className="ml-auto hidden min-w-0 shrink-0 items-center lg:flex">
             <Link
               to="/wishlist"
               className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted"
@@ -252,21 +249,21 @@ export function StorefrontHeader() {
             >
               <ShoppingBag className="h-5 w-5" />
               {count > 0 ? (
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-hm-accent px-1 text-[10px] font-bold text-hm-primary">
+                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-hm-accent px-1 text-[10px] font-bold text-white">
                   {count}
                 </span>
               ) : null}
             </button>
             <Link
               to="/account"
-              className="hidden min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted sm:inline-flex"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted"
               aria-label="Account"
             >
               <User className="h-5 w-5" />
             </Link>
             <Link
               to="/reminders"
-              className="hidden min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted sm:inline-flex"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-hm-text hover:bg-hm-muted"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -275,7 +272,7 @@ export function StorefrontHeader() {
               variant="ghost"
               size="icon"
               aria-label="Toggle theme"
-              className="hidden text-hm-text sm:inline-flex"
+              className="text-hm-text"
               onClick={toggleTheme}
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -283,7 +280,29 @@ export function StorefrontHeader() {
           </div>
         </div>
 
-        <nav className="border-t border-hm-border bg-hm-elevated/95" aria-label="Primary">
+        <nav
+          className="flex gap-2 overflow-x-auto px-3 pb-2.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
+          aria-label="Shop"
+        >
+          {primaryNav.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                cn(
+                  'shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition',
+                  isActive
+                    ? 'border-hm-accent bg-hm-accent/10 text-hm-accent'
+                    : 'border-hm-border bg-hm-bg text-hm-text-muted',
+                )
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <nav className="hidden border-t border-hm-border bg-hm-elevated/95 lg:block" aria-label="Primary">
           <div className="mx-auto grid max-w-7xl grid-cols-5">
             {primaryNav.map((item) => (
               <NavLink

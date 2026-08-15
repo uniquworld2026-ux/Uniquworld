@@ -25,6 +25,7 @@ const OCCASIONS = {
     headline: 'A moving birthday website — candles, confetti, and their name in lights.',
     priceInr: 49,
     templates: [
+      'bd-mocha',
       'bd-cake',
       'bd-balloons',
       'bd-countdown',

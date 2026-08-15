@@ -46,6 +46,44 @@ export function videoEmbedUrl(raw) {
   }
 }
 
+export function youtubeVideoId(raw) {
+  if (!raw) return null
+  try {
+    const u = new URL(raw.trim())
+    const host = u.hostname.replace(/^www\./, '').toLowerCase()
+    if (host === 'youtu.be') {
+      return u.pathname.replace(/^\//, '').split('/')[0] || null
+    }
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') {
+      return (
+        u.searchParams.get('v') ||
+        u.pathname.match(/\/embed\/([^/]+)/)?.[1] ||
+        u.pathname.match(/\/shorts\/([^/]+)/)?.[1] ||
+        null
+      )
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+export function youtubeMusicEmbedUrl(raw, { autoplay = true, mute = false } = {}) {
+  const id = youtubeVideoId(raw)
+  if (!id) return null
+  const params = new URLSearchParams({
+    rel: '0',
+    loop: '1',
+    playlist: id,
+    playsinline: '1',
+    enablejsapi: '1',
+    modestbranding: '1',
+    autoplay: autoplay ? '1' : '0',
+    mute: mute ? '1' : '0',
+  })
+  return `https://www.youtube.com/embed/${id}?${params.toString()}`
+}
+
 export function resolveMediaEmbeds({ instagramUrl, videoUrl } = {}) {
   const instagram = instagramEmbedUrl(instagramUrl)
   const video = videoEmbedUrl(videoUrl)

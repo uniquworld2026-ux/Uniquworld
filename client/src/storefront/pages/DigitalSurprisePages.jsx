@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowRight, Check, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Music, Sparkles } from 'lucide-react'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
 import { Section } from '@/storefront/components/ui/Section'
@@ -15,6 +15,8 @@ import {
 } from '@/storefront/features/digitalSurprise/occasions'
 import { digitalSurpriseApi } from '@/storefront/features/digitalSurprise/api'
 import { DigitalSurpriseExperience } from '@/storefront/features/digitalSurprise/DigitalSurpriseExperience'
+import { BACKGROUND_TRACKS } from '@/storefront/features/digitalSurprise/musicTracks'
+import { youtubeVideoId } from '@/storefront/features/digitalSurprise/mediaEmbeds'
 import { cn } from '@/shared/utils/cn'
 
 export function DigitalSurprisePage() {
@@ -118,17 +120,26 @@ export function DigitalSurpriseCustomizePage() {
   const [instagramUrl, setInstagramUrl] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
+  const [musicTrackId, setMusicTrackId] = useState('birthday-piano')
+  const [customMusicUrl, setCustomMusicUrl] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [published, setPublished] = useState(null)
+
+  const musicUrl = useMemo(() => {
+    if (musicTrackId === 'none') return ''
+    if (musicTrackId === 'custom') return customMusicUrl.trim()
+    return BACKGROUND_TRACKS.find((t) => t.id === musicTrackId)?.url || ''
+  }, [musicTrackId, customMusicUrl])
 
   const draftMedia = useMemo(
     () => ({
       instagramUrl: instagramUrl || null,
       videoUrl: videoUrl || null,
       photoUrl: photoUrl || null,
+      musicUrl: musicUrl || null,
     }),
-    [instagramUrl, videoUrl, photoUrl],
+    [instagramUrl, videoUrl, photoUrl, musicUrl],
   )
 
   if (!occasion) {
@@ -157,6 +168,7 @@ export function DigitalSurpriseCustomizePage() {
         instagramUrl: instagramUrl || undefined,
         videoUrl: videoUrl || undefined,
         photoUrl: photoUrl || undefined,
+        musicUrl: musicUrl || undefined,
       })
 
       const checkout = await digitalSurpriseApi.checkout(draft.id)
@@ -214,14 +226,15 @@ export function DigitalSurpriseCustomizePage() {
     }
   }
 
-  function openPreview() {
+  function openPreview(nextTemplateId = templateId) {
     setError('')
     const params = new URLSearchParams()
     if (recipientName.trim()) params.set('name', recipientName.trim())
     if (senderName.trim()) params.set('from', senderName.trim())
     if (message.trim()) params.set('msg', message.trim().slice(0, 180))
+    if (nextTemplateId) params.set('template', nextTemplateId)
+    if (musicUrl && youtubeVideoId(musicUrl)) params.set('music', musicUrl)
     const q = params.toString()
-    // Hard navigate so demo loads as its own full-screen page (no layout overlay)
     window.location.assign(`/surprise/digital/${occasion.slug}/demo${q ? `?${q}` : ''}`)
   }
 
@@ -310,13 +323,24 @@ export function DigitalSurpriseCustomizePage() {
                         </button>
                         <Button
                           type="button"
-                          variant={selected ? 'primary' : 'outline'}
+                          variant="outline"
                           size="sm"
                           className="mt-2 w-full text-[11px]"
+                          onClick={() => {
+                            setTemplateId(t.id)
+                            openPreview(t.id)
+                          }}
+                        >
+                          Full demo
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={selected ? 'primary' : 'outline'}
+                          size="sm"
+                          className="mt-1.5 w-full text-[11px]"
                           disabled={busy}
                           onClick={() => {
                             setTemplateId(t.id)
-                            // Scroll to checkout actions so Pay now is obvious
                             document.getElementById('ds-pay-now')?.scrollIntoView({
                               behavior: 'smooth',
                               block: 'center',
@@ -357,6 +381,46 @@ export function DigitalSurpriseCustomizePage() {
                   className="w-full rounded-xl border border-hm-border bg-hm-elevated px-3 py-2.5 text-sm outline-none focus:border-hm-accent"
                 />
               </label>
+              <div className="space-y-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-hm-text-muted">
+                  <Music className="h-3.5 w-3.5" />
+                  Background song
+                </span>
+                <p className="text-[11px] text-hm-text-subtle">
+                  Plays behind the surprise. Pick a track or paste a YouTube link.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {BACKGROUND_TRACKS.map((track) => {
+                    const selected = musicTrackId === track.id
+                    return (
+                      <button
+                        key={track.id}
+                        type="button"
+                        onClick={() => setMusicTrackId(track.id)}
+                        className={cn(
+                          'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
+                          selected
+                            ? 'border-hm-accent bg-hm-accent-muted text-hm-primary'
+                            : 'border-hm-border bg-hm-elevated text-hm-text-muted hover:border-hm-accent/40',
+                        )}
+                      >
+                        {track.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                {musicTrackId === 'custom' ? (
+                  <input
+                    value={customMusicUrl}
+                    onChange={(e) => setCustomMusicUrl(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=…"
+                    className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
+                  />
+                ) : null}
+                {musicTrackId === 'custom' && customMusicUrl && !youtubeVideoId(customMusicUrl) ? (
+                  <p className="text-xs text-hm-danger">Paste a valid YouTube link.</p>
+                ) : null}
+              </div>
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-hm-text-muted">Instagram post / reel URL</span>
                 <input
@@ -367,7 +431,7 @@ export function DigitalSurpriseCustomizePage() {
                 />
               </label>
               <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-hm-text-muted">YouTube / Vimeo / video URL → iframe</span>
+                <span className="text-xs font-medium text-hm-text-muted">Video to show on the page (optional)</span>
                 <input
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
@@ -404,8 +468,8 @@ export function DigitalSurpriseCustomizePage() {
               {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
 
               <div id="ds-pay-now" className="flex flex-col gap-2 sm:flex-row">
-                <Button type="button" variant="outline" className="flex-1" onClick={openPreview} disabled={busy}>
-                  Full-screen demo
+                <Button type="button" variant="outline" className="flex-1" onClick={() => openPreview()} disabled={busy}>
+                  Play full 6-card demo
                 </Button>
                 <Button type="button" variant="primary" className="flex-1 gap-1.5" onClick={payAndPublish} disabled={busy}>
                   {busy ? 'Processing…' : `Pay now · ${formatINR(DIGITAL_PRICE_INR)}`}
@@ -414,10 +478,19 @@ export function DigitalSurpriseCustomizePage() {
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-hm-border">
-              <div className="border-b border-hm-border bg-hm-bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-wider text-hm-text-muted">
-                Live style preview
+              <div className="flex items-center justify-between border-b border-hm-border bg-hm-bg-muted px-4 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-hm-text-muted">
+                  Live style preview
+                </p>
+                <button
+                  type="button"
+                  className="text-[11px] font-semibold text-hm-accent hover:underline"
+                  onClick={() => openPreview()}
+                >
+                  Open full demo
+                </button>
               </div>
-              <div className="max-h-[70vh] overflow-y-auto">
+              <div className="max-h-[85vh] min-h-[36rem] overflow-y-auto">
                 <DigitalSurpriseExperience
                   templateId={templateId}
                   recipientName={recipientName || 'Her name'}
