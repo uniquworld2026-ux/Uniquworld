@@ -14,9 +14,12 @@ import {
   buildDemoSlides,
 } from '@/storefront/features/digitalSurprise/demoSlides'
 import { DigitalSurpriseExperience } from '@/storefront/features/digitalSurprise/DigitalSurpriseExperience'
-import { YoutubeBackgroundMusic } from '@/storefront/features/digitalSurprise/YoutubeBackgroundMusic'
+import { BackgroundMusic } from '@/storefront/features/digitalSurprise/BackgroundMusic'
 import { BACKGROUND_TRACKS } from '@/storefront/features/digitalSurprise/musicTracks'
+import { appConfig } from '@/config/appConfig'
 import { cn } from '@/shared/utils/cn'
+
+const IS_LOCAL = appConfig.mode === 'local'
 
 const SLIDE_MS = 3800
 
@@ -113,11 +116,15 @@ export function DigitalSurpriseDemoPage() {
   const sender = location.state?.senderName || search.get('from') || 'Uniquworld'
   const message = location.state?.message || search.get('msg') || ''
   const templateId = location.state?.templateId || search.get('template') || ''
+  const musicFromState = location.state?.musicUrl
+  const musicFromQuery = search.get('music')
   const musicUrl =
-    location.state?.musicUrl ||
-    search.get('music') ||
-    (occasion?.id === 'birthday' ? BACKGROUND_TRACKS.find((t) => t.id === 'birthday-piano')?.url : '') ||
-    ''
+    musicFromState !== undefined && musicFromState !== null
+      ? musicFromState
+      : musicFromQuery !== null
+        ? musicFromQuery
+        : (occasion?.id === 'birthday' ? BACKGROUND_TRACKS.find((t) => t.id === 'birthday-piano')?.url : '') ||
+          ''
 
   const slides = useMemo(() => {
     const base = buildDemoSlides({
@@ -199,7 +206,9 @@ export function DigitalSurpriseDemoPage() {
     u.searchParams.set('from', sender)
     if (message) u.searchParams.set('msg', message.slice(0, 180))
     if (templateId) u.searchParams.set('template', templateId)
-    if (musicUrl) u.searchParams.set('music', musicUrl)
+    if (musicUrl && !musicUrl.startsWith('blob:') && !musicUrl.startsWith('data:')) {
+      u.searchParams.set('music', musicUrl)
+    }
     return u.toString()
   }, [occasion, name, sender, message, templateId, musicUrl])
 
@@ -247,25 +256,11 @@ export function DigitalSurpriseDemoPage() {
   if (templateId) {
     return (
       <div className="flex h-svh max-h-svh flex-col overflow-hidden bg-[#f7c6d4]">
-        <div className="z-40 flex shrink-0 items-center justify-between gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:gap-3 sm:px-4 sm:py-3">
-          <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#be123c]/80 sm:text-[10px]">
-              Full interactive demo · 6 cards
+        {IS_LOCAL ? (
+          <div className="z-40 flex shrink-0 items-center justify-between gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#be123c]/80">
+              Testing · 8 cards · song play / stop / upload
             </p>
-            <p className="truncate text-xs font-semibold text-[#9f1239] sm:text-sm">
-              {occasion.templates.find((t) => t.id === templateId)?.name || occasion.title}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              aria-label="Share demo"
-              className="inline-flex h-9 items-center gap-1 rounded-full bg-white/80 px-2.5 text-xs font-semibold text-[#9f1239] sm:px-3"
-              onClick={nativeShare}
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{copied ? 'Copied' : 'Share'}</span>
-            </button>
             <button
               type="button"
               aria-label="Close"
@@ -275,29 +270,61 @@ export function DigitalSurpriseDemoPage() {
               <X className="h-4 w-4" />
             </button>
           </div>
-        </div>
+        ) : (
+          <div className="z-40 flex shrink-0 items-center justify-between gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:gap-3 sm:px-4 sm:py-3">
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#be123c]/80 sm:text-[10px]">
+                Full interactive demo · 8 cards
+              </p>
+              <p className="truncate text-xs font-semibold text-[#9f1239] sm:text-sm">
+                {occasion.templates.find((t) => t.id === templateId)?.name || occasion.title}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                aria-label="Share demo"
+                className="inline-flex h-9 items-center gap-1 rounded-full bg-white/80 px-2.5 text-xs font-semibold text-[#9f1239] sm:px-3"
+                onClick={nativeShare}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{copied ? 'Copied' : 'Share'}</span>
+              </button>
+              <button
+                type="button"
+                aria-label="Close"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#9f1239]"
+                onClick={() => navigate(customizePath)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <DigitalSurpriseExperience
             templateId={templateId}
             recipientName={name}
             senderName={sender}
             message={message || occasion.headline}
-            preview
+            preview={!IS_LOCAL}
             media={musicUrl ? { musicUrl } : undefined}
           />
         </div>
-        <div className="shrink-0 px-3 pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-1 sm:px-4 sm:pt-2">
-          <div className="mx-auto flex max-w-lg items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/90 p-2 shadow-lg sm:gap-3 sm:p-3">
-            <p className="hidden text-xs text-[#7a3148] sm:block">
-              Play every card: Yes / No, then Click me through the story.
-            </p>
-            <p className="text-[11px] text-[#7a3148] sm:hidden">Tap Yes, then Click me</p>
-            <Button type="button" variant="primary" size="sm" className="shrink-0 gap-1.5" onClick={() => navigate(customizePath)}>
-              Create
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+        {IS_LOCAL ? null : (
+          <div className="shrink-0 px-3 pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-1 sm:px-4 sm:pt-2">
+            <div className="mx-auto flex max-w-lg items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/90 p-2 shadow-lg sm:gap-3 sm:p-3">
+              <p className="hidden text-xs text-[#7a3148] sm:block">
+                Play every card: Yes / No, then Click me through the story.
+              </p>
+              <p className="text-[11px] text-[#7a3148] sm:hidden">Tap Yes, then Click me</p>
+              <Button type="button" variant="primary" size="sm" className="shrink-0 gap-1.5" onClick={() => navigate(customizePath)}>
+                Create
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     )
   }
@@ -502,7 +529,7 @@ export function DigitalSurpriseDemoPage() {
           </div>
         </div>
       </div>
-      <YoutubeBackgroundMusic url={musicUrl} />
+      <BackgroundMusic url={musicUrl} />
     </div>
   )
 }

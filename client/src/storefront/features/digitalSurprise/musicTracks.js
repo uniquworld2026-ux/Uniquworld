@@ -1,4 +1,4 @@
-/** Background tracks — paste any YouTube URL, or pick a preset. */
+/** Background tracks — pick a preset, paste a YouTube URL, or upload an audio file. */
 export const BACKGROUND_TRACKS = [
   { id: 'none', label: 'No music', url: '' },
   {
@@ -21,6 +21,7 @@ export const BACKGROUND_TRACKS = [
     label: 'Warm acoustic',
     url: 'https://www.youtube.com/watch?v=1ZYbU82GVz4',
   },
+  { id: 'upload', label: 'Upload song…', url: '' },
   { id: 'custom', label: 'YouTube link…', url: '' },
 ]
 

@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+const path = require('path');
 const config = require('../config');
 const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
@@ -5,6 +7,7 @@ const digitalSurpriseRepository = require('../repositories/digitalSurprise.repos
 const razorpayService = require('./razorpay.service');
 const emailService = require('./email.service');
 const templates = require('../templates/email.templates');
+const { uploadFile } = require('../config/supabase');
 const {
   OCCASIONS,
   PRICE_PAISE,
@@ -264,6 +267,39 @@ const recordPreview = async (id) => {
   };
 };
 
+const AUDIO_EXT = new Set(['mp3', 'wav', 'ogg', 'm4a', 'aac', 'webm']);
+const EXT_MIME = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  m4a: 'audio/mp4',
+  aac: 'audio/aac',
+  webm: 'audio/webm',
+};
+
+const uploadMusic = async (file) => {
+  if (!file?.buffer) {
+    throw ApiError.badRequest('Choose a song file to upload');
+  }
+
+  const ext = path
+    .extname(file.originalname || '')
+    .replace('.', '')
+    .toLowerCase();
+  const safeExt = AUDIO_EXT.has(ext) ? ext : 'mp3';
+  const fileName = `${crypto.randomBytes(16).toString('hex')}.${safeExt}`;
+  const storagePath = `digital-surprise/music/${fileName}`;
+  const contentType = file.mimetype || EXT_MIME[safeExt] || 'audio/mpeg';
+
+  try {
+    const { publicUrl } = await uploadFile(storagePath, file.buffer, contentType);
+    return { url: publicUrl };
+  } catch (err) {
+    logger.error('Music upload failed', { message: err.message });
+    throw ApiError.badRequest('Could not upload song. Try a YouTube link instead.');
+  }
+};
+
 module.exports = {
   listOccasions,
   createDraft,
@@ -271,6 +307,7 @@ module.exports = {
   verifyAndActivate,
   getPublicBySlug,
   recordPreview,
+  uploadMusic,
   PRICE_PAISE,
   EXPIRY_DAYS,
 };

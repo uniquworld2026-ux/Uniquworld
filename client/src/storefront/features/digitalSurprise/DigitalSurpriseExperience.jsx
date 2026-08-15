@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { resolveMediaEmbeds } from '@/storefront/features/digitalSurprise/mediaEmbeds'
 import { DS_GRADIENTS } from '@/storefront/features/digitalSurprise/gradients'
 import { MilkMochaInteractive } from '@/storefront/features/digitalSurprise/templates/MilkMochaInteractive'
-import { YoutubeBackgroundMusic } from '@/storefront/features/digitalSurprise/YoutubeBackgroundMusic'
+import { BackgroundMusic } from '@/storefront/features/digitalSurprise/BackgroundMusic'
 import { cn } from '@/shared/utils/cn'
 
 function MediaBlock({ media }) {
@@ -430,6 +430,7 @@ export function DigitalSurpriseExperience({
   message,
   media,
   preview = false,
+  enableMusic = true,
 }) {
   const name = recipientName || 'You'
   const common = { name, sender: senderName, message, media }
@@ -771,7 +772,7 @@ export function DigitalSurpriseExperience({
   return (
     <>
       {tree}
-      <YoutubeBackgroundMusic url={media?.musicUrl} />
+      {enableMusic ? <BackgroundMusic url={media?.musicUrl} /> : null}
     </>
   )
 }

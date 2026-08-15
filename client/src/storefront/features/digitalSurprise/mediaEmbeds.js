@@ -81,7 +81,31 @@ export function youtubeMusicEmbedUrl(raw, { autoplay = true, mute = false } = {}
     autoplay: autoplay ? '1' : '0',
     mute: mute ? '1' : '0',
   })
-  return `https://www.youtube.com/embed/${id}?${params.toString()}`
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    params.set('origin', window.location.origin)
+  }
+  return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`
+}
+
+const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|aac|webm|mpeg|opus)(\?|$)/i
+
+/** Uploaded file (blob/data) or a direct audio URL — not YouTube. */
+export function isDirectAudioUrl(raw) {
+  if (!raw || typeof raw !== 'string') return false
+  const s = raw.trim()
+  if (s.startsWith('blob:')) return true
+  if (s.startsWith('data:audio')) return true
+  try {
+    const u = new URL(s)
+    if (AUDIO_EXT.test(u.pathname)) return true
+    return /\/digital-surprise\/music\//i.test(u.pathname)
+  } catch {
+    return false
+  }
+}
+
+export function isPlayableMusicUrl(raw) {
+  return Boolean(youtubeVideoId(raw) || isDirectAudioUrl(raw))
 }
 
 export function resolveMediaEmbeds({ instagramUrl, videoUrl } = {}) {

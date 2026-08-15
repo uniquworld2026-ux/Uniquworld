@@ -32,6 +32,11 @@ const preview = asyncHandler(async (req, res) => {
   return ApiResponse.ok(res, data, 'Preview recorded');
 });
 
+const uploadMusic = asyncHandler(async (req, res) => {
+  const data = await digitalSurpriseService.uploadMusic(req.file);
+  return ApiResponse.ok(res, data, 'Song uploaded');
+});
+
 module.exports = {
   listOccasions,
   create,
@@ -39,4 +44,5 @@ module.exports = {
   verifyPayment,
   getBySlug,
   preview,
+  uploadMusic,
 };

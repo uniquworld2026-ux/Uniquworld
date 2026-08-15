@@ -1,6 +1,7 @@
 const express = require('express');
 const validate = require('../../middlewares/validate.middleware');
 const { optionalAuthenticate } = require('../../middlewares/auth.middleware');
+const { musicUpload } = require('../../middlewares/musicUpload.middleware');
 const digitalSurpriseController = require('../../controllers/digitalSurprise.controller');
 const {
   createDigitalSurpriseSchema,
@@ -11,6 +12,8 @@ const router = express.Router();
 
 router.get('/occasions', digitalSurpriseController.listOccasions);
 router.get('/s/:slug', digitalSurpriseController.getBySlug);
+
+router.post('/music', optionalAuthenticate, musicUpload, digitalSurpriseController.uploadMusic);
 
 router.post(
   '/',

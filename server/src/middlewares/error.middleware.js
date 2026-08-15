@@ -23,6 +23,11 @@ const errorHandler = (err, req, res, _next) => {
     message = 'Request too large. Use images under 2 MB each or fewer gallery photos.';
   }
 
+  if (err.code === 'LIMIT_FILE_SIZE' || err.name === 'MulterError') {
+    statusCode = 400;
+    message = err.code === 'LIMIT_FILE_SIZE' ? 'Song must be under 8 MB' : err.message || 'Upload failed';
+  }
+
   if (err.code === '23505') {
     statusCode = 409;
     message = 'Resource already exists';

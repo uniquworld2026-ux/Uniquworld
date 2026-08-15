@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowRight, Check, Music, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Music, Sparkles, Upload, X } from 'lucide-react'
 import { Button } from '@/shared/components/ui/Button'
 import { Container } from '@/storefront/components/ui/Container'
 import { Section } from '@/storefront/components/ui/Section'
@@ -16,7 +16,12 @@ import {
 import { digitalSurpriseApi } from '@/storefront/features/digitalSurprise/api'
 import { DigitalSurpriseExperience } from '@/storefront/features/digitalSurprise/DigitalSurpriseExperience'
 import { BACKGROUND_TRACKS } from '@/storefront/features/digitalSurprise/musicTracks'
-import { youtubeVideoId } from '@/storefront/features/digitalSurprise/mediaEmbeds'
+import { BackgroundMusic } from '@/storefront/features/digitalSurprise/BackgroundMusic'
+import {
+  isDirectAudioUrl,
+  isPlayableMusicUrl,
+  youtubeVideoId,
+} from '@/storefront/features/digitalSurprise/mediaEmbeds'
 import { cn } from '@/shared/utils/cn'
 
 export function DigitalSurprisePage() {
@@ -122,15 +127,52 @@ export function DigitalSurpriseCustomizePage() {
   const [photoUrl, setPhotoUrl] = useState('')
   const [musicTrackId, setMusicTrackId] = useState('birthday-piano')
   const [customMusicUrl, setCustomMusicUrl] = useState('')
+  const [musicFile, setMusicFile] = useState(null)
+  const [musicFileName, setMusicFileName] = useState('')
+  const [uploadedObjectUrl, setUploadedObjectUrl] = useState('')
+  const uploadedObjectUrlRef = useRef('')
+  const musicFileInputRef = useRef(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [published, setPublished] = useState(null)
 
   const musicUrl = useMemo(() => {
     if (musicTrackId === 'none') return ''
+    if (musicTrackId === 'upload') return uploadedObjectUrl
     if (musicTrackId === 'custom') return customMusicUrl.trim()
     return BACKGROUND_TRACKS.find((t) => t.id === musicTrackId)?.url || ''
-  }, [musicTrackId, customMusicUrl])
+  }, [musicTrackId, customMusicUrl, uploadedObjectUrl])
+
+  useEffect(() => {
+    uploadedObjectUrlRef.current = uploadedObjectUrl
+  }, [uploadedObjectUrl])
+
+  useEffect(
+    () => () => {
+      if (uploadedObjectUrlRef.current) URL.revokeObjectURL(uploadedObjectUrlRef.current)
+    },
+    [],
+  )
+
+  function applyMusicFile(file) {
+    if (!file) return
+    if (!file.type.startsWith('audio/') && !/\.(mp3|wav|ogg|m4a|aac|webm)$/i.test(file.name)) {
+      setError('Upload an MP3, WAV, OGG, or M4A file')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setError('Song must be under 8 MB')
+      return
+    }
+    setError('')
+    if (uploadedObjectUrlRef.current) URL.revokeObjectURL(uploadedObjectUrlRef.current)
+    const nextUrl = URL.createObjectURL(file)
+    uploadedObjectUrlRef.current = nextUrl
+    setUploadedObjectUrl(nextUrl)
+    setMusicFile(file)
+    setMusicFileName(file.name)
+    setMusicTrackId('upload')
+  }
 
   const draftMedia = useMemo(
     () => ({
@@ -157,6 +199,15 @@ export function DigitalSurpriseCustomizePage() {
     setError('')
     setBusy(true)
     try {
+      let resolvedMusicUrl = musicUrl
+      if (musicTrackId === 'upload') {
+        if (!musicFile) throw new Error('Choose a song file to upload')
+        const uploaded = await digitalSurpriseApi.uploadMusic(musicFile)
+        resolvedMusicUrl = uploaded.url
+      } else if (resolvedMusicUrl && !isPlayableMusicUrl(resolvedMusicUrl)) {
+        throw new Error('Paste a valid YouTube or audio link')
+      }
+
       const draft = await digitalSurpriseApi.create({
         occasion: occasion.id,
         templateId,
@@ -168,7 +219,7 @@ export function DigitalSurpriseCustomizePage() {
         instagramUrl: instagramUrl || undefined,
         videoUrl: videoUrl || undefined,
         photoUrl: photoUrl || undefined,
-        musicUrl: musicUrl || undefined,
+        musicUrl: resolvedMusicUrl || undefined,
       })
 
       const checkout = await digitalSurpriseApi.checkout(draft.id)
@@ -234,8 +285,19 @@ export function DigitalSurpriseCustomizePage() {
     if (message.trim()) params.set('msg', message.trim().slice(0, 180))
     if (nextTemplateId) params.set('template', nextTemplateId)
     if (musicUrl && youtubeVideoId(musicUrl)) params.set('music', musicUrl)
+    else if (musicUrl && isDirectAudioUrl(musicUrl) && !musicUrl.startsWith('blob:')) {
+      params.set('music', musicUrl)
+    }
     const q = params.toString()
-    window.location.assign(`/surprise/digital/${occasion.slug}/demo${q ? `?${q}` : ''}`)
+    navigate(`/surprise/digital/${occasion.slug}/demo${q ? `?${q}` : ''}`, {
+      state: {
+        recipientName: recipientName.trim() || undefined,
+        senderName: senderName.trim() || undefined,
+        message: message.trim() || undefined,
+        templateId: nextTemplateId,
+        musicUrl: musicUrl || '',
+      },
+    })
   }
 
   if (published) {
@@ -387,7 +449,7 @@ export function DigitalSurpriseCustomizePage() {
                   Background song
                 </span>
                 <p className="text-[11px] text-hm-text-subtle">
-                  Plays behind the surprise. Pick a track or paste a YouTube link.
+                  Plays behind the surprise. Pick a track, paste a YouTube link, or upload an MP3.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {BACKGROUND_TRACKS.map((track) => {
@@ -413,12 +475,74 @@ export function DigitalSurpriseCustomizePage() {
                   <input
                     value={customMusicUrl}
                     onChange={(e) => setCustomMusicUrl(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=…"
+                    placeholder="https://youtube.com/watch?v=…  or  https://…/song.mp3"
                     className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
                   />
                 ) : null}
-                {musicTrackId === 'custom' && customMusicUrl && !youtubeVideoId(customMusicUrl) ? (
-                  <p className="text-xs text-hm-danger">Paste a valid YouTube link.</p>
+                {musicTrackId === 'custom' && customMusicUrl && !isPlayableMusicUrl(customMusicUrl) ? (
+                  <p className="text-xs text-hm-danger">Paste a valid YouTube or audio file link.</p>
+                ) : null}
+                {musicTrackId === 'upload' ? (
+                  <div className="space-y-2">
+                    <input
+                      ref={musicFileInputRef}
+                      type="file"
+                      accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/webm,.mp3,.wav,.ogg,.m4a,.aac"
+                      className="sr-only"
+                      onChange={(e) => {
+                        applyMusicFile(e.target.files?.[0])
+                        e.target.value = ''
+                      }}
+                    />
+                    {musicFileName ? (
+                      <div className="flex items-center justify-between gap-2 rounded-xl border border-hm-border bg-hm-elevated px-3 py-2">
+                        <p className="min-w-0 truncate text-sm text-hm-text">{musicFileName}</p>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            className="inline-flex h-8 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-hm-accent hover:underline"
+                            onClick={() => musicFileInputRef.current?.click()}
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Remove song"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-hm-text-muted hover:bg-hm-bg-muted"
+                            onClick={() => {
+                              if (uploadedObjectUrlRef.current) {
+                                URL.revokeObjectURL(uploadedObjectUrlRef.current)
+                                uploadedObjectUrlRef.current = ''
+                              }
+                              setUploadedObjectUrl('')
+                              setMusicFile(null)
+                              setMusicFileName('')
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => musicFileInputRef.current?.click()}
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-hm-border bg-hm-elevated text-sm font-medium text-hm-text-muted hover:border-hm-accent/50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload MP3 / WAV / M4A · up to 8 MB
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+                {isPlayableMusicUrl(musicUrl) ? (
+                  <div className="pt-1">
+                    <BackgroundMusic key={musicUrl} url={musicUrl} variant="inline" />
+                    <p className="mt-1.5 text-[11px] text-hm-text-subtle">
+                      Tap Play / Stop here to test the song before the full demo.
+                    </p>
+                  </div>
                 ) : null}
               </div>
               <label className="block space-y-1.5">
@@ -497,6 +621,7 @@ export function DigitalSurpriseCustomizePage() {
                   senderName={senderName}
                   message={message || occasion.headline}
                   media={draftMedia}
+                  enableMusic={false}
                 />
               </div>
             </div>

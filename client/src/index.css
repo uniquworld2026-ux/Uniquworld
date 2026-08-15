@@ -154,6 +154,7 @@
 @theme inline {
   --font-sans: var(--hm-font-sans);
   --font-display: var(--hm-font-display);
+  --font-hand: 'Caveat', cursive;
 
   --radius-hm-sm: var(--hm-radius-sm);
   --radius-hm-md: var(--hm-radius-md);
