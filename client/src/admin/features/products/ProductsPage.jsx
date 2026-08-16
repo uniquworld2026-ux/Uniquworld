@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { PRODUCT_STATUS_LABELS } from '@/admin/features/products/productSchema'
 import {
   bulkImportProducts,
-  productImportHeaders,
+  buildProductWorkbookSheets,
   productImportSampleRows,
   productsToCsvRows,
 } from '@/admin/features/products/productStore'
@@ -22,7 +22,13 @@ import {
   useDeleteProducts,
   useProducts,
 } from '@/admin/features/products/useProducts'
-import { downloadCsv, parseCsv, readTextFile } from '@/admin/lib/bulkCsv'
+import { parseCsv, readTextFile } from '@/admin/lib/bulkCsv'
+import {
+  downloadWorkbook,
+  isExcelFile,
+  parseSpreadsheetRows,
+  readSpreadsheetFile,
+} from '@/admin/lib/bulkExcel'
 import { AdminPageStats, buildPageStats } from '@/admin/components/crud/AdminPageStats'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
@@ -288,26 +294,32 @@ export function ProductsPage() {
     setImportMessage('')
     setImportError('')
     try {
-      const text = await readTextFile(file)
-      const rows = parseCsv(text)
-      if (rows.length === 0) throw new Error('The CSV file is empty.')
+      const rows = isExcelFile(file)
+        ? parseSpreadsheetRows(await readSpreadsheetFile(file))
+        : parseCsv(await readTextFile(file))
+      if (rows.length === 0) throw new Error('The file is empty.')
       rows.forEach((row, index) => {
         if (!row.name || !row.description || !row.price) {
           throw new Error(`Row ${index + 2}: name, description, and price are required.`)
         }
       })
-      const result = bulkImportProducts(rows)
+      const result = await bulkImportProducts(rows)
       await qc.invalidateQueries({ queryKey: ['products'] })
       const created = result.created?.length ?? 0
       const updated = result.updated?.length ?? 0
+      const failed = result.errors?.length ?? 0
       const parts = []
       if (created) parts.push(`${created} created`)
       if (updated) parts.push(`${updated} updated`)
+      if (failed) parts.push(`${failed} failed`)
       setImportMessage(
         parts.length
           ? `Bulk import complete: ${parts.join(', ')}.`
           : `Processed ${rows.length} row${rows.length === 1 ? '' : 's'}.`,
       )
+      if (failed) {
+        setImportError(result.errors.map((e) => `Row ${e.row}: ${e.message}`).join(' · '))
+      }
     } catch (error) {
       setImportError(error instanceof Error ? error.message : 'Import failed.')
     }
@@ -321,8 +333,8 @@ export function ProductsPage() {
             Product Management
           </h2>
           <p className="mt-1 max-w-xl text-sm text-admin-text-muted">
-            Create, edit, and manage catalog inventory. Import CSV to create or update by id / SKU /
-            slug.
+            Create, edit, and manage catalog inventory. Download the Excel sample — it includes every
+            product field. Import .xlsx or .csv to create or update by id / SKU / slug.
           </p>
           {flash ? (
             <p
@@ -339,7 +351,7 @@ export function ProductsPage() {
           <input
             ref={inputRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
             className="sr-only"
             onChange={(e) => {
               void handleImportFile(e.target.files?.[0])
@@ -351,11 +363,14 @@ export function ProductsPage() {
             size="sm"
             className="h-9 whitespace-nowrap"
             onClick={() =>
-              downloadCsv('products-sample-template.csv', productImportSampleRows, productImportHeaders)
+              downloadWorkbook(
+                'products-sample-template.xlsx',
+                buildProductWorkbookSheets(productImportSampleRows),
+              )
             }
           >
             <Download className="h-4 w-4" />
-            Sample
+            Excel sample
           </Button>
           <Button
             variant="outline"
@@ -364,16 +379,21 @@ export function ProductsPage() {
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
-            Import
+            Import Excel
           </Button>
           <Button
             variant="outline"
             size="sm"
             className="h-9 whitespace-nowrap"
-            onClick={() => downloadCsv('products-export.csv', productsToCsvRows(data), productImportHeaders)}
+            onClick={() =>
+              downloadWorkbook(
+                'products-export.xlsx',
+                buildProductWorkbookSheets(productsToCsvRows(data)),
+              )
+            }
           >
             <Download className="h-4 w-4" />
-            Export
+            Export Excel
           </Button>
           <Button
             variant="accent"
