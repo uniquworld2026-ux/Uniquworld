@@ -201,53 +201,7 @@ export function ProductsPage() {
 
   return (
     <div>
-      <section className="border-b border-hm-border bg-hm-muted/60">
-        <div className="mx-auto max-w-[90rem] px-4 py-6 sm:px-8 sm:py-8">
-          {activeCategory ? (
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="h-36 w-full overflow-hidden rounded-2xl border border-hm-border bg-white shadow-hm-soft sm:h-40 sm:w-52 sm:shrink-0">
-                <img
-                  src={activeCategory.image || CATEGORY_FALLBACK}
-                  alt=""
-                  className="h-full w-full object-contain p-2"
-                  onError={(e) => {
-                    if (e.currentTarget.src !== CATEGORY_FALLBACK) {
-                      e.currentTarget.src = CATEGORY_FALLBACK
-                    }
-                  }}
-                />
-              </div>
-              <div className="min-w-0">
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-hm-accent">
-                  Collection
-                </p>
-                <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-hm-text sm:text-4xl md:text-5xl">
-                  {activeCategory.title}
-                </h1>
-                <p className="mt-2 max-w-xl font-sans text-sm leading-relaxed text-hm-text-muted sm:text-base">
-                  {activeCategory.subtitle ||
-                    `Shop ${activeCategory.title} gifts — chosen for the moment.`}
-                </p>
-                <p className="mt-3 font-sans text-sm text-hm-text-subtle">
-                  {isLoading ? 'Loading…' : `${products.length} gift${products.length === 1 ? '' : 's'}`}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-hm-accent">
-                Shop
-              </p>
-              <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-hm-text sm:text-4xl md:text-5xl">
-                All gifts
-              </h1>
-              <p className="mt-2 max-w-xl font-sans text-sm leading-relaxed text-hm-text-muted sm:text-base">
-                Browse collections, then pick a gift that feels right.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+      <h1 className="sr-only">{activeCategory?.title || 'All gifts'}</h1>
 
       {categories.length > 0 || categoriesLoading ? (
         <div className="border-b border-hm-border bg-hm-elevated">
