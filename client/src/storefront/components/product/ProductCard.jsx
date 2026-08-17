@@ -9,7 +9,13 @@ import { cn } from '@/shared/utils/cn'
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=80'
 
-/** Simple product card — responsive for 2-col mobile grids */
+function occasionLabel(product) {
+  if (typeof product.occasion === 'string' && product.occasion.trim()) return product.occasion
+  if (Array.isArray(product.occasion) && product.occasion[0]) return product.occasion[0]
+  return product.category || ''
+}
+
+/** Product card — full-view image so headings on photos stay visible. */
 export function ProductCard({ product, className, href, priority = false }) {
   const navigate = useNavigate()
   const { addItem } = useCart()
@@ -17,6 +23,7 @@ export function ProductCard({ product, className, href, priority = false }) {
   const [failed, setFailed] = useState(false)
   const image = failed ? FALLBACK_IMAGE : preferred
   const detailHref = href || `/products/${product.id}`
+  const meta = occasionLabel(product)
 
   useEffect(() => {
     setFailed(false)
@@ -37,13 +44,13 @@ export function ProductCard({ product, className, href, priority = false }) {
   return (
     <article
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated shadow-hm-soft transition duration-300 hover:-translate-y-1 hover:border-hm-accent/40 hover:shadow-hm-card',
+        'group flex h-full flex-col overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated shadow-hm-soft transition duration-300 hover:-translate-y-1 hover:border-hm-accent/35 hover:shadow-hm-card',
         className,
       )}
     >
       <Link
         to={detailHref}
-        className="relative block aspect-[5/4] shrink-0 overflow-hidden bg-gradient-to-br from-hm-muted to-white"
+        className="relative block aspect-[4/5] shrink-0 overflow-hidden bg-hm-muted"
       >
         <img
           src={image}
@@ -54,17 +61,17 @@ export function ProductCard({ product, className, href, priority = false }) {
           onError={() => {
             if (!failed) setFailed(true)
           }}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          className="h-full w-full object-contain p-1.5 transition duration-500 group-hover:scale-[1.03] sm:p-2"
         />
         {product.tag ? (
-          <span className="absolute left-2 top-2 rounded-lg bg-hm-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white sm:left-3.5 sm:top-3.5 sm:rounded-xl sm:px-3 sm:py-1 sm:text-[11px]">
+          <span className="absolute left-2 top-2 rounded-full bg-hm-primary/95 px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[11px]">
             {product.tag}
           </span>
         ) : null}
         <button
           type="button"
           aria-label="Wishlist"
-          className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-hm-primary shadow-hm-soft sm:right-3.5 sm:top-3.5 sm:h-10 sm:w-10"
+          className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-hm-primary shadow-hm-soft sm:right-3 sm:top-3 sm:h-10 sm:w-10"
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -75,34 +82,30 @@ export function ProductCard({ product, className, href, priority = false }) {
         </button>
       </Link>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-5">
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4 sm:pt-3">
         <div className="min-w-0">
+          {meta ? (
+            <p className="mb-0.5 truncate font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-hm-accent sm:text-[11px]">
+              {meta}
+            </p>
+          ) : null}
           <Link to={detailHref}>
-            <h3 className="line-clamp-2 text-sm font-medium leading-snug text-hm-text hover:text-hm-primary sm:min-h-[2.75rem] sm:text-[1.05rem]">
+            <h3 className="line-clamp-2 font-display text-[1.05rem] font-semibold leading-snug tracking-tight text-hm-text transition hover:text-hm-accent sm:min-h-[2.6rem] sm:text-[1.25rem]">
               {product.name}
             </h3>
           </Link>
-          {(typeof product.occasion === 'string'
-            ? product.occasion
-            : product.occasion?.[0]) || product.category ? (
-            <p className="mt-1 hidden line-clamp-1 text-[0.8125rem] text-hm-text-subtle sm:block">
-              {typeof product.occasion === 'string'
-                ? product.occasion
-                : product.occasion?.[0] || product.category}
-            </p>
-          ) : null}
         </div>
 
         <div className="mt-auto pt-2 sm:pt-3">
           <div className="flex items-end justify-between gap-1.5">
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline gap-1.5">
-                <p className="text-base font-semibold leading-tight text-hm-primary sm:text-xl">
+                <p className="font-sans text-base font-bold leading-tight text-hm-primary sm:text-xl">
                   {formatCurrency(product.price)}
                 </p>
                 {product.offerPercent > 0 ||
                 (product.compareAt && product.compareAt > product.price) ? (
-                  <span className="rounded-md bg-hm-offer-muted px-1.5 py-0.5 text-[0.7rem] font-semibold text-hm-offer sm:text-[0.75rem]">
+                  <span className="rounded-md bg-hm-offer-muted px-1.5 py-0.5 font-sans text-[0.7rem] font-semibold text-hm-offer sm:text-[0.75rem]">
                     {product.offerPercent > 0
                       ? `${product.offerPercent}% off`
                       : `${Math.round(((product.compareAt - product.price) / product.compareAt) * 1000) / 10}% off`}
@@ -111,7 +114,7 @@ export function ProductCard({ product, className, href, priority = false }) {
               </div>
               <p
                 className={cn(
-                  'text-[0.75rem] leading-tight text-hm-text-subtle line-through sm:text-[0.8125rem]',
+                  'font-sans text-[0.75rem] leading-tight text-hm-text-subtle line-through sm:text-[0.8125rem]',
                   !product.compareAt && 'invisible',
                 )}
               >
@@ -123,11 +126,11 @@ export function ProductCard({ product, className, href, priority = false }) {
             </div>
           </div>
 
-          <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:mt-3 sm:gap-2.5">
+          <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:mt-3 sm:gap-2">
             <button
               type="button"
               onClick={handleAdd}
-              className="inline-flex h-10 items-center justify-center gap-1 rounded-xl border border-hm-border text-[0.75rem] font-semibold text-hm-text hover:border-hm-accent hover:text-hm-primary sm:h-11 sm:gap-1.5 sm:text-[0.8125rem]"
+              className="inline-flex h-10 items-center justify-center gap-1 rounded-xl border border-hm-border font-sans text-[0.75rem] font-semibold text-hm-text transition hover:border-hm-accent hover:text-hm-primary sm:h-11 sm:gap-1.5 sm:text-[0.8125rem]"
             >
               <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Add
@@ -135,7 +138,7 @@ export function ProductCard({ product, className, href, priority = false }) {
             <button
               type="button"
               onClick={handleBuy}
-              className="inline-flex h-10 items-center justify-center gap-1 rounded-xl bg-hm-primary text-[0.75rem] font-semibold text-white hover:bg-hm-primary-hover sm:h-11 sm:text-[0.8125rem]"
+              className="inline-flex h-10 items-center justify-center gap-1 rounded-xl bg-hm-primary font-sans text-[0.75rem] font-semibold text-white transition hover:bg-hm-primary-hover sm:h-11 sm:text-[0.8125rem]"
             >
               Buy
               <span className="hidden sm:inline"> now</span>

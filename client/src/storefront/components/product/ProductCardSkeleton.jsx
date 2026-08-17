@@ -11,8 +11,8 @@ export function ProductCardSkeleton({ className }) {
       )}
       aria-hidden
     >
-      <Skeleton className="aspect-[5/4] w-full rounded-none" />
-      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-5">
+      <Skeleton className="aspect-[4/5] w-full rounded-none" />
+      <div className="flex flex-1 flex-col gap-2 px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4 sm:pt-3">
         <Skeleton className="h-4 w-4/5 rounded-md" />
         <Skeleton className="h-4 w-3/5 rounded-md" />
         <div className="mt-auto space-y-2 pt-3">
@@ -50,11 +50,14 @@ export function ProductGridSkeleton({ count = 8, className }) {
 
 export function CategoryCardSkeleton() {
   return (
-    <div className="relative aspect-[3/4] overflow-hidden rounded-2xl" aria-hidden>
-      <Skeleton className="h-full w-full rounded-none" />
-      <div className="absolute inset-x-0 bottom-0 space-y-2 p-5">
-        <Skeleton className="h-7 w-2/3 rounded-md bg-white/30" />
-        <Skeleton className="h-4 w-1/2 rounded-md bg-white/20" />
+    <div
+      className="overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated"
+      aria-hidden
+    >
+      <Skeleton className="aspect-[4/5] w-full rounded-none" />
+      <div className="space-y-2 p-4 sm:p-5">
+        <Skeleton className="h-7 w-2/3 rounded-md" />
+        <Skeleton className="h-4 w-1/2 rounded-md" />
       </div>
     </div>
   )

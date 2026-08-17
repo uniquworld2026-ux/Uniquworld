@@ -50,19 +50,22 @@ export function CategoriesPage() {
               <Link
                 key={cat.id}
                 to={cat.path}
-                className="group relative aspect-[3/4] overflow-hidden rounded-2xl"
+                className="group overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated shadow-hm-soft transition hover:-translate-y-1 hover:border-hm-accent/35 hover:shadow-hm-card"
               >
-                <img
-                  src={cat.image}
-                  alt=""
-                  className="h-full w-full object-cover transition group-hover:scale-[1.03]"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                  <p className="font-display text-2xl">{cat.title}</p>
-                  <p className="text-sm text-white/75">
+                <div className="aspect-[4/5] overflow-hidden bg-hm-muted">
+                  <img
+                    src={cat.image}
+                    alt=""
+                    className="h-full w-full object-contain p-2 transition duration-500 group-hover:scale-[1.03]"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="space-y-1 p-4 sm:p-5">
+                  <p className="font-display text-2xl font-semibold tracking-tight text-hm-text">
+                    {cat.title}
+                  </p>
+                  <p className="font-sans text-sm text-hm-text-muted">
                     {cat.subtitle || `${cat.productCount} product${cat.productCount === 1 ? '' : 's'}`}
                   </p>
                 </div>
