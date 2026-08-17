@@ -150,8 +150,10 @@ export function ProductDetailsPage() {
       : product?.shippingNote || 'Dispatches in 1–2 days'
 
   const unitPrice = displayPrice
-  const displayRating = reviewsLoaded ? liveRating || 0 : product?.rating || 0
-  const displayReviewCount = reviewsLoaded ? liveReviewCount : product?.reviewCount || 0
+  const displayRating =
+    reviewsLoaded && liveReviewCount > 0 ? liveRating || product?.rating || 0 : product?.rating || 0
+  const displayReviewCount =
+    reviewsLoaded && liveReviewCount > 0 ? liveReviewCount : product?.reviewCount || 0
   const recentlyViewed = useMemo(() => {
     if (!product) return []
     return getRecentlyViewedIds()

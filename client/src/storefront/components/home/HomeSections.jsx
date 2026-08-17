@@ -118,6 +118,7 @@ function useHomeRailProducts(fallback = [], { featured, trending, newest, deals 
       tag: p.tag || (p.featured ? 'Featured' : p.trending ? 'Trending' : ''),
       occasion: Array.isArray(p.occasion) ? p.occasion[0] : p.occasion || p.category,
       rating: p.rating,
+      reviewCount: p.reviewCount,
       image: p.images?.[0] || p.image,
       images: p.images,
     }))

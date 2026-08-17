@@ -7,6 +7,19 @@ function norm(value) {
     .toLowerCase()
 }
 
+/** Stable pseudo-random rating (4.5–5.0) and review count (125+) per product. */
+export function getProductSocialProof(productKey) {
+  const key = String(productKey || 'product')
+  let hash = 0
+  for (let i = 0; i < key.length; i += 1) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0
+  }
+  const seed = Math.abs(hash)
+  const rating = Math.round((4.5 + (seed % 6) / 10) * 10) / 10
+  const reviewCount = 125 + (seed % 1876)
+  return { rating, reviewCount }
+}
+
 /** Products customers can see — keep Admin Items + storefront filters in sync. */
 export function isLiveProduct(p) {
   const status = p?.status
@@ -61,6 +74,7 @@ export function mapAdminProduct(p) {
     : p.category
       ? [p.category]
       : []
+  const { rating, reviewCount } = getProductSocialProof(p.id || p.slug || p.name)
   return {
     id: p.id,
     slug: p.slug || p.id,
@@ -109,8 +123,8 @@ export function mapAdminProduct(p) {
           ),
     deliveryDaysProduct: Number(p.deliveryDaysProduct) || 0,
     deliveryDaysCustomized: Number(p.deliveryDaysCustomized) || 0,
-    rating: p.rating != null && p.rating !== '' ? Number(p.rating) : undefined,
-    reviewCount: Number(p.reviewCount) || 0,
+    rating,
+    reviewCount,
     stock: Number(p.stock) || 0,
     shortDescription: p.description?.slice(0, 120) || '',
     description: p.description || '',

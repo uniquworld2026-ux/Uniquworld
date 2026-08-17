@@ -121,8 +121,11 @@ export function ProductCard({ product, className, href, priority = false }) {
                 {product.compareAt ? formatCurrency(product.compareAt) : '—'}
               </p>
             </div>
-            <div className={cn('hidden sm:block', !product.rating && 'invisible')}>
-              <StarRating rating={product.rating || 0} />
+            <div className="flex shrink-0 flex-col items-end gap-0.5">
+              <StarRating rating={product.rating || 0} size="sm" showValue />
+              <span className="font-sans text-[0.6875rem] text-hm-text-muted sm:text-xs">
+                {product.reviewCount || 0} reviews
+              </span>
             </div>
           </div>
 

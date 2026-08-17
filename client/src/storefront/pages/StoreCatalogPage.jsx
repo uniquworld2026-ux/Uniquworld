@@ -5,6 +5,7 @@ import { ProductCard } from '@/storefront/components/product/ProductCard'
 import { Button } from '@/shared/components/ui/Button'
 import { storePublicApi } from '@/admin/lib/erpApi'
 import { getErrorMessage } from '@/shared/lib/axios'
+import { getProductSocialProof } from '@/shared/catalog/liveCatalog'
 
 /**
  * /store — powered by the separate store_products catalog (not main products).
@@ -29,6 +30,7 @@ export function StoreHubPage() {
   const products = items.map((p) => {
     const gallery = Array.isArray(p.gallery) ? p.gallery.filter(Boolean) : []
     const images = [...new Set([p.imageUrl, ...gallery].filter(Boolean))]
+    const { rating, reviewCount } = getProductSocialProof(p.id || p.slug || p.name)
     return {
       id: p.id,
       name: p.name,
@@ -39,8 +41,8 @@ export function StoreHubPage() {
       tag: p.storeName || p.category || 'Store',
       slug: p.slug,
       category: p.category,
-      rating: 4.6,
-      reviewCount: 0,
+      rating,
+      reviewCount,
     }
   })
 
