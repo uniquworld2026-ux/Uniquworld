@@ -1,38 +1,69 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { KeyRound, Lock, Mail, ShieldCheck, User } from 'lucide-react'
 import { PageHero } from '@/storefront/components/layout/PageHero'
 import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Button } from '@/shared/components/ui/Button'
+import { Input } from '@/storefront/components/ui/Input'
 import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
 import { useCart } from '@/storefront/hooks/useCart'
 import { accountApi, authApi } from '@/storefront/api/account'
 import { getErrorMessage } from '@/shared/lib/axios'
 import { validatePassword } from '@/shared/lib/password'
 import { formatINR, loadRazorpay } from '@/storefront/lib/commerce'
+import { cn } from '@/shared/utils/cn'
 
-function AuthShell({ title, subtitle, children, footer }) {
+function AuthShell({ title, subtitle, children, footer, badge }) {
   return (
-    <div className="mx-auto flex min-h-[70svh] max-w-md flex-col justify-center px-5 py-12 sm:min-h-[80svh] sm:px-8 sm:py-24">
-      <BrandLogo priority imgClassName="h-11 sm:h-12" />
-      <h1 className="mt-8 font-display text-4xl text-hm-text">{title}</h1>
-      {subtitle ? <p className="mt-2 text-sm text-hm-text-muted">{subtitle}</p> : null}
-      <div className="mt-8">{children}</div>
-      {footer ? <div className="mt-6 text-sm text-hm-text-muted">{footer}</div> : null}
+    <div className="min-h-[80svh] bg-gradient-to-b from-hm-muted/80 to-hm-bg px-4 py-10 sm:px-6 sm:py-16">
+      <div className="mx-auto w-full max-w-md">
+        <div className="mb-8 text-center sm:text-left">
+          <BrandLogo priority imgClassName="mx-auto h-11 sm:mx-0 sm:h-12" />
+          {badge ? (
+            <p className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-hm-accent/30 bg-hm-accent-muted px-3 py-1 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-hm-accent">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              {badge}
+            </p>
+          ) : null}
+          <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-hm-text sm:text-4xl">
+            {title}
+          </h1>
+          {subtitle ? (
+            <p className="mt-2 font-sans text-sm leading-relaxed text-hm-text-muted">{subtitle}</p>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-hm-border bg-hm-elevated p-5 shadow-hm-soft sm:p-6">
+          {children}
+        </div>
+
+        {footer ? (
+          <div className="mt-6 text-center font-sans text-sm leading-relaxed text-hm-text-muted sm:text-left">
+            {footer}
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
 
-function Text({ label, type = 'text', register, error }) {
+function TextField({ label, type = 'text', icon: Icon, register, error, placeholder }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs font-medium text-hm-text-muted">{label}</span>
-      <input
-        type={type}
-        className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
-        {...register}
-      />
-      {error ? <span className="text-xs text-hm-danger">{error}</span> : null}
+      <span className="font-sans text-xs font-medium text-hm-text-muted">{label}</span>
+      <span className="relative block">
+        {Icon ? (
+          <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hm-text-subtle" />
+        ) : null}
+        <Input
+          type={type}
+          placeholder={placeholder}
+          className={cn(Icon && 'pl-10')}
+          {...register}
+        />
+      </span>
+      {error ? <span className="font-sans text-xs text-hm-danger">{error}</span> : null}
     </label>
   )
 }
@@ -58,8 +89,13 @@ export function LoginPage() {
     return (
       <AuthShell
         title={isLoginOtp ? 'Enter login code' : 'Verify email'}
-        subtitle={`We sent a code to ${otpStep.email}`}
-        footer={<Link to="/login" className="text-hm-accent" onClick={() => setOtpStep(null)}>Back</Link>}
+        subtitle={`We sent a 6-digit code to ${otpStep.email}`}
+        badge="Secure sign in"
+        footer={
+          <Link to="/login" className="text-hm-accent hover:underline" onClick={() => setOtpStep(null)}>
+            Back to sign in
+          </Link>
+        }
       >
         <form
           className="space-y-4"
@@ -88,13 +124,13 @@ export function LoginPage() {
             }
           }}
         >
-          <input
+          <Input
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value)}
             placeholder="6-digit OTP"
             inputMode="numeric"
             autoComplete="one-time-code"
-            className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
+            className="text-center tracking-[0.3em]"
           />
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
           {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
@@ -109,12 +145,19 @@ export function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in once with password + OTP — we’ll keep you signed in on this browser."
+      subtitle="Sign in with your email and password. We'll send a one-time code to keep your account secure."
+      badge="Customer account"
       footer={
         <>
-          New here? <Link to="/signup" className="text-hm-accent">Create account</Link>
-          <br />
-          <Link to="/forgot-password" className="text-hm-accent">Forgot password?</Link>
+          New here?{' '}
+          <Link to="/signup" className="font-medium text-hm-accent hover:underline">
+            Create account
+          </Link>
+          <br className="hidden sm:block" />
+          <span className="hidden sm:inline"> · </span>
+          <Link to="/forgot-password" className="font-medium text-hm-accent hover:underline">
+            Forgot password?
+          </Link>
         </>
       }
     >
@@ -139,8 +182,22 @@ export function LoginPage() {
           }
         })}
       >
-        <Text label="Email" type="email" register={register('email', { required: 'Email required' })} error={errors.email?.message} />
-        <Text label="Password" type="password" register={register('password', { required: 'Password required' })} error={errors.password?.message} />
+        <TextField
+          label="Email"
+          type="email"
+          icon={Mail}
+          placeholder="you@email.com"
+          register={register('email', { required: 'Email required' })}
+          error={errors.email?.message}
+        />
+        <TextField
+          label="Password"
+          type="password"
+          icon={Lock}
+          placeholder="Your password"
+          register={register('password', { required: 'Password required' })}
+          error={errors.password?.message}
+        />
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
         {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
@@ -170,7 +227,12 @@ export function SignupPage() {
       <AuthShell
         title="Verify email"
         subtitle={`Enter the OTP sent to ${otpStep.email}`}
-        footer={<Link to="/login" className="text-hm-accent">Back to sign in</Link>}
+        badge="Almost there"
+        footer={
+          <Link to="/login" className="font-medium text-hm-accent hover:underline">
+            Back to sign in
+          </Link>
+        }
       >
         <form
           className="space-y-4"
@@ -197,13 +259,13 @@ export function SignupPage() {
             }
           }}
         >
-          <input
+          <Input
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value)}
             placeholder="6-digit OTP"
             inputMode="numeric"
             autoComplete="one-time-code"
-            className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
+            className="text-center tracking-[0.3em]"
           />
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
           {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
@@ -218,9 +280,15 @@ export function SignupPage() {
   return (
     <AuthShell
       title="Create account"
-      subtitle="We’ll email a one-time code — enter it once and you’ll stay signed in on this browser."
+      subtitle="Join Uniquworld to track orders, save addresses, and manage your profile in one place."
+      badge="New customer"
       footer={
-        <>Already have an account? <Link to="/login" className="text-hm-accent">Sign in</Link></>
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-hm-accent hover:underline">
+            Sign in
+          </Link>
+        </>
       }
     >
       <form
@@ -245,11 +313,26 @@ export function SignupPage() {
           }
         })}
       >
-        <Text label="Full name" register={register('name', { required: 'Name required' })} error={errors.name?.message} />
-        <Text label="Email" type="email" register={register('email', { required: 'Email required' })} error={errors.email?.message} />
-        <Text
+        <TextField
+          label="Full name"
+          icon={User}
+          placeholder="Your name"
+          register={register('name', { required: 'Name required' })}
+          error={errors.name?.message}
+        />
+        <TextField
+          label="Email"
+          type="email"
+          icon={Mail}
+          placeholder="you@email.com"
+          register={register('email', { required: 'Email required' })}
+          error={errors.email?.message}
+        />
+        <TextField
           label="Password"
           type="password"
+          icon={KeyRound}
+          placeholder="Min. 8 characters"
           register={register('password', {
             required: 'Password required',
             validate: validatePassword,
@@ -273,8 +356,13 @@ export function ForgotPasswordPage() {
   return (
     <AuthShell
       title="Reset password"
-      subtitle="We’ll email you an OTP to reset your password."
-      footer={<Link to="/login" className="text-hm-accent">Back to sign in</Link>}
+      subtitle="We'll email you a one-time code to reset your password."
+      badge="Account recovery"
+      footer={
+        <Link to="/login" className="font-medium text-hm-accent hover:underline">
+          Back to sign in
+        </Link>
+      }
     >
       <form
         className="space-y-4"
@@ -289,7 +377,14 @@ export function ForgotPasswordPage() {
           }
         })}
       >
-        <Text label="Email" type="email" register={register('email', { required: 'Email required' })} error={errors.email?.message} />
+        <TextField
+          label="Email"
+          type="email"
+          icon={Mail}
+          placeholder="you@email.com"
+          register={register('email', { required: 'Email required' })}
+          error={errors.email?.message}
+        />
         {message ? <p className="text-sm text-hm-accent">{message}</p> : null}
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>

@@ -1,110 +1,111 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { PageHero } from '@/storefront/components/layout/PageHero'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
+import {
+  AccountEmptyState,
+  AccountSection,
+} from '@/storefront/components/account/AccountShell'
+import { DeliveryTimeline } from '@/storefront/components/account/DeliveryTimeline'
+import { OrderCard } from '@/storefront/components/account/OrderCard'
+import { OrderStatusBadge } from '@/storefront/components/account/OrderStatusBadge'
 import { Button } from '@/shared/components/ui/Button'
+import { Input, TextArea } from '@/storefront/components/ui/Input'
+import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
 import { accountApi } from '@/storefront/api/account'
 import { getErrorMessage } from '@/shared/lib/axios'
 import { formatDate, formatINR, statusLabel } from '@/storefront/lib/commerce'
 
-function AccountNav() {
-  const links = [
-    { to: '/account', label: 'Overview', end: true },
-    { to: '/account/orders', label: 'Orders' },
-    { to: '/account/returns', label: 'Returns' },
-    { to: '/account/profile', label: 'Profile' },
-    { to: '/account/addresses', label: 'Addresses' },
-    { to: '/account/notifications', label: 'Notifications' },
-    { to: '/wishlist', label: 'Wishlist' },
-  ]
+export { AccountShell as AccountLayout } from '@/storefront/components/account/AccountShell'
 
+function Field({ label, children }) {
   return (
-    <nav className="flex flex-wrap gap-2 border-b border-hm-border pb-4">
-      {links.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.end}
-          className={({ isActive }) =>
-            `rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
-              isActive
-                ? 'border-hm-accent bg-hm-accent/10 text-hm-text'
-                : 'border-hm-border text-hm-text-muted hover:border-hm-accent hover:text-hm-text'
-            }`
-          }
-        >
-          {link.label}
-        </NavLink>
-      ))}
-    </nav>
+    <label className="block space-y-1.5">
+      <span className="font-sans text-xs font-medium text-hm-text-muted">{label}</span>
+      {children}
+    </label>
   )
 }
 
-export function AccountLayout() {
-  const { user, logout } = useCustomerAuth()
-  const navigate = useNavigate()
-
-  const onSignOut = async () => {
-    await logout()
-    navigate('/login')
-  }
-
+function LoadingBlock({ lines = 3 }) {
   return (
-    <div>
-      <PageHero
-        eyebrow="Account"
-        title={`Hello, ${user?.firstName || 'there'}`}
-        description="Manage orders, addresses, payments, returns, and notifications — Flipkart-style account hub."
-        actions={
-          <Button variant="outline" size="sm" onClick={onSignOut}>
-            Sign out
-          </Button>
-        }
-      />
-      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
-        <AccountNav />
-        <div className="mt-8">
-          <Outlet />
-        </div>
-      </div>
+    <div className="space-y-3">
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-xl" />
+      ))}
     </div>
   )
 }
 
 export function AccountOverviewPage() {
   const [summary, setSummary] = useState(null)
+  const [recentOrders, setRecentOrders] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    accountApi
-      .summary()
-      .then(setSummary)
+    Promise.all([accountApi.summary(), accountApi.listOrders({ limit: 3 })])
+      .then(([sum, orders]) => {
+        setSummary(sum)
+        setRecentOrders((orders || []).slice(0, 3))
+      })
       .catch((err) => setError(getErrorMessage(err)))
+      .finally(() => setLoading(false))
   }, [])
 
-  if (error) return <p className="text-sm text-hm-danger">{error}</p>
-  if (!summary) return <p className="text-sm text-hm-text-muted">Loading overview…</p>
+  if (loading) return <LoadingBlock lines={4} />
+  if (error) return <p className="font-sans text-sm text-hm-danger">{error}</p>
 
   const cards = [
-    { label: 'Orders', value: summary.ordersCount, to: '/account/orders' },
-    { label: 'Addresses', value: summary.addressesCount, to: '/account/addresses' },
-    { label: 'Wishlist', value: summary.wishlistCount, to: '/wishlist' },
-    { label: 'Unread alerts', value: summary.unreadNotifications, to: '/account/notifications' },
+    { label: 'Orders', value: summary.ordersCount, to: '/account/orders', hint: 'Track & manage' },
+    { label: 'Addresses', value: summary.addressesCount, to: '/account/addresses', hint: 'Delivery locations' },
+    { label: 'Wishlist', value: summary.wishlistCount, to: '/wishlist', hint: 'Saved gifts' },
+    { label: 'Alerts', value: summary.unreadNotifications, to: '/account/notifications', hint: 'Unread updates' },
   ]
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Link
-          key={card.label}
-          to={card.to}
-          className="rounded-2xl border border-hm-border bg-hm-elevated p-5 transition hover:border-hm-accent"
-        >
-          <p className="text-xs uppercase tracking-wider text-hm-text-subtle">{card.label}</p>
-          <p className="mt-2 text-3xl font-semibold text-hm-text">{card.value}</p>
-        </Link>
-      ))}
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => (
+          <Link
+            key={card.label}
+            to={card.to}
+            className="rounded-2xl border border-hm-border bg-hm-elevated p-5 transition hover:border-hm-accent/40 hover:shadow-hm-soft"
+          >
+            <p className="font-sans text-xs font-semibold uppercase tracking-wide text-hm-text-subtle">
+              {card.label}
+            </p>
+            <p className="mt-2 font-display text-3xl font-semibold text-hm-text">{card.value}</p>
+            <p className="mt-1 font-sans text-xs text-hm-text-muted">{card.hint}</p>
+          </Link>
+        ))}
+      </div>
+
+      <AccountSection
+        title="Recent orders"
+        description="Quick access to your latest purchases."
+        action={
+          <Link to="/account/orders" className="font-sans text-sm font-medium text-hm-accent hover:underline">
+            View all
+          </Link>
+        }
+      >
+        {!recentOrders.length ? (
+          <AccountEmptyState
+            title="No orders yet"
+            description="When you place an order, it will show up here with delivery updates."
+            actionLabel="Browse gifts"
+            actionTo="/categories"
+          />
+        ) : (
+          <div className="space-y-3">
+            {recentOrders.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))}
+          </div>
+        )}
+      </AccountSection>
     </div>
   )
 }
@@ -122,42 +123,30 @@ export function AccountOrdersPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <p className="text-sm text-hm-text-muted">Loading orders…</p>
-  if (error) return <p className="text-sm text-hm-danger">{error}</p>
+  if (loading) return <LoadingBlock lines={5} />
+  if (error) return <p className="font-sans text-sm text-hm-danger">{error}</p>
 
   if (!orders.length) {
     return (
-      <div className="rounded-2xl border border-hm-border bg-hm-elevated p-8 text-center">
-        <p className="text-sm text-hm-text-muted">You haven’t placed any orders yet.</p>
-        <Link to="/categories" className="mt-4 inline-block">
-          <Button variant="primary">Start shopping</Button>
-        </Link>
-      </div>
+      <AccountEmptyState
+        title="No orders yet"
+        description="Your order history and delivery timeline will appear here after checkout."
+        actionLabel="Start shopping"
+        actionTo="/categories"
+      />
     )
   }
 
   return (
     <div className="space-y-4">
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-hm-text">My orders</h2>
+        <p className="mt-1 font-sans text-sm text-hm-text-muted">
+          {orders.length} order{orders.length === 1 ? '' : 's'} · tap any order for products & tracking
+        </p>
+      </div>
       {orders.map((order) => (
-        <Link
-          key={order.id}
-          to={`/account/orders/${order.id}`}
-          className="block rounded-2xl border border-hm-border bg-hm-elevated p-5 transition hover:border-hm-accent"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-hm-text">{order.orderNumber}</p>
-              <p className="mt-1 text-xs text-hm-text-muted">{formatDate(order.createdAt)}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-hm-text">{formatINR(order.totalAmount)}</p>
-              <p className="mt-1 text-xs text-hm-accent">{statusLabel(order.status)}</p>
-            </div>
-          </div>
-          <p className="mt-3 line-clamp-1 text-sm text-hm-text-muted">
-            {(order.items || []).map((i) => i.productName).join(', ')}
-          </p>
-        </Link>
+        <OrderCard key={order.id} order={order} />
       ))}
     </div>
   )
@@ -166,18 +155,22 @@ export function AccountOrdersPage() {
 export function AccountOrderDetailPage() {
   const { orderId } = useParams()
   const [order, setOrder] = useState(null)
+  const [tracking, setTracking] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [returnReason, setReturnReason] = useState('')
 
   const load = () =>
-    accountApi
-      .getOrder(orderId)
-      .then(setOrder)
-      .catch((err) => setError(getErrorMessage(err)))
+    Promise.all([
+      accountApi.getOrder(orderId),
+      accountApi.trackOrder(orderId).catch(() => null),
+    ]).then(([ord, track]) => {
+      setOrder(ord)
+      setTracking(track)
+    })
 
   useEffect(() => {
-    load()
+    load().catch((err) => setError(getErrorMessage(err)))
   }, [orderId])
 
   const cancel = async () => {
@@ -200,7 +193,6 @@ export function AccountOrderDetailPage() {
       await accountApi.requestReturn(orderId, { reason: returnReason.trim() })
       await load()
       setReturnReason('')
-      alert('Return request submitted')
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -208,54 +200,84 @@ export function AccountOrderDetailPage() {
     }
   }
 
-  if (error && !order) return <p className="text-sm text-hm-danger">{error}</p>
-  if (!order) return <p className="text-sm text-hm-text-muted">Loading order…</p>
+  if (error && !order) return <p className="font-sans text-sm text-hm-danger">{error}</p>
+  if (!order) return <LoadingBlock lines={6} />
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/account/orders" className="text-xs text-hm-accent">
-            ← Back to orders
+          <Link
+            to="/account/orders"
+            className="inline-flex items-center gap-1 font-sans text-sm text-hm-accent hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to orders
           </Link>
-          <h2 className="mt-2 text-xl font-semibold text-hm-text">{order.orderNumber}</h2>
-          <p className="text-sm text-hm-text-muted">
-            {formatDate(order.createdAt)} · {statusLabel(order.status)}
+          <h2 className="mt-3 font-display text-2xl font-semibold text-hm-text sm:text-3xl">
+            {order.orderNumber}
+          </h2>
+          <p className="mt-1 font-sans text-sm text-hm-text-muted">
+            Placed {formatDate(order.createdAt)}
           </p>
         </div>
-        <p className="text-2xl font-semibold text-hm-text">{formatINR(order.totalAmount)}</p>
+        <div className="text-right">
+          <OrderStatusBadge status={order.status} className="text-xs" />
+          <p className="mt-3 font-display text-2xl font-semibold text-hm-primary">
+            {formatINR(order.totalAmount)}
+          </p>
+        </div>
       </div>
 
-      {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
+      {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
 
-      <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
-        <h3 className="text-sm font-semibold text-hm-text">Items</h3>
-        <ul className="mt-3 space-y-3">
+      <DeliveryTimeline
+        status={order.status}
+        timeline={order.timeline}
+        estimatedDelivery={order.shipment?.estimatedDelivery}
+      />
+
+      <AccountSection title="Products in this order" description="Items included in your purchase.">
+        <ul className="divide-y divide-hm-border">
           {(order.items || []).map((item) => (
-            <li key={item.id} className="flex gap-3 text-sm">
+            <li key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  className="h-20 w-20 shrink-0 rounded-xl border border-hm-border object-contain bg-hm-muted p-1"
+                />
               ) : (
-                <div className="h-14 w-14 rounded-lg bg-hm-muted" />
+                <div className="h-20 w-20 shrink-0 rounded-xl bg-hm-muted" />
               )}
-              <div className="flex-1">
-                <p className="font-medium text-hm-text">{item.productName}</p>
-                <p className="text-hm-text-muted">
-                  Qty {item.quantity} · {formatINR(item.unitPrice)}
+              <div className="min-w-0 flex-1">
+                {item.productId ? (
+                  <Link
+                    to={`/products/${item.productId}`}
+                    className="font-sans text-sm font-semibold text-hm-text hover:text-hm-accent"
+                  >
+                    {item.productName}
+                  </Link>
+                ) : (
+                  <p className="font-sans text-sm font-semibold text-hm-text">{item.productName}</p>
+                )}
+                <p className="mt-1 font-sans text-sm text-hm-text-muted">
+                  Qty {item.quantity} · {formatINR(item.unitPrice)} each
                 </p>
               </div>
-              <p className="font-medium text-hm-text">{formatINR(item.totalPrice)}</p>
+              <p className="shrink-0 font-sans text-sm font-semibold text-hm-text">
+                {formatINR(item.totalPrice)}
+              </p>
             </li>
           ))}
         </ul>
-      </section>
+      </AccountSection>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5 text-sm">
-          <h3 className="font-semibold text-hm-text">Shipping address</h3>
+        <AccountSection title="Shipping address">
           {order.shippingAddress ? (
-            <div className="mt-2 space-y-1 text-hm-text-muted">
-              <p className="text-hm-text">{order.shippingAddress.fullName}</p>
+            <div className="space-y-1 font-sans text-sm text-hm-text-muted">
+              <p className="font-semibold text-hm-text">{order.shippingAddress.fullName}</p>
               <p>{order.shippingAddress.line1}</p>
               {order.shippingAddress.line2 ? <p>{order.shippingAddress.line2}</p> : null}
               <p>
@@ -265,77 +287,73 @@ export function AccountOrderDetailPage() {
               <p>{order.shippingAddress.phone}</p>
             </div>
           ) : (
-            <p className="mt-2 text-hm-text-muted">No address on file</p>
+            <p className="font-sans text-sm text-hm-text-muted">No address on file</p>
           )}
-        </section>
+        </AccountSection>
 
-        <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5 text-sm">
-          <h3 className="font-semibold text-hm-text">Payment & delivery</h3>
-          <div className="mt-2 space-y-1 text-hm-text-muted">
+        <AccountSection title="Payment & shipment">
+          <div className="space-y-2 font-sans text-sm text-hm-text-muted">
             <p>
-              Payment: {statusLabel(order.payment?.method)} · {statusLabel(order.payment?.status)}
+              <span className="text-hm-text">Payment:</span>{' '}
+              {statusLabel(order.payment?.method)} · {statusLabel(order.payment?.status)}
             </p>
-            <p>Shipping: {formatINR(order.shippingAmount)}</p>
+            <p>
+              <span className="text-hm-text">Shipping fee:</span> {formatINR(order.shippingAmount)}
+            </p>
             {order.shipment ? (
               <>
-                <p>Carrier: {order.shipment.courierName || order.shipment.carrier}</p>
-                <p>AWB: {order.shipment.awbCode || 'Pending assignment'}</p>
+                <p>
+                  <span className="text-hm-text">Carrier:</span>{' '}
+                  {order.shipment.courierName || order.shipment.carrier || 'Assigned soon'}
+                </p>
+                <p>
+                  <span className="text-hm-text">AWB:</span>{' '}
+                  {order.shipment.awbCode || 'Pending assignment'}
+                </p>
                 {order.shipment.trackingUrl ? (
                   <a
                     href={order.shipment.trackingUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-hm-accent"
+                    className="inline-flex items-center gap-1 font-medium text-hm-accent hover:underline"
                   >
-                    Track shipment
+                    Track on courier site
+                    <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 ) : null}
               </>
             ) : (
-              <p>Shipment will appear after confirmation.</p>
+              <p>Shipment details appear after order confirmation.</p>
             )}
+            {tracking?.tracking?.tracking_data?.shipment_track?.[0]?.current_status ? (
+              <p className="rounded-lg bg-hm-muted px-3 py-2 text-hm-text">
+                Live status: {tracking.tracking.tracking_data.shipment_track[0].current_status}
+              </p>
+            ) : null}
           </div>
-        </section>
+        </AccountSection>
       </div>
 
-      <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
-        <h3 className="text-sm font-semibold text-hm-text">Order timeline</h3>
-        <ol className="mt-4 space-y-3">
-          {(order.timeline || []).map((event, idx) => (
-            <li key={`${event.status}-${idx}`} className="flex gap-3 text-sm">
-              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-hm-accent" />
-              <div>
-                <p className="font-medium text-hm-text">{statusLabel(event.status)}</p>
-                <p className="text-hm-text-muted">{event.note}</p>
-                <p className="text-xs text-hm-text-subtle">{formatDate(event.createdAt)}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <div className="flex flex-wrap gap-3">
-        {['pending', 'confirmed', 'processing'].includes(order.status) ? (
+      {['pending', 'confirmed', 'processing'].includes(order.status) ? (
+        <div className="flex flex-wrap gap-3">
           <Button variant="outline" disabled={busy} onClick={cancel}>
             Cancel order
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {order.status === 'delivered' ? (
-        <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
-          <h3 className="text-sm font-semibold text-hm-text">Request a return</h3>
-          <textarea
+        <AccountSection title="Request a return" description="Tell us why you'd like to return this order.">
+          <TextArea
             value={returnReason}
             onChange={(e) => setReturnReason(e.target.value)}
-            rows={3}
+            rows={4}
             placeholder="Reason for return"
-            className="mt-3 w-full rounded-xl border border-hm-border bg-hm-bg px-3 py-2 text-sm outline-none focus:border-hm-accent"
           />
-          <Button className="mt-3" variant="primary" disabled={busy} onClick={requestReturn}>
+          <Button className="mt-4" variant="primary" disabled={busy} onClick={requestReturn}>
             Submit return request
           </Button>
-        </section>
+        </AccountSection>
       ) : null}
     </div>
   )
@@ -343,7 +361,12 @@ export function AccountOrderDetailPage() {
 
 export function AccountProfilePage() {
   const { user, refreshUser } = useCustomerAuth()
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm({
     defaultValues: {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
@@ -367,44 +390,46 @@ export function AccountProfilePage() {
     try {
       await accountApi.updateProfile(values)
       await refreshUser()
-      setMessage('Profile saved')
+      setMessage('Profile updated successfully.')
     } catch (err) {
       setError(getErrorMessage(err))
     }
   }
 
   return (
-    <form
-      className="max-w-lg space-y-4 rounded-2xl border border-hm-border bg-hm-elevated p-6"
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      <h2 className="text-sm font-semibold text-hm-text">Profile</h2>
-      <input
-        {...register('firstName', { required: true })}
-        placeholder="First name"
-        className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent"
-      />
-      <input
-        {...register('lastName')}
-        placeholder="Last name"
-        className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent"
-      />
-      <input
-        value={user?.email || ''}
-        disabled
-        className="h-11 w-full rounded-xl border border-hm-border bg-hm-muted px-3 text-sm text-hm-text-muted"
-      />
-      <input
-        {...register('phone')}
-        placeholder="Phone"
-        className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent"
-      />
-      {message ? <p className="text-sm text-hm-accent">{message}</p> : null}
-      {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
-      <Button type="submit" variant="primary" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving…' : 'Save profile'}
-      </Button>
-    </form>
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-hm-text">Profile</h2>
+        <p className="mt-1 font-sans text-sm text-hm-text-muted">
+          Update your name and phone for orders and delivery updates.
+        </p>
+      </div>
+
+      <form
+        className="max-w-lg space-y-4 rounded-2xl border border-hm-border bg-hm-elevated p-5 sm:p-6"
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="First name">
+            <Input {...register('firstName', { required: true })} placeholder="First name" />
+          </Field>
+          <Field label="Last name">
+            <Input {...register('lastName')} placeholder="Last name" />
+          </Field>
+        </div>
+        <Field label="Email">
+          <Input value={user?.email || ''} disabled className="bg-hm-muted text-hm-text-muted" />
+        </Field>
+        <Field label="Phone">
+          <Input {...register('phone')} placeholder="+91 98765 43210" type="tel" />
+        </Field>
+        {message ? <p className="font-sans text-sm text-hm-success">{message}</p> : null}
+        {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving…' : 'Save profile'}
+        </Button>
+      </form>
+    </div>
   )
 }
 
@@ -412,7 +437,12 @@ export function AccountAddressesPage() {
   const [addresses, setAddresses] = useState([])
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm({
     defaultValues: {
       fullName: '',
       phone: '',
@@ -438,11 +468,7 @@ export function AccountAddressesPage() {
   const onCreate = async (values) => {
     setError('')
     try {
-      await accountApi.createAddress({
-        ...values,
-        type: 'shipping',
-        country: 'India',
-      })
+      await accountApi.createAddress({ ...values, type: 'shipping', country: 'India' })
       reset()
       setShowForm(false)
       await load()
@@ -471,29 +497,48 @@ export function AccountAddressesPage() {
   }
 
   return (
-    <div className="space-y-4">
-      {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl font-semibold text-hm-text">Addresses</h2>
+          <p className="mt-1 font-sans text-sm text-hm-text-muted">Saved delivery addresses for faster checkout.</p>
+        </div>
+        {!showForm ? (
+          <Button variant="outline" onClick={() => setShowForm(true)}>
+            Add address
+          </Button>
+        ) : null}
+      </div>
+
+      {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
+
+      {!addresses.length && !showForm ? (
+        <div className="rounded-2xl border border-dashed border-hm-border bg-hm-elevated/80 p-8 text-center">
+          <p className="font-display text-xl font-semibold text-hm-text">No addresses saved</p>
+          <p className="mt-2 font-sans text-sm text-hm-text-muted">Add a delivery address to speed up checkout.</p>
+        </div>
+      ) : null}
 
       {addresses.map((a) => (
         <div key={a.id} className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-hm-text">
+              <p className="font-sans text-sm font-semibold text-hm-text">
                 {a.fullName}
                 {a.isDefault ? (
-                  <span className="ml-2 rounded-full bg-hm-accent/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-hm-accent">
+                  <span className="ml-2 rounded-full bg-hm-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-hm-accent">
                     Default
                   </span>
                 ) : null}
               </p>
-              <p className="mt-1 text-sm text-hm-text-muted">
+              <p className="mt-1 font-sans text-sm text-hm-text-muted">
                 {a.line1}
                 {a.line2 ? `, ${a.line2}` : ''}
               </p>
-              <p className="text-sm text-hm-text-muted">
+              <p className="font-sans text-sm text-hm-text-muted">
                 {a.city}, {a.state} {a.postalCode}
               </p>
-              <p className="text-sm text-hm-text-muted">{a.phone}</p>
+              <p className="font-sans text-sm text-hm-text-muted">{a.phone}</p>
             </div>
             <div className="flex gap-2">
               {!a.isDefault ? (
@@ -512,20 +557,34 @@ export function AccountAddressesPage() {
       {showForm ? (
         <form
           onSubmit={handleSubmit(onCreate)}
-          className="space-y-3 rounded-2xl border border-hm-border bg-hm-elevated p-5"
+          className="space-y-4 rounded-2xl border border-hm-border bg-hm-elevated p-5 sm:p-6"
         >
-          <h3 className="text-sm font-semibold text-hm-text">Add address</h3>
-          <input {...register('fullName', { required: true })} placeholder="Full name" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
-          <input {...register('phone', { required: true })} placeholder="Phone" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
-          <input {...register('line1', { required: true })} placeholder="Address line 1" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
-          <input {...register('line2')} placeholder="Address line 2" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <input {...register('city', { required: true })} placeholder="City" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
-            <input {...register('state', { required: true })} placeholder="State" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
-            <input {...register('postalCode', { required: true })} placeholder="Pincode" className="h-11 w-full rounded-xl border border-hm-border bg-hm-bg px-3 text-sm outline-none focus:border-hm-accent" />
+          <h3 className="font-sans text-base font-semibold text-hm-text">Add new address</h3>
+          <Field label="Full name">
+            <Input {...register('fullName', { required: true })} placeholder="Full name" />
+          </Field>
+          <Field label="Phone">
+            <Input {...register('phone', { required: true })} placeholder="Phone" type="tel" />
+          </Field>
+          <Field label="Address line 1">
+            <Input {...register('line1', { required: true })} placeholder="House no., street" />
+          </Field>
+          <Field label="Address line 2">
+            <Input {...register('line2')} placeholder="Landmark (optional)" />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="City">
+              <Input {...register('city', { required: true })} placeholder="City" />
+            </Field>
+            <Field label="State">
+              <Input {...register('state', { required: true })} placeholder="State" />
+            </Field>
+            <Field label="Pincode">
+              <Input {...register('postalCode', { required: true })} placeholder="Pincode" />
+            </Field>
           </div>
-          <label className="flex items-center gap-2 text-sm text-hm-text-muted">
-            <input type="checkbox" {...register('isDefault')} />
+          <label className="flex items-center gap-2 font-sans text-sm text-hm-text-muted">
+            <input type="checkbox" {...register('isDefault')} className="h-4 w-4 rounded border-hm-border" />
             Make this my default address
           </label>
           <div className="flex gap-2">
@@ -537,8 +596,12 @@ export function AccountAddressesPage() {
             </Button>
           </div>
         </form>
-      ) : (
+      ) : addresses.length ? (
         <Button variant="outline" onClick={() => setShowForm(true)}>
+          Add another address
+        </Button>
+      ) : (
+        <Button variant="primary" onClick={() => setShowForm(true)}>
           Add address
         </Button>
       )}
@@ -549,12 +612,14 @@ export function AccountAddressesPage() {
 export function AccountNotificationsPage() {
   const [data, setData] = useState({ items: [], unreadCount: 0 })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   const load = () =>
     accountApi
       .listNotifications()
       .then(setData)
       .catch((err) => setError(getErrorMessage(err)))
+      .finally(() => setLoading(false))
 
   useEffect(() => {
     load()
@@ -570,20 +635,28 @@ export function AccountNotificationsPage() {
     await load()
   }
 
-  if (error) return <p className="text-sm text-hm-danger">{error}</p>
+  if (loading) return <LoadingBlock lines={4} />
+  if (error) return <p className="font-sans text-sm text-hm-danger">{error}</p>
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-hm-text-muted">{data.unreadCount} unread</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl font-semibold text-hm-text">Notifications</h2>
+          <p className="mt-1 font-sans text-sm text-hm-text-muted">{data.unreadCount} unread</p>
+        </div>
         {data.unreadCount > 0 ? (
           <Button size="sm" variant="outline" onClick={markAll}>
             Mark all read
           </Button>
         ) : null}
       </div>
+
       {!data.items?.length ? (
-        <p className="text-sm text-hm-text-muted">No notifications yet.</p>
+        <AccountEmptyState
+          title="All caught up"
+          description="Order updates and alerts will appear here."
+        />
       ) : (
         <ul className="space-y-3">
           {data.items.map((n) => (
@@ -595,9 +668,9 @@ export function AccountNotificationsPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-hm-text">{n.title}</p>
-                  {n.body ? <p className="mt-1 text-sm text-hm-text-muted">{n.body}</p> : null}
-                  <p className="mt-1 text-xs text-hm-text-muted">{formatDate(n.createdAt)}</p>
+                  <p className="font-sans text-sm font-medium text-hm-text">{n.title}</p>
+                  {n.body ? <p className="mt-1 font-sans text-sm text-hm-text-muted">{n.body}</p> : null}
+                  <p className="mt-1 font-sans text-xs text-hm-text-muted">{formatDate(n.createdAt)}</p>
                 </div>
                 {!n.readAt ? (
                   <Button size="sm" variant="ghost" onClick={() => markOne(n.id)}>
@@ -616,28 +689,45 @@ export function AccountNotificationsPage() {
 export function AccountReturnsPage() {
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     accountApi
       .listReturns()
       .then(setItems)
       .catch((err) => setError(getErrorMessage(err)))
+      .finally(() => setLoading(false))
   }, [])
 
-  if (error) return <p className="text-sm text-hm-danger">{error}</p>
+  if (loading) return <LoadingBlock lines={3} />
+  if (error) return <p className="font-sans text-sm text-hm-danger">{error}</p>
+
   if (!items.length) {
-    return <p className="text-sm text-hm-text-muted">No return requests yet. You can request a return from a delivered order.</p>
+    return (
+      <AccountEmptyState
+        title="No return requests"
+        description="You can request a return from any delivered order."
+        actionLabel="View orders"
+        actionTo="/account/orders"
+      />
+    )
   }
 
   return (
-    <ul className="space-y-3">
-      {items.map((item) => (
-        <li key={item.id} className="rounded-2xl border border-hm-border bg-hm-elevated p-5 text-sm">
-          <p className="font-semibold text-hm-text">{statusLabel(item.status)}</p>
-          <p className="mt-1 text-hm-text-muted">{item.reason}</p>
-          <p className="mt-2 text-xs text-hm-text-subtle">{formatDate(item.requestedAt)}</p>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-hm-text">Returns</h2>
+        <p className="mt-1 font-sans text-sm text-hm-text-muted">Status of your return requests.</p>
+      </div>
+      <ul className="space-y-3">
+        {items.map((item) => (
+          <li key={item.id} className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
+            <OrderStatusBadge status={item.status} />
+            <p className="mt-2 font-sans text-sm text-hm-text-muted">{item.reason}</p>
+            <p className="mt-2 font-sans text-xs text-hm-text-subtle">{formatDate(item.requestedAt)}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
