@@ -188,7 +188,9 @@ const register = async (payload) => {
     throw ApiError.conflict('Email is already registered');
   }
 
-  const passwordHash = await hashPassword(payload.password);
+  // Auto-generate a random password when the client doesn't supply one
+  const tempPassword = payload.password || crypto.randomBytes(6).toString('base64url').slice(0, 10);
+  const passwordHash = await hashPassword(tempPassword);
   const roleSlug = payload.role === ROLES.CORPORATE ? ROLES.CORPORATE : ROLES.CUSTOMER;
   const roleId = await roleRepository.resolveRoleId(roleSlug);
 
@@ -210,13 +212,28 @@ const register = async (payload) => {
     firstName: user.first_name,
   });
 
-  try {
-    await emailService.sendWelcomeEmail({
-      to: user.email,
-      firstName: user.first_name,
-    });
-  } catch (err) {
-    logger.warn('Welcome email skipped', { email: user.email, message: err.message });
+  // Email the auto-generated password so the user can log in after verification
+  if (!payload.password) {
+    try {
+      await emailService.sendAccountCredentialsEmail({
+        to: user.email,
+        firstName: user.first_name,
+        email: user.email,
+        tempPassword,
+        loginUrl: `${config.clientUrl}/login`,
+      });
+    } catch (err) {
+      logger.warn('Credentials email skipped', { email: user.email, message: err.message });
+    }
+  } else {
+    try {
+      await emailService.sendWelcomeEmail({
+        to: user.email,
+        firstName: user.first_name,
+      });
+    } catch (err) {
+      logger.warn('Welcome email skipped', { email: user.email, message: err.message });
+    }
   }
 
   return {

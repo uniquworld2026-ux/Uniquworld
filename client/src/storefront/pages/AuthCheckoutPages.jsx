@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { KeyRound, Lock, Mail, ShieldCheck, User } from 'lucide-react'
+import { Lock, Mail, ShieldCheck, User } from 'lucide-react'
 import { PageHero } from '@/storefront/components/layout/PageHero'
 import { BrandLogo } from '@/storefront/components/brand/BrandLogo'
 import { Button } from '@/shared/components/ui/Button'
@@ -10,7 +10,6 @@ import { useCustomerAuth } from '@/storefront/auth/CustomerAuthContext'
 import { useCart } from '@/storefront/hooks/useCart'
 import { accountApi, authApi } from '@/storefront/api/account'
 import { getErrorMessage } from '@/shared/lib/axios'
-import { validatePassword } from '@/shared/lib/password'
 import { formatINR, loadRazorpay } from '@/storefront/lib/commerce'
 import { calcCartTotals } from '@/storefront/lib/orderPricing'
 import { BillingSummary } from '@/storefront/components/checkout/BillingSummary'
@@ -18,30 +17,30 @@ import { cn } from '@/shared/utils/cn'
 
 function AuthShell({ title, subtitle, children, footer, badge }) {
   return (
-    <div className="min-h-[80svh] bg-gradient-to-b from-hm-muted/80 to-hm-bg px-4 py-10 sm:px-6 sm:py-16">
-      <div className="mx-auto w-full max-w-md">
-        <div className="mb-8 text-center sm:text-left">
-          <BrandLogo priority imgClassName="mx-auto h-11 sm:mx-0 sm:h-12" />
+    <div className="flex min-h-[80svh] items-start justify-center bg-gradient-to-b from-hm-muted/80 to-hm-bg px-4 py-8 pb-[calc(2rem+var(--uw-bottom-nav-h))] sm:items-center sm:px-6 sm:py-16">
+      <div className="w-full max-w-md">
+        <div className="mb-6 text-center sm:mb-8">
+          <BrandLogo priority imgClassName="mx-auto h-9 sm:h-12" />
           {badge ? (
-            <p className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-hm-accent/30 bg-hm-accent-muted px-3 py-1 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-hm-accent">
-              <ShieldCheck className="h-3.5 w-3.5" />
+            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-hm-accent/30 bg-hm-accent-muted px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-hm-accent sm:mt-6 sm:text-[11px]">
+              <ShieldCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               {badge}
             </p>
           ) : null}
-          <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-hm-text sm:text-4xl">
+          <h1 className="mt-3 font-display text-2xl font-semibold tracking-tight text-hm-text sm:mt-4 sm:text-4xl">
             {title}
           </h1>
           {subtitle ? (
-            <p className="mt-2 font-sans text-sm leading-relaxed text-hm-text-muted">{subtitle}</p>
+            <p className="mt-1.5 font-sans text-xs leading-relaxed text-hm-text-muted sm:mt-2 sm:text-sm">{subtitle}</p>
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-hm-border bg-hm-elevated p-5 shadow-hm-soft sm:p-6">
+        <div className="rounded-2xl border border-hm-border bg-hm-elevated p-4 shadow-hm-soft sm:p-6">
           {children}
         </div>
 
         {footer ? (
-          <div className="mt-6 text-center font-sans text-sm leading-relaxed text-hm-text-muted sm:text-left">
+          <div className="mt-5 text-center font-sans text-xs leading-relaxed text-hm-text-muted sm:mt-6 sm:text-sm">
             {footer}
           </div>
         ) : null}
@@ -302,14 +301,13 @@ export function SignupPage() {
             const nameParts = values.name.trim().split(/\s+/)
             await registerUser({
               email: values.email,
-              password: values.password,
               firstName: nameParts[0],
               lastName: nameParts.slice(1).join(' ') || undefined,
             })
             setOtpStep({
               email: values.email,
             })
-            setInfo('Verification code sent to your email.')
+            setInfo('Verification code sent to your email. We also emailed your login password.')
           } catch (err) {
             setError(getErrorMessage(err))
           }
@@ -330,17 +328,9 @@ export function SignupPage() {
           register={register('email', { required: 'Email required' })}
           error={errors.email?.message}
         />
-        <TextField
-          label="Password"
-          type="password"
-          icon={KeyRound}
-          placeholder="Min. 8 characters"
-          register={register('password', {
-            required: 'Password required',
-            validate: validatePassword,
-          })}
-          error={errors.password?.message}
-        />
+        <p className="font-sans text-[11px] leading-relaxed text-hm-text-muted">
+          A secure password will be generated and emailed to you. Use it for your first login.
+        </p>
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Creating…' : 'Create account'}

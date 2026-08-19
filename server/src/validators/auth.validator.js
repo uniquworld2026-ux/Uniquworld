@@ -8,7 +8,7 @@ const passwordSchema = z
 
 const registerSchema = z.object({
   email: z.string().email().max(255).transform((v) => v.toLowerCase()),
-  password: passwordSchema,
+  password: passwordSchema.optional(),
   firstName: z.string().min(1).max(100).trim(),
   lastName: z.string().max(100).trim().optional().nullable(),
   phone: z.string().max(20).optional().nullable(),
