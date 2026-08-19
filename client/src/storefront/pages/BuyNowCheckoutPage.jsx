@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { ArrowLeft, Mail, ShieldCheck, User } from 'lucide-react'
+import { ArrowLeft, Lock, Mail, ShieldCheck, User } from 'lucide-react'
 import { BillingSummary } from '@/storefront/components/checkout/BillingSummary'
 import { Button } from '@/shared/components/ui/Button'
 import { Input } from '@/storefront/components/ui/Input'
@@ -28,13 +28,13 @@ export function BuyNowCheckoutPage() {
   const productId = params.get('product') || ''
   const qty = Math.max(1, Number(params.get('qty')) || 1)
   const { product, isLoading: productLoading } = useStorefrontProduct(productId)
-  const { isAuthenticated, user, loading: authLoading, checkoutStart, completeLoginWithOtp } =
+  const { isAuthenticated, user, loading: authLoading, checkoutStart, completeLoginWithOtp, login } =
     useCustomerAuth()
 
   const [step, setStep] = useState('identity')
   const [otpPurpose, setOtpPurpose] = useState('email_verification')
   const [checkoutEmail, setCheckoutEmail] = useState('')
-  const [otpCode, setOtpCode] = useState('')
+  const [password, setPassword] = useState('')
   const [info, setInfo] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -239,8 +239,8 @@ export function BuyNowCheckoutPage() {
                 Your details
               </div>
               <p className="mb-4 font-sans text-sm text-hm-text-muted">
-                Enter your name and email. We will create your account automatically, email your
-                login password, and verify with OTP — no separate signup needed.
+                Enter your name and email. New customers get a one-time OTP to verify email. After
+                that, sign in with email and password — we will not send another login OTP.
               </p>
               <form
                 className="space-y-4"
@@ -255,6 +255,11 @@ export function BuyNowCheckoutPage() {
                   try {
                     const data = await checkoutStart({ email, firstName: name })
                     setCheckoutEmail(data.email || email)
+                    if (data.requiresPassword) {
+                      setStep('password')
+                      setInfo(data.message || 'Account already verified. Enter your password to continue.')
+                      return
+                    }
                     setOtpPurpose(data.purpose || 'email_verification')
                     setStep('otp')
                     setInfo(data.message || 'OTP sent to your email.')
@@ -286,8 +291,71 @@ export function BuyNowCheckoutPage() {
                 {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
                 {info ? <p className="font-sans text-sm text-hm-success">{info}</p> : null}
                 <Button type="submit" variant="primary" className="w-full" disabled={busy}>
-                  {busy ? 'Sending OTP…' : 'Continue with email OTP'}
+                  {busy ? 'Continuing…' : 'Continue'}
                 </Button>
+              </form>
+            </section>
+          ) : null}
+
+          {step === 'password' ? (
+            <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5">
+              <p className="font-sans text-sm font-semibold text-hm-text">Sign in</p>
+              <p className="mt-1 font-sans text-sm text-hm-text-muted">
+                {checkoutEmail} is already verified. Enter your password — no OTP email this time.
+              </p>
+              <form
+                className="mt-4 space-y-4"
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  setError('')
+                  setBusy(true)
+                  try {
+                    const data = await login(checkoutEmail, password)
+                    if (data?.requiresOtp) {
+                      setOtpPurpose(data.purpose || 'email_verification')
+                      setStep('otp')
+                      setInfo(data.message || 'Verify your email with the OTP we sent.')
+                      return
+                    }
+                    setStep('delivery')
+                    setInfo('Signed in. Add delivery details to complete your order.')
+                  } catch (err) {
+                    setError(getErrorMessage(err, 'Invalid email or password'))
+                  } finally {
+                    setBusy(false)
+                  }
+                }}
+              >
+                <Field label="Password">
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hm-text-subtle" />
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="Your password"
+                      className="pl-10"
+                    />
+                  </div>
+                </Field>
+                {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
+                {info ? <p className="font-sans text-sm text-hm-success">{info}</p> : null}
+                <Button type="submit" variant="primary" className="w-full" disabled={busy}>
+                  {busy ? 'Signing in…' : 'Sign in & continue'}
+                </Button>
+                <p className="text-center font-sans text-sm">
+                  <Link to="/forgot-password" className="text-hm-accent hover:underline">
+                    Forgot password?
+                  </Link>
+                </p>
+                <button
+                  type="button"
+                  className="font-sans text-sm text-hm-accent hover:underline"
+                  onClick={() => setStep('identity')}
+                >
+                  Change email
+                </button>
               </form>
             </section>
           ) : null}

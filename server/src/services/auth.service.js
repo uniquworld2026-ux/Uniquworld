@@ -115,7 +115,18 @@ const checkoutStart = async ({ email, firstName }) => {
     const purpose =
       !user.email_verified_at || user.status === USER_STATUS.PENDING
         ? OTP_PURPOSE.EMAIL_VERIFICATION
-        : OTP_PURPOSE.LOGIN;
+        : null;
+
+    if (!purpose) {
+      return {
+        requiresOtp: false,
+        requiresPassword: true,
+        isVerified: true,
+        email: normalizedEmail,
+        isNewUser: false,
+        message: 'Email already verified. Sign in with your password to continue.',
+      };
+    }
 
     const otpMeta = await createAndSendOtp({
       userId: user.id,
@@ -129,10 +140,7 @@ const checkoutStart = async ({ email, firstName }) => {
       purpose,
       email: normalizedEmail,
       isNewUser: false,
-      message:
-        purpose === OTP_PURPOSE.EMAIL_VERIFICATION
-          ? 'Verify your email with the OTP we sent to continue checkout.'
-          : 'Enter the login OTP we sent to your email to continue checkout.',
+      message: 'Verify your email with the OTP we sent to continue checkout.',
       otp: otpMeta,
     };
   }
@@ -264,7 +272,7 @@ const login = async ({ email, password }, meta = {}) => {
     throw ApiError.forbidden('Account is inactive');
   }
 
-  // Unverified accounts must complete email verification OTP first
+  // Unverified accounts must complete email verification OTP first (once)
   if (!user.email_verified_at || user.status === USER_STATUS.PENDING) {
     const otpMeta = await createAndSendOtp({
       userId: user.id,
@@ -277,25 +285,22 @@ const login = async ({ email, password }, meta = {}) => {
       requiresOtp: true,
       purpose: OTP_PURPOSE.EMAIL_VERIFICATION,
       email: user.email,
-      message: 'Verify your email with the OTP we just sent, then sign in again.',
+      message: 'Verify your email with the OTP we just sent. After that you can sign in with email and password.',
       otp: otpMeta,
     };
   }
 
-  // Verified accounts: password OK → send login OTP (no tokens until verified)
-  const otpMeta = await createAndSendOtp({
-    userId: user.id,
-    email: user.email,
-    purpose: OTP_PURPOSE.LOGIN,
-    firstName: user.first_name,
-  });
+  await userRepository.touchLastLogin(user.id);
+  const tokens = await tokenService.issueTokenPair(user, meta);
 
   return {
-    requiresOtp: true,
-    purpose: OTP_PURPOSE.LOGIN,
-    email: user.email,
-    message: 'OTP sent to your email. Enter it to complete sign-in.',
-    otp: otpMeta,
+    requiresOtp: false,
+    user: toPublicUser({ ...user, permissions: tokens.permissions }),
+    tokens: {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+    },
   };
 };
 

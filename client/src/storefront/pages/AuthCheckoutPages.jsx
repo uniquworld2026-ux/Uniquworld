@@ -115,7 +115,7 @@ export function LoginPage() {
                 navigate(from, { replace: true })
                 return
               }
-              setInfo(data?.message || 'Email verified. Sign in again to receive your login OTP.')
+              setInfo(data?.message || 'Email verified. You can sign in with your email and password.')
               setOtpStep(null)
               setOtpCode('')
             } catch (err) {
@@ -146,7 +146,7 @@ export function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in with your email and password. We'll send a one-time code to keep your account secure."
+      subtitle="Sign in with your email and password."
       badge="Customer account"
       footer={
         <>
