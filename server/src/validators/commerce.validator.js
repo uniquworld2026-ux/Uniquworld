@@ -28,7 +28,7 @@ const updateProfileSchema = z.object({
 const orderItemSchema = z.object({
   id: z.union([z.string(), z.number()]).optional(),
   catalogKey: z.string().optional(),
-  productId: z.string().uuid().optional().nullable(),
+  productId: z.union([z.string(), z.number()]).optional().nullable(),
   variantId: z.string().uuid().optional().nullable(),
   name: z.string().optional(),
   productName: z.string().optional(),

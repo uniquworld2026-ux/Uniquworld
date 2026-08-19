@@ -1,5 +1,6 @@
 const config = require('../config');
 const ApiError = require('../utils/ApiError');
+const { query } = require('../config/database');
 const addressRepository = require('../repositories/address.repository');
 const orderRepository = require('../repositories/order.repository');
 const userRepository = require('../repositories/user.repository');
@@ -11,6 +12,29 @@ const { calcOrderTotals } = require('./pricing.service');
 const { notifyUser } = require('./notification.service');
 
 const calcShipping = (subtotal) => calcOrderTotals(subtotal).shippingAmount;
+
+const findCatalogProductId = async (idOrSlug) => {
+  if (!idOrSlug) return null;
+  const found = await query(
+    `SELECT id FROM catalog_products
+     WHERE id::text = $1 OR slug = $1
+     LIMIT 1`,
+    [String(idOrSlug)]
+  );
+  return found.rows[0]?.id || null;
+};
+
+/** Legacy commerce `products` table — not the admin `catalog_products` feed. */
+const findLegacyProductId = async (idOrSlug) => {
+  if (!idOrSlug) return null;
+  const found = await query(
+    `SELECT id FROM products
+     WHERE (id::text = $1 OR slug = $1) AND deleted_at IS NULL
+     LIMIT 1`,
+    [String(idOrSlug)]
+  );
+  return found.rows[0]?.id || null;
+};
 
 const placeOrder = async (userId, payload) => {
   const {
@@ -65,7 +89,6 @@ const placeOrder = async (userId, payload) => {
       Boolean(storeId || storeProductId || item.channel === 'store' || meta.channel === 'store');
 
     if (looksLikeStore && (!storeId || !storeProductId)) {
-      const { query } = require('../config/database');
       const idOrSlug = storeProductId || item.productId || item.id || item.catalogKey;
       if (idOrSlug) {
         const found = await query(
@@ -81,10 +104,20 @@ const placeOrder = async (userId, payload) => {
       }
     }
 
-    const totalPrice = unitPrice * quantity;
     const isStoreItem = Boolean(storeId || storeProductId);
+    const idOrSlug = item.productId || item.id || item.catalogKey;
+    let catalogProductId = null;
+    let legacyProductId = null;
+
+    if (!isStoreItem && idOrSlug) {
+      catalogProductId = await findCatalogProductId(idOrSlug);
+      legacyProductId = await findLegacyProductId(idOrSlug);
+    }
+
+    const totalPrice = unitPrice * quantity;
     normalizedItems.push({
-      productId: item.productId || null,
+      // order_items.product_id FK points at legacy `products`, not catalog_products.
+      productId: isStoreItem ? null : legacyProductId,
       variantId: item.variantId || null,
       productName: item.productName || item.name,
       sku: item.sku || String(item.id || item.catalogKey || ''),
@@ -92,7 +125,12 @@ const placeOrder = async (userId, payload) => {
       quantity,
       totalPrice,
       imageUrl: item.imageUrl || item.image || null,
-      meta: { ...meta, channel: isStoreItem ? 'store' : meta.channel },
+      meta: {
+        ...meta,
+        channel: isStoreItem ? 'store' : catalogProductId ? 'catalog' : meta.channel,
+        catalogKey: item.catalogKey || (item.id != null ? String(item.id) : null),
+        catalogProductId: catalogProductId || meta.catalogProductId || null,
+      },
       storeId,
       storeProductId,
       platformFee: 0,

@@ -38,6 +38,12 @@ const errorHandler = (err, req, res, _next) => {
     const detail = String(err.detail || err.message || '');
     if (/roles/i.test(detail) || /role_id/i.test(detail)) {
       message = 'Account roles are not set up. Ask an admin to run database seed.';
+    } else if (/product_id/i.test(detail)) {
+      message = 'One or more products in your cart could not be linked. Refresh the page and try again.';
+    } else if (/store_product_id/i.test(detail)) {
+      message = 'A store product in your cart is no longer available. Refresh and try again.';
+    } else if (/shipping_address_id|billing_address_id/i.test(detail)) {
+      message = 'Saved address not found. Choose another address or enter a new one.';
     } else {
       message = 'Related resource not found';
     }
