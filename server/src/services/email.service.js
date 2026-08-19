@@ -26,8 +26,10 @@ const domainOf = (email) => {
 };
 
 /**
- * From address for Resend — use onboarding sender until uniquworld.com is verified.
- * Set RESEND_FROM_EMAIL=noreply@uniquworld.com after https://resend.com/domains is verified.
+ * From address for Resend. Use the configured domain once it is verified at
+ * https://resend.com/domains (Sending capability). Set
+ * RESEND_FORCE_ONBOARDING=true only on a Resend trial key that still allows
+ * beth.t@example.com.
  */
 const getResendFrom = () => {
   const configured =
@@ -36,15 +38,12 @@ const getResendFrom = () => {
     RESEND_ONBOARDING_FROM;
   const domain = domainOf(configured);
   const useOnboarding =
-    process.env.RESEND_FORCE_ONBOARDING === 'true' ||
-    !domain ||
-    domain === 'uniquworld.com' ||
-    domain === 'www.uniquworld.com';
+    process.env.RESEND_FORCE_ONBOARDING === 'true' || !domain;
 
   const fromAddress = useOnboarding ? RESEND_ONBOARDING_FROM : configured;
   if (useOnboarding && configured !== RESEND_ONBOARDING_FROM) {
     logger.warn(
-      'Resend FROM uses beth.t@example.com until uniquworld.com is verified at https://resend.com/domains',
+      'Resend FROM uses beth.t@example.com (RESEND_FORCE_ONBOARDING). Prefer a verified domain at https://resend.com/domains',
       { configured }
     );
   }
@@ -136,22 +135,32 @@ const sendViaResend = async ({ to, subject, html, text }) => {
   } catch (err) {
     const msg = String(err.message || '');
     const domainIssue = /domain is not verified|not verified/i.test(msg);
-    if (domainIssue && !primary.fromAddress.includes('resend.dev')) {
-      logger.warn('Resend domain not verified — retrying with beth.t@example.com', { to });
-      const body = await postResend({
-        from: `Uniquworld <${RESEND_ONBOARDING_FROM}>`,
-        to,
-        subject,
-        html,
-        text,
-      });
-      logger.info('Email sent via Resend (onboarding from)', {
-        to,
-        subject,
-        messageId: body.id,
-        provider: 'resend',
-      });
-      return { messageId: body.id, accepted: [to], provider: 'resend' };
+    const alreadyOnboarding = primary.fromAddress === RESEND_ONBOARDING_FROM;
+    if (domainIssue && !alreadyOnboarding) {
+      logger.warn(
+        'Resend domain not verified — retrying with beth.t@example.com (trial sender only)',
+        { to, from: primary.fromAddress }
+      );
+      try {
+        const body = await postResend({
+          from: `Uniquworld <${RESEND_ONBOARDING_FROM}>`,
+          to,
+          subject,
+          html,
+          text,
+        });
+        logger.info('Email sent via Resend (onboarding from)', {
+          to,
+          subject,
+          messageId: body.id,
+          provider: 'resend',
+        });
+        return { messageId: body.id, accepted: [to], provider: 'resend' };
+      } catch (onboardingErr) {
+        throw new Error(
+          `${msg} Onboarding sender also failed (${onboardingErr.message}). Finish Sending verification at https://resend.com/domains — Partially Verified (receiving only) is not enough.`
+        );
+      }
     }
     throw err;
   }
