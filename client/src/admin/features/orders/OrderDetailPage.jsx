@@ -8,6 +8,7 @@ import { ShipmentTrackingPanel } from '@/admin/components/commerce/ShipmentTrack
 import { StatusBadge } from '@/admin/components/crud/AdminCrudPage'
 import { Button } from '@/shared/components/ui/Button'
 import { formatCurrency } from '@/shared/lib/utils'
+import { displayPaymentStatus } from '@/storefront/lib/commerce'
 import { getErrorMessage } from '@/shared/lib/axios'
 
 const TABS = [
@@ -102,7 +103,7 @@ export function OrderDetailPage() {
           <h2 className="mt-2 text-2xl font-semibold text-admin-text">{order.orderNumber}</h2>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge value={order.status} />
-            {payment?.status ? <StatusBadge value={payment.status} /> : null}
+            <StatusBadge value={displayPaymentStatus(order)} />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -212,7 +213,9 @@ export function OrderDetailPage() {
             {payment ? (
               <div className="rounded-2xl border border-admin-border bg-admin-elevated p-5 text-sm">
                 <h3 className="font-semibold text-admin-text">Razorpay</h3>
-                <p className="mt-2 capitalize">{payment.method} · {payment.status}</p>
+                <p className="mt-2 capitalize">
+                  {payment.method} · {displayPaymentStatus(order)}
+                </p>
                 {payment.gatewayPaymentId ? (
                   <p className="mt-1 break-all text-xs text-admin-text-muted">{payment.gatewayPaymentId}</p>
                 ) : null}

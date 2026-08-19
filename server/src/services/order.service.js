@@ -41,20 +41,24 @@ const fulfillPaidOrder = async (order, { razorpayOrderId, razorpayPaymentId, ext
 
   let current = await orderRepository.findById(order.id);
   if (!current.shipment) {
-    const buyer = await userRepository.findById(current.userId);
-    const shipmentData = await shiprocketService.createShipmentForOrder({
-      ...current,
-      status: 'confirmed',
-      payment: { ...current.payment, status: 'paid' },
-      userEmail: buyer?.email || current.shippingAddress?.email || null,
-    });
-    await orderRepository.createShipment({
-      orderId: current.id,
-      ...shipmentData,
-      status: shipmentData.status || 'created',
-    });
-    if (!shipmentData.mock && current.status !== 'processing') {
-      await orderRepository.updateStatus(current.id, 'processing', 'Shipment created with Shiprocket');
+    try {
+      const buyer = await userRepository.findById(current.userId);
+      const shipmentData = await shiprocketService.createShipmentForOrder({
+        ...current,
+        status: 'confirmed',
+        payment: { ...current.payment, status: 'paid' },
+        userEmail: buyer?.email || current.shippingAddress?.email || null,
+      });
+      await orderRepository.createShipment({
+        orderId: current.id,
+        ...shipmentData,
+        status: shipmentData.status || 'created',
+      });
+      if (!shipmentData.mock && current.status !== 'processing') {
+        await orderRepository.updateStatus(current.id, 'processing', 'Shipment created with Shiprocket');
+      }
+    } catch (_err) {
+      // Payment is captured even if shipment create fails — retry from admin shipping.
     }
     current = await orderRepository.findById(current.id);
   }

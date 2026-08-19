@@ -6,6 +6,7 @@ import { erpApi } from '@/admin/lib/erpApi'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 import { Button } from '@/shared/components/ui/Button'
 import { formatCurrency } from '@/shared/lib/utils'
+import { displayPaymentStatus } from '@/storefront/lib/commerce'
 
 export function OrdersPage() {
   const { data = [], isLoading } = useErpCommerceOrders()
@@ -31,7 +32,7 @@ export function OrdersPage() {
     phone: o.customerPhone || o.shippingAddress?.phone || '',
     total: o.totalAmount,
     items: (o.items || []).length,
-    paymentStatus: o.payment?.status || 'pending',
+    paymentStatus: displayPaymentStatus(o),
     status: o.status,
     updatedAt: o.updatedAt,
     createdAt: o.createdAt,
@@ -92,6 +93,7 @@ export function OrdersPage() {
             { value: 'shipped', label: 'Shipped' },
             { value: 'delivered', label: 'Delivered' },
             { value: 'cancelled', label: 'Cancelled' },
+            { value: 'failed', label: 'Failed' },
             { value: 'refunded', label: 'Refunded' },
           ],
         },
@@ -109,6 +111,7 @@ export function OrdersPage() {
           { value: 'shipped', label: 'Shipped' },
           { value: 'delivered', label: 'Delivered' },
           { value: 'cancelled', label: 'Cancelled' },
+          { value: 'failed', label: 'Failed' },
         ],
       }}
     />

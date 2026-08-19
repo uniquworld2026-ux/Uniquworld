@@ -8,7 +8,7 @@ import {
 } from '@/storefront/components/account/AccountShell'
 import { DeliveryTimeline } from '@/storefront/components/account/DeliveryTimeline'
 import { OrderCard } from '@/storefront/components/account/OrderCard'
-import { OrderStatusBadge } from '@/storefront/components/account/OrderStatusBadge'
+import { OrderStatusBadge, PaymentStatusBadge } from '@/storefront/components/account/OrderStatusBadge'
 import { Button } from '@/shared/components/ui/Button'
 import { Input, TextArea } from '@/storefront/components/ui/Input'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
@@ -222,7 +222,10 @@ export function AccountOrderDetailPage() {
           </p>
         </div>
         <div className="text-right">
-          <OrderStatusBadge order={order} className="text-xs" />
+          <div className="flex flex-wrap justify-end gap-1.5">
+            <PaymentStatusBadge order={order} />
+            <OrderStatusBadge order={order} className="text-xs" />
+          </div>
           <p className="mt-2 font-display text-xl font-semibold text-hm-primary sm:mt-3 sm:text-2xl">
             {formatINR(order.totalAmount)}
           </p>

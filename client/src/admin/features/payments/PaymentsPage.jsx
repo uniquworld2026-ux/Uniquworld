@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useErpPayments } from '@/admin/lib/createErpHooks'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
 import { formatCurrency } from '@/shared/lib/utils'
+import { displayPaymentStatus } from '@/storefront/lib/commerce'
 
 export function PaymentsPage() {
   const { data = [], isLoading } = useErpPayments()
@@ -14,12 +15,17 @@ export function PaymentsPage() {
     },
   })
 
+  const rows = data.map((p) => ({
+    ...p,
+    status: displayPaymentStatus({ payment: p, status: p.orderStatus }),
+  }))
+
   return (
     <AdminCrudPage
       title="Payment Management"
-      description="Razorpay and COD payments synced from live orders."
+      description="Razorpay and COD payments synced from live orders. Paid vs failed is taken from Razorpay."
       addLabel="Payments are system-generated"
-      data={data}
+      data={rows}
       isLoading={isLoading}
       createMutation={noop}
       updateMutation={noop}
