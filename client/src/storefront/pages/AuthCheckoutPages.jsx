@@ -341,9 +341,88 @@ export function SignupPage() {
 }
 
 export function ForgotPasswordPage() {
+  const navigate = useNavigate()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm()
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [resetStep, setResetStep] = useState(null)
+  const [otpCode, setOtpCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  if (resetStep) {
+    return (
+      <AuthShell
+        title="Enter OTP & new password"
+        subtitle={`We sent a 6-digit code to ${resetStep.email}. Enter it below with your new password.`}
+        badge="Account recovery"
+        footer={
+          <button
+            type="button"
+            onClick={() => { setResetStep(null); setError(''); setMessage('') }}
+            className="font-medium text-hm-accent hover:underline"
+          >
+            Use a different email
+          </button>
+        }
+      >
+        <form
+          className="space-y-4"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            setError('')
+            setMessage('')
+            if (!otpCode.trim() || !newPassword.trim()) {
+              setError('Please enter the OTP and a new password.')
+              return
+            }
+            if (newPassword.length < 8) {
+              setError('Password must be at least 8 characters.')
+              return
+            }
+            setBusy(true)
+            try {
+              const data = await authApi.resetPassword({
+                email: resetStep.email,
+                code: otpCode.trim(),
+                newPassword,
+              })
+              setMessage(data?.message || 'Password reset successful!')
+              setTimeout(() => navigate('/login'), 1500)
+            } catch (err) {
+              setError(getErrorMessage(err))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          <label className="block space-y-1.5">
+            <span className="font-sans text-xs font-medium text-hm-text-muted">OTP code</span>
+            <Input
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value)}
+              placeholder="6-digit OTP"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              className="text-center tracking-[0.3em]"
+            />
+          </label>
+          <TextField
+            label="New password"
+            type="password"
+            icon={Lock}
+            placeholder="Min. 8 characters"
+            register={{ value: newPassword, onChange: (e) => setNewPassword(e.target.value) }}
+          />
+          {message ? <p className="text-sm text-hm-accent">{message}</p> : null}
+          {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
+          <Button type="submit" variant="primary" className="w-full" disabled={busy}>
+            {busy ? 'Resetting…' : 'Reset password'}
+          </Button>
+        </form>
+      </AuthShell>
+    )
+  }
 
   return (
     <AuthShell
@@ -362,8 +441,8 @@ export function ForgotPasswordPage() {
           setError('')
           setMessage('')
           try {
-            const data = await authApi.forgotPassword(values.email)
-            setMessage(data?.message || 'If that email exists, an OTP has been sent.')
+            await authApi.forgotPassword(values.email)
+            setResetStep({ email: values.email })
           } catch (err) {
             setError(getErrorMessage(err))
           }
@@ -380,7 +459,7 @@ export function ForgotPasswordPage() {
         {message ? <p className="text-sm text-hm-accent">{message}</p> : null}
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
-          Send OTP
+          {isSubmitting ? 'Sending…' : 'Send OTP'}
         </Button>
       </form>
     </AuthShell>

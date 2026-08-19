@@ -36,9 +36,9 @@ export function DeliveryTimeline({ status, timeline = [], estimatedDelivery, cla
 
   if (cancelled) {
     return (
-      <div className={cn('rounded-2xl border border-red-200 bg-red-50 p-5', className)}>
-        <p className="text-sm font-semibold text-red-800">Order cancelled</p>
-        <p className="mt-1 text-sm text-red-700/80">
+      <div className={cn('rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5', className)}>
+        <p className="text-xs font-semibold text-red-800 sm:text-sm">Order cancelled</p>
+        <p className="mt-1 text-xs text-red-700/80 sm:text-sm">
           {timeline?.[timeline.length - 1]?.note || 'This order was cancelled.'}
         </p>
       </div>
@@ -46,17 +46,17 @@ export function DeliveryTimeline({ status, timeline = [], estimatedDelivery, cla
   }
 
   return (
-    <div className={cn('rounded-2xl border border-hm-border bg-hm-elevated p-5 sm:p-6', className)}>
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="font-sans text-sm font-semibold text-hm-text">Delivery timeline</h3>
+    <div className={cn('rounded-2xl border border-hm-border bg-hm-elevated p-4 sm:p-6', className)}>
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+        <h3 className="font-sans text-xs font-semibold text-hm-text sm:text-sm">Delivery timeline</h3>
         {estimatedDelivery ? (
-          <p className="text-xs text-hm-text-muted">
-            Est. delivery <span className="font-medium text-hm-text">{formatDate(estimatedDelivery)}</span>
+          <p className="text-[10px] text-hm-text-muted sm:text-xs">
+            Est. <span className="font-medium text-hm-text">{formatDate(estimatedDelivery)}</span>
           </p>
         ) : null}
       </div>
 
-      <ol className="mt-6 grid gap-4 sm:grid-cols-5">
+      <ol className="mt-4 flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-6 sm:grid sm:grid-cols-5 sm:gap-4 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
         {STEPS.map((step, index) => {
           const done = currentRank >= index
           const active = currentRank === index
@@ -64,7 +64,7 @@ export function DeliveryTimeline({ status, timeline = [], estimatedDelivery, cla
           const Icon = step.icon
 
           return (
-            <li key={step.id} className="relative flex flex-col items-center text-center">
+            <li key={step.id} className="relative flex w-20 shrink-0 flex-col items-center text-center sm:w-auto">
               {index < STEPS.length - 1 ? (
                 <span
                   className={cn(
@@ -109,11 +109,11 @@ export function DeliveryTimeline({ status, timeline = [], estimatedDelivery, cla
       </ol>
 
       {(timeline || []).length > 0 ? (
-        <div className="mt-6 border-t border-hm-border pt-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-hm-text-subtle">Updates</p>
-          <ul className="mt-3 space-y-3">
+        <div className="mt-4 border-t border-hm-border pt-3 sm:mt-6 sm:pt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-hm-text-subtle sm:text-xs">Updates</p>
+          <ul className="mt-2 space-y-2.5 sm:mt-3 sm:space-y-3">
             {[...(timeline || [])].reverse().slice(0, 5).map((event, idx) => (
-              <li key={`${event.status}-${idx}`} className="flex gap-3 text-sm">
+              <li key={`${event.status}-${idx}`} className="flex gap-2.5 text-xs sm:gap-3 sm:text-sm">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-hm-accent" />
                 <div>
                   <p className="font-medium text-hm-text capitalize">{String(event.status).replace(/_/g, ' ')}</p>

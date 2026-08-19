@@ -112,11 +112,11 @@ export function AccountShell() {
 
 export function AccountEmptyState({ title, description, actionLabel, actionTo }) {
   return (
-    <div className="rounded-2xl border border-dashed border-hm-border bg-hm-elevated/80 p-8 text-center sm:p-12">
-      <p className="font-display text-2xl font-semibold text-hm-text">{title}</p>
-      <p className="mx-auto mt-2 max-w-sm font-sans text-sm text-hm-text-muted">{description}</p>
+    <div className="rounded-2xl border border-dashed border-hm-border bg-hm-elevated/80 p-6 text-center sm:p-12">
+      <p className="font-display text-lg font-semibold text-hm-text sm:text-2xl">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-sm font-sans text-xs text-hm-text-muted sm:mt-2 sm:text-sm">{description}</p>
       {actionTo ? (
-        <Link to={actionTo} className="mt-6 inline-block">
+        <Link to={actionTo} className="mt-4 inline-block sm:mt-6">
           <Button variant="primary">{actionLabel}</Button>
         </Link>
       ) : null}
@@ -126,12 +126,12 @@ export function AccountEmptyState({ title, description, actionLabel, actionTo })
 
 export function AccountSection({ title, description, children, action }) {
   return (
-    <section className="rounded-2xl border border-hm-border bg-hm-elevated p-5 sm:p-6">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <section className="rounded-2xl border border-hm-border bg-hm-elevated p-4 sm:p-6">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2 sm:mb-4 sm:gap-3">
         <div>
-          {title ? <h2 className="font-sans text-base font-semibold text-hm-text">{title}</h2> : null}
+          {title ? <h2 className="font-sans text-sm font-semibold text-hm-text sm:text-base">{title}</h2> : null}
           {description ? (
-            <p className="mt-1 font-sans text-sm text-hm-text-muted">{description}</p>
+            <p className="mt-0.5 font-sans text-xs text-hm-text-muted sm:mt-1 sm:text-sm">{description}</p>
           ) : null}
         </div>
         {action}
