@@ -1,7 +1,10 @@
+import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Eye } from 'lucide-react'
 import { useErpCommerceOrders } from '@/admin/lib/createErpHooks'
 import { erpApi } from '@/admin/lib/erpApi'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
+import { Button } from '@/shared/components/ui/Button'
 import { formatCurrency } from '@/shared/lib/utils'
 
 export function OrdersPage() {
@@ -23,8 +26,9 @@ export function OrdersPage() {
   const rows = data.map((o) => ({
     id: o.id,
     orderNumber: o.orderNumber,
-    customer: o.shippingAddress?.fullName || 'Customer',
-    email: o.shippingAddress?.phone || '',
+    customer: o.customerName || o.shippingAddress?.fullName || 'Customer',
+    email: o.customerEmail || o.shippingAddress?.email || '',
+    phone: o.customerPhone || o.shippingAddress?.phone || '',
     total: o.totalAmount,
     items: (o.items || []).length,
     paymentStatus: o.payment?.status || 'pending',
@@ -36,7 +40,7 @@ export function OrdersPage() {
   return (
     <AdminCrudPage
       title="Order Management"
-      description="Live storefront orders — update fulfillment status here."
+      description="Live storefront orders — view invoice, email customer, and manage Shiprocket delivery."
       addLabel="From checkout"
       data={rows}
       isLoading={isLoading}
@@ -46,6 +50,11 @@ export function OrdersPage() {
       columns={[
         { accessorKey: 'orderNumber', header: 'Order', cell: ({ getValue }) => <TextCell>{getValue()}</TextCell> },
         { accessorKey: 'customer', header: 'Customer', cell: ({ getValue }) => <TextCell muted>{getValue()}</TextCell> },
+        {
+          accessorKey: 'email',
+          header: 'Email',
+          cell: ({ getValue }) => <TextCell muted>{getValue() || '—'}</TextCell>,
+        },
         {
           accessorKey: 'total',
           header: 'Total',
@@ -58,6 +67,18 @@ export function OrdersPage() {
           cell: ({ getValue }) => <StatusBadge value={getValue()} />,
         },
         { accessorKey: 'status', header: 'Status', cell: ({ getValue }) => <StatusBadge value={getValue()} /> },
+        {
+          id: 'view',
+          header: '',
+          cell: ({ row }) => (
+            <Link to={`/admin/orders/${row.original.id}`}>
+              <Button size="sm" variant="outline">
+                <Eye className="h-3.5 w-3.5" />
+                View
+              </Button>
+            </Link>
+          ),
+        },
       ]}
       fields={[
         {

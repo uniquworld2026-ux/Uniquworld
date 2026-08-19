@@ -332,22 +332,167 @@ const listModules = asyncHandler(async (_req, res) => {
 /** Commerce ops — orders / payments / shipments for admin */
 const listOrders = asyncHandler(async (req, res) => {
   const result = await query(
-    `SELECT o.*, 
+    `SELECT o.*,
+      u.email AS customer_email,
+      u.first_name AS customer_first_name,
+      u.last_name AS customer_last_name,
+      u.phone AS customer_phone,
       (SELECT json_agg(oi.*) FROM order_items oi WHERE oi.order_id = o.id) AS items,
       (SELECT row_to_json(p.*) FROM payments p WHERE p.order_id = o.id ORDER BY p.created_at DESC LIMIT 1) AS payment,
       (SELECT row_to_json(s.*) FROM shipments s WHERE s.order_id = o.id ORDER BY s.created_at DESC LIMIT 1) AS shipment
      FROM orders o
+     LEFT JOIN users u ON u.id = o.user_id
      ORDER BY o.created_at DESC
      LIMIT $1 OFFSET $2`,
     [Number(req.query.limit) || 50, Number(req.query.offset) || 0]
   );
   const items = result.rows.map((row) => ({
     ...rowToApi(row),
+    customerEmail: row.customer_email,
+    customerName: [row.customer_first_name, row.customer_last_name].filter(Boolean).join(' '),
+    customerPhone: row.customer_phone,
     items: row.items || [],
     payment: row.payment ? rowToApi(row.payment) : null,
     shipment: row.shipment ? rowToApi(row.shipment) : null,
   }));
   return ApiResponse.ok(res, { items });
+});
+
+const getOrderDetail = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const order = await orderRepository.findById(req.params.id);
+  if (!order) throw ApiError.notFound('Order not found');
+
+  const userResult = await query(
+    `SELECT email, first_name, last_name, phone FROM users WHERE id = $1 LIMIT 1`,
+    [order.userId]
+  );
+  const user = userResult.rows[0];
+
+  return ApiResponse.ok(res, {
+    item: {
+      ...order,
+      customer: user
+        ? {
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            phone: user.phone,
+          }
+        : null,
+    },
+  });
+});
+
+const getOrderInvoice = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const invoiceService = require('../services/invoice.service');
+  const order = await orderRepository.findById(req.params.id);
+  if (!order) throw ApiError.notFound('Order not found');
+
+  const userResult = await query(
+    `SELECT email, first_name, last_name, phone FROM users WHERE id = $1 LIMIT 1`,
+    [order.userId]
+  );
+  const user = userResult.rows[0];
+  const customer = user
+    ? {
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phone: user.phone,
+      }
+    : {};
+
+  const html = invoiceService.buildOrderInvoiceHtml(order, customer);
+  return ApiResponse.ok(res, { html, orderNumber: order.orderNumber });
+});
+
+const sendOrderCustomerEmail = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const invoiceService = require('../services/invoice.service');
+  const { type = 'invoice', subject, message } = req.body || {};
+
+  const order = await orderRepository.findById(req.params.id);
+  if (!order) throw ApiError.notFound('Order not found');
+
+  const userResult = await query(
+    `SELECT email, first_name, last_name FROM users WHERE id = $1 LIMIT 1`,
+    [order.userId]
+  );
+  const user = userResult.rows[0];
+  const to =
+    order.shippingAddress?.email ||
+    user?.email ||
+    null;
+  if (!to) throw ApiError.badRequest('No customer email on this order');
+
+  const firstName = user?.first_name || order.shippingAddress?.fullName || 'Customer';
+  let title;
+  let body;
+  let totalLabel;
+
+  if (type === 'custom') {
+    title = subject || `Update on order ${order.orderNumber}`;
+    body = message || 'We have an update on your order.';
+  } else if (type === 'status') {
+    title = `Order ${order.orderNumber} — ${String(order.status).replace(/_/g, ' ')}`;
+    body =
+      message ||
+      `Your order status is now "${String(order.status).replace(/_/g, ' ')}".`;
+    totalLabel = invoiceService.buildInvoiceEmailSummary(order);
+  } else {
+    title = `Invoice for order ${order.orderNumber}`;
+    body =
+      message ||
+      'Please find your order invoice summary below. You can track delivery from your Uniquworld account.';
+    totalLabel = invoiceService.buildInvoiceEmailSummary(order);
+  }
+
+  await emailService.sendOrderEmail({
+    to,
+    firstName,
+    orderNumber: order.orderNumber,
+    title,
+    message: body,
+    totalLabel,
+  });
+
+  return ApiResponse.ok(res, { sent: true, to }, 'Email sent to customer');
+});
+
+const getOrderTracking = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const shiprocketService = require('../services/shiprocket.service');
+
+  const order = await orderRepository.findById(req.params.id);
+  if (!order) throw ApiError.notFound('Order not found');
+
+  let liveTracking = null;
+  if (order.shipment?.awbCode && shiprocketService.isConfigured()) {
+    try {
+      liveTracking = await shiprocketService.trackByAwb(order.shipment.awbCode);
+    } catch (err) {
+      logger.warn('Shiprocket track failed', { orderId: order.id, message: err.message });
+    }
+  }
+
+  const addr = order.shippingAddress || {};
+  const mapQuery = [addr.line1, addr.city, addr.state, addr.postalCode, 'India']
+    .filter(Boolean)
+    .join(', ');
+
+  return ApiResponse.ok(res, {
+    order: {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      timeline: order.timeline || [],
+    },
+    shipment: order.shipment,
+    tracking: liveTracking,
+    mapQuery,
+  });
 });
 
 const updateOrderStatus = asyncHandler(async (req, res) => {
@@ -368,6 +513,33 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
      VALUES ($1, $2, $3)`,
     [req.params.id, status, note || `Status set to ${status}`]
   );
+
+  if (req.body.sendEmail) {
+    try {
+      const orderRepository = require('../repositories/order.repository');
+      const invoiceService = require('../services/invoice.service');
+      const order = await orderRepository.findById(req.params.id);
+      const userResult = await query(
+        `SELECT email, first_name FROM users WHERE id = $1 LIMIT 1`,
+        [order.userId]
+      );
+      const user = userResult.rows[0];
+      const to = order.shippingAddress?.email || user?.email;
+      if (to) {
+        await emailService.sendOrderEmail({
+          to,
+          firstName: user?.first_name || order.shippingAddress?.fullName || 'Customer',
+          orderNumber: order.orderNumber,
+          title: `Order ${order.orderNumber} — ${String(status).replace(/_/g, ' ')}`,
+          message: note || `Your order status is now "${String(status).replace(/_/g, ' ')}".`,
+          totalLabel: invoiceService.buildInvoiceEmailSummary(order),
+        });
+      }
+    } catch (err) {
+      logger.warn('Order status email skipped', { orderId: req.params.id, message: err.message });
+    }
+  }
+
   if (status === 'delivered') {
     try {
       const storePartnerRepository = require('../repositories/storePartner.repository');
@@ -574,6 +746,117 @@ const deleteShipment = asyncHandler(async (req, res) => {
   const result = await query(`DELETE FROM shipments WHERE id = $1 RETURNING id`, [req.params.id]);
   if (!result.rows[0]) throw ApiError.notFound('Shipment not found');
   return ApiResponse.ok(res, null, 'Shipment deleted');
+});
+
+const getShipmentDetail = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const shiprocketService = require('../services/shiprocket.service');
+
+  const result = await query(
+    `SELECT s.*, o.order_number, o.status AS order_status, o.user_id,
+            o.shipping_address_snap, u.email AS customer_email,
+            u.first_name AS customer_first_name, u.last_name AS customer_last_name
+     FROM shipments s
+     JOIN orders o ON o.id = s.order_id
+     LEFT JOIN users u ON u.id = o.user_id
+     WHERE s.id = $1
+     LIMIT 1`,
+    [req.params.id]
+  );
+  if (!result.rows[0]) throw ApiError.notFound('Shipment not found');
+
+  const row = result.rows[0];
+  const order = await orderRepository.findById(row.order_id);
+
+  let liveTracking = null;
+  if (row.awb_code && shiprocketService.isConfigured()) {
+    try {
+      liveTracking = await shiprocketService.trackByAwb(row.awb_code);
+    } catch (err) {
+      logger.warn('Shiprocket track failed', { shipmentId: row.id, message: err.message });
+    }
+  }
+
+  const addr = row.shipping_address_snap || {};
+  const mapQuery = [addr.line1, addr.city, addr.state, addr.postalCode, 'India']
+    .filter(Boolean)
+    .join(', ');
+
+  const item = rowToApi(row);
+  const meta = item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
+
+  return ApiResponse.ok(res, {
+    item: {
+      ...item,
+      orderNumber: row.order_number,
+      orderStatus: row.order_status,
+      orderId: row.order_id,
+      status: row.shipment_status,
+      deliveryMode: meta.deliveryMode || (row.carrier === 'manual' ? 'manual' : 'auto'),
+      customer: {
+        email: row.customer_email,
+        name: [row.customer_first_name, row.customer_last_name].filter(Boolean).join(' '),
+      },
+      order,
+      tracking: liveTracking,
+      mapQuery,
+    },
+  });
+});
+
+const cancelShipment = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const shiprocketService = require('../services/shiprocket.service');
+  const { reason } = req.body || {};
+
+  const result = await query(`SELECT * FROM shipments WHERE id = $1 LIMIT 1`, [req.params.id]);
+  if (!result.rows[0]) throw ApiError.notFound('Shipment not found');
+  const row = result.rows[0];
+
+  if (row.shipment_status === 'cancelled') {
+    return ApiResponse.ok(res, { item: rowToApi(row) }, 'Shipment already cancelled');
+  }
+
+  if (shiprocketService.isConfigured()) {
+    try {
+      if (row.awb_code) {
+        await shiprocketService.cancelShipmentByAwb(row.awb_code);
+      } else if (row.shiprocket_order_id) {
+        await shiprocketService.cancelOrdersByIds([row.shiprocket_order_id]);
+      }
+    } catch (err) {
+      logger.warn('Shiprocket cancel failed', { shipmentId: row.id, message: err.message });
+      throw ApiError.badRequest(err.message || 'Unable to cancel shipment in Shiprocket');
+    }
+  }
+
+  await query(
+    `UPDATE shipments SET shipment_status = 'cancelled', metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb WHERE id = $1`,
+    [req.params.id, JSON.stringify({ cancelReason: reason || 'Cancelled by admin' })]
+  );
+
+  await orderRepository.updateStatus(
+    row.order_id,
+    'cancelled',
+    reason || 'Shipment cancelled by admin',
+    null
+  );
+
+  const orderResult = await query(`SELECT order_number FROM orders WHERE id = $1`, [row.order_id]);
+  const updated = await query(`SELECT * FROM shipments WHERE id = $1`, [req.params.id]);
+  const item = rowToApi(updated.rows[0]);
+
+  return ApiResponse.ok(
+    res,
+    {
+      item: {
+        ...item,
+        orderNumber: orderResult.rows[0]?.order_number,
+        status: updated.rows[0].shipment_status,
+      },
+    },
+    'Shipment cancelled'
+  );
 });
 
 const listCustomers = asyncHandler(async (req, res) => {
@@ -896,11 +1179,17 @@ module.exports = {
   remove,
   listModules,
   listOrders,
+  getOrderDetail,
+  getOrderInvoice,
+  sendOrderCustomerEmail,
+  getOrderTracking,
   updateOrderStatus,
   listPayments,
   listShipments,
+  getShipmentDetail,
   createShipment,
   updateShipment,
+  cancelShipment,
   deleteShipment,
   listCustomers,
   listPublicStoreProducts,

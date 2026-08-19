@@ -24,8 +24,10 @@ import {
 } from '@/admin/features/stores/StoreProductFormPages'
 import { StoreWithdrawalsPage } from '@/admin/features/stores/StoreWithdrawalsPage'
 import { OrdersPage } from '@/admin/features/orders/OrdersPage'
+import { OrderDetailPage } from '@/admin/features/orders/OrderDetailPage'
 import { PaymentsPage } from '@/admin/features/payments/PaymentsPage'
 import { ShippingPage } from '@/admin/features/shipping/ShippingPage'
+import { ShipmentDetailPage } from '@/admin/features/shipping/ShipmentDetailPage'
 import { CustomersPage } from '@/admin/features/customers/CustomersPage'
 import { AdminUsersPage } from '@/admin/features/admin-users/AdminUsersPage'
 import { CorporateEnquiriesPage } from '@/admin/features/corporate/CorporateEnquiriesPage'
@@ -124,8 +126,10 @@ export function AppRouter() {
         <Route path="store-products/new" element={<StoreProductCreatePage />} />
         <Route path="store-products/:id/edit" element={<StoreProductEditPage />} />
         <Route path="store-withdrawals" element={<StoreWithdrawalsPage />} />
+        <Route path="orders/:orderId" element={<OrderDetailPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="payments" element={<PaymentsPage />} />
+        <Route path="shipping/:shipmentId" element={<ShipmentDetailPage />} />
         <Route path="shipping" element={<ShippingPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="admin-users" element={<AdminUsersPage />} />

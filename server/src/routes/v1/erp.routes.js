@@ -32,10 +32,16 @@ router.post('/auth/login', erpController.adminLogin);
 router.post('/auth/verify-otp', erpController.adminVerifyOtp);
 
 router.get('/commerce/orders', requireAdminAccess, erpController.listOrders);
+router.get('/commerce/orders/:id/invoice', requireAdminAccess, erpController.getOrderInvoice);
+router.get('/commerce/orders/:id/tracking', requireAdminAccess, erpController.getOrderTracking);
+router.post('/commerce/orders/:id/email', requireAdminAccess, erpController.sendOrderCustomerEmail);
+router.get('/commerce/orders/:id', requireAdminAccess, erpController.getOrderDetail);
 router.patch('/commerce/orders/:id', requireAdminAccess, erpController.updateOrderStatus);
 router.get('/commerce/payments', requireAdminAccess, erpController.listPayments);
 router.get('/commerce/shipments', requireAdminAccess, erpController.listShipments);
+router.get('/commerce/shipments/:id', requireAdminAccess, erpController.getShipmentDetail);
 router.post('/commerce/shipments', requireAdminAccess, erpController.createShipment);
+router.post('/commerce/shipments/:id/cancel', requireAdminAccess, erpController.cancelShipment);
 router.patch('/commerce/shipments/:id', requireAdminAccess, erpController.updateShipment);
 router.delete('/commerce/shipments/:id', requireAdminAccess, erpController.deleteShipment);
 router.get('/commerce/customers', requireAdminAccess, erpController.listCustomers);

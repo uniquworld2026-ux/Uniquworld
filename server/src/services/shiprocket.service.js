@@ -56,9 +56,59 @@ const createAdhocOrder = async (payload) => {
   });
 };
 
+const normalizeTracking = (data) => {
+  const track = data?.tracking_data || data || {};
+  const scans =
+    track.shipment_track_activities ||
+    track.track_activities ||
+    track.shipment_track ||
+    [];
+
+  const activities = (Array.isArray(scans) ? scans : []).map((scan) => ({
+    status:
+      scan['sr-status-label'] ||
+      scan.status ||
+      scan.activity ||
+      scan['status'] ||
+      'Update',
+    location: scan.location || scan.city || scan['location'] || '',
+    timestamp: scan.date || scan['updated-time'] || scan.datetime || scan['date'] || null,
+  }));
+
+  return {
+    awb: track.awb_code || data?.awb_code || null,
+    courier: track.courier_name || data?.courier_name || null,
+    status: track.shipment_status || track.current_status || track.status || null,
+    etd: track.edd || track.etd || null,
+    activities,
+    raw: data,
+  };
+};
+
 const trackByAwb = async (awb) => {
   const token = await getToken();
-  return request(`/courier/track/awb/${awb}`, { token });
+  const data = await request(`/courier/track/awb/${encodeURIComponent(awb)}`, { token });
+  return normalizeTracking(data);
+};
+
+const cancelShipmentByAwb = async (awb) => {
+  const token = await getToken();
+  return request('/orders/cancel/shipment/awbs', {
+    method: 'POST',
+    token,
+    body: { awbs: [String(awb)] },
+  });
+};
+
+const cancelOrdersByIds = async (shiprocketOrderIds = []) => {
+  const ids = shiprocketOrderIds.map((id) => Number(id)).filter(Boolean);
+  if (!ids.length) throw ApiError.badRequest('Shiprocket order id is required to cancel');
+  const token = await getToken();
+  return request('/orders/cancel', {
+    method: 'POST',
+    token,
+    body: { ids },
+  });
 };
 
 const buildOrderPayload = (order) => {
@@ -139,5 +189,8 @@ module.exports = {
   isConfigured,
   createShipmentForOrder,
   trackByAwb,
+  normalizeTracking,
+  cancelShipmentByAwb,
+  cancelOrdersByIds,
   getToken,
 };

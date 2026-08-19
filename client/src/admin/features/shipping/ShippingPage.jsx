@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Eye } from 'lucide-react'
 import { useErpShipments } from '@/admin/lib/createErpHooks'
 import { erpApi } from '@/admin/lib/erpApi'
 import { AdminCrudPage, StatusBadge, TextCell } from '@/admin/components/crud/AdminCrudPage'
@@ -124,14 +126,23 @@ export function ShippingPage() {
         {
           id: 'track',
           header: '',
-          cell: ({ row }) =>
-            row.original.trackingUrl ? (
-              <a href={row.original.trackingUrl} target="_blank" rel="noreferrer">
+          cell: ({ row }) => (
+            <div className="flex items-center gap-2">
+              <Link to={`/admin/shipping/${row.original.id}`}>
                 <Button size="sm" variant="outline">
-                  Track
+                  <Eye className="h-3.5 w-3.5" />
+                  Manage
                 </Button>
-              </a>
-            ) : null,
+              </Link>
+              {row.original.trackingUrl ? (
+                <a href={row.original.trackingUrl} target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="ghost">
+                    Track
+                  </Button>
+                </a>
+              ) : null}
+            </div>
+          ),
         },
       ]}
       fields={[
