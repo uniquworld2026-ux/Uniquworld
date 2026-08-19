@@ -273,7 +273,13 @@ const verifyRazorpayPayment = async (userId, payload) => {
     razorpayPaymentId,
     razorpaySignature,
   });
-  if (!valid) throw ApiError.badRequest('Invalid payment signature');
+  if (!valid) {
+    await failRazorpayPayment(userId, {
+      orderId,
+      reason: 'Invalid payment signature',
+    });
+    throw ApiError.badRequest('Invalid payment signature');
+  }
 
   await orderRepository.updatePayment(order.payment.id, {
     status: 'paid',
@@ -313,6 +319,37 @@ const verifyRazorpayPayment = async (userId, payload) => {
     data: { orderId: order.id, orderNumber: order.orderNumber },
     orderNumber: order.orderNumber,
   });
+
+  return orderRepository.findByIdForUser(order.id, userId);
+};
+
+const failRazorpayPayment = async (userId, { orderId, reason } = {}) => {
+  const order = await orderRepository.findByIdForUser(orderId, userId);
+  if (!order) throw ApiError.notFound('Order not found');
+  if (order.payment?.status === 'paid') {
+    return order;
+  }
+  if (!['pending', 'failed'].includes(order.status)) {
+    return order;
+  }
+
+  if (order.payment?.id) {
+    await orderRepository.updatePayment(order.payment.id, {
+      status: 'failed',
+      metadata: {
+        ...(order.payment.metadata || {}),
+        failReason: reason || 'Payment failed or cancelled',
+      },
+    });
+  }
+
+  if (order.status !== 'failed') {
+    await orderRepository.updateStatus(
+      order.id,
+      'failed',
+      reason || 'Payment failed or cancelled'
+    );
+  }
 
   return orderRepository.findByIdForUser(order.id, userId);
 };
@@ -412,6 +449,7 @@ const accountSummary = async (userId) => {
 module.exports = {
   placeOrder,
   verifyRazorpayPayment,
+  failRazorpayPayment,
   listOrders,
   getOrder,
   getOrderByNumber,

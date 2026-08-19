@@ -122,6 +122,11 @@ const verifyPayment = asyncHandler(async (req, res) => {
   return ApiResponse.ok(res, { order }, 'Payment verified');
 });
 
+const failPayment = asyncHandler(async (req, res) => {
+  const order = await orderService.failRazorpayPayment(req.user.id, req.body);
+  return ApiResponse.ok(res, { order }, 'Payment marked failed');
+});
+
 const listOrders = asyncHandler(async (req, res) => {
   const orders = await orderService.listOrders(req.user.id, {
     status: req.query.status,
@@ -173,6 +178,7 @@ module.exports = {
   markAllNotificationsRead,
   placeOrder,
   verifyPayment,
+  failPayment,
   listOrders,
   getOrder,
   cancelOrder,

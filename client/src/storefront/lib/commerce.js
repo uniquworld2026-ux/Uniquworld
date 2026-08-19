@@ -18,7 +18,23 @@ export function formatDate(value) {
 
 export function statusLabel(status) {
   if (!status) return '—'
+  const key = String(status).toLowerCase()
+  if (key === 'confirmed') return 'Confirmed'
+  if (key === 'failed') return 'Failed'
+  if (key === 'pending') return 'Pending payment'
   return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+/** Customer-facing order badge: Failed if unpaid/cancelled payment; Confirmed (green) after paid. */
+export function customerFacingOrderStatus(order) {
+  const status = String(order?.status || '').toLowerCase()
+  const pay = String(order?.payment?.status || '').toLowerCase()
+
+  if (['cancelled', 'refunded', 'failed'].includes(status)) return status
+  if (pay === 'failed') return 'failed'
+  if (['shipped', 'in_transit', 'out_for_delivery', 'delivered'].includes(status)) return status
+  if (pay === 'paid' || ['confirmed', 'processing'].includes(status)) return 'confirmed'
+  return 'pending'
 }
 
 export function loadRazorpay() {

@@ -25,7 +25,7 @@ export function OrderCard({ order, className }) {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <OrderStatusBadge status={order.status} />
+          <OrderStatusBadge order={order} />
           <ChevronRight className="h-3.5 w-3.5 text-hm-text-subtle transition group-hover:translate-x-0.5 group-hover:text-hm-accent sm:h-4 sm:w-4" />
         </div>
       </div>

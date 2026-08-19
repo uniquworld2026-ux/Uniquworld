@@ -73,6 +73,11 @@ const verifyPaymentSchema = z.object({
   razorpaySignature: z.string().min(3),
 });
 
+const failPaymentSchema = z.object({
+  orderId: z.string().uuid(),
+  reason: z.string().max(300).optional(),
+});
+
 const cancelOrderSchema = z.object({
   reason: z.string().max(500).optional(),
 });
@@ -110,6 +115,7 @@ module.exports = {
   updateProfileSchema,
   placeOrderSchema,
   verifyPaymentSchema,
+  failPaymentSchema,
   cancelOrderSchema,
   returnSchema,
   wishlistSchema,

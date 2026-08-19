@@ -19,6 +19,7 @@ const STATUS_RANK = {
   out_for_delivery: 3,
   delivered: 4,
   cancelled: -1,
+  failed: -1,
 }
 
 function rankForStatus(status) {
@@ -32,14 +33,19 @@ function eventForStep(timeline, stepId) {
 /** Visual delivery timeline for order tracking. */
 export function DeliveryTimeline({ status, timeline = [], estimatedDelivery, className }) {
   const currentRank = rankForStatus(status)
-  const cancelled = String(status).toLowerCase() === 'cancelled'
+  const key = String(status || '').toLowerCase()
+  const cancelled = key === 'cancelled'
+  const failed = key === 'failed'
 
-  if (cancelled) {
+  if (cancelled || failed) {
     return (
       <div className={cn('rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5', className)}>
-        <p className="text-xs font-semibold text-red-800 sm:text-sm">Order cancelled</p>
+        <p className="text-xs font-semibold text-red-800 sm:text-sm">
+          {failed ? 'Payment failed' : 'Order cancelled'}
+        </p>
         <p className="mt-1 text-xs text-red-700/80 sm:text-sm">
-          {timeline?.[timeline.length - 1]?.note || 'This order was cancelled.'}
+          {timeline?.[timeline.length - 1]?.note ||
+            (failed ? 'Payment was not completed. Please place the order again.' : 'This order was cancelled.')}
         </p>
       </div>
     )

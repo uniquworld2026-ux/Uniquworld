@@ -112,10 +112,21 @@ export function BuyNowCheckoutPage() {
             })
             resolve(verified)
           } catch (err) {
+            accountApi.failPayment({ orderId: order.id, reason: 'Payment verification failed' }).catch(() => {})
             reject(err)
           }
         },
-        modal: { ondismiss: () => reject(new Error('Payment cancelled')) },
+        modal: {
+          ondismiss: () => {
+            accountApi.failPayment({ orderId: order.id, reason: 'Payment cancelled' }).catch(() => {})
+            reject(new Error('Payment cancelled'))
+          },
+        },
+      })
+      rzp.on('payment.failed', (resp) => {
+        const reason = resp?.error?.description || 'Payment failed'
+        accountApi.failPayment({ orderId: order.id, reason }).catch(() => {})
+        reject(new Error(reason))
       })
       rzp.open()
     })
@@ -273,7 +284,7 @@ export function BuyNowCheckoutPage() {
                   </div>
                 </Field>
                 {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
-                {info ? <p className="font-sans text-sm text-hm-accent">{info}</p> : null}
+                {info ? <p className="font-sans text-sm text-hm-success">{info}</p> : null}
                 <Button type="submit" variant="primary" className="w-full" disabled={busy}>
                   {busy ? 'Sending OTP…' : 'Continue with email OTP'}
                 </Button>
@@ -298,7 +309,7 @@ export function BuyNowCheckoutPage() {
                   className="text-center tracking-[0.3em]"
                 />
                 {error ? <p className="font-sans text-sm text-hm-danger">{error}</p> : null}
-                {info ? <p className="font-sans text-sm text-hm-accent">{info}</p> : null}
+                {info ? <p className="font-sans text-sm text-hm-success">{info}</p> : null}
                 <Button
                   type="button"
                   variant="primary"

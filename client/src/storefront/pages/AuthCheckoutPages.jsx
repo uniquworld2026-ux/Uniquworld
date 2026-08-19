@@ -134,7 +134,7 @@ export function LoginPage() {
             className="text-center tracking-[0.3em]"
           />
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
-          {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
+          {info ? <p className="text-sm text-hm-success">{info}</p> : null}
           <Button type="submit" variant="primary" className="w-full" disabled={verifying}>
             {verifying ? 'Verifying…' : isLoginOtp ? 'Verify & sign in' : 'Verify email'}
           </Button>
@@ -200,7 +200,7 @@ export function LoginPage() {
           error={errors.password?.message}
         />
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
-        {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
+        {info ? <p className="text-sm text-hm-success">{info}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Signing in…' : 'Continue'}
         </Button>
@@ -269,7 +269,7 @@ export function SignupPage() {
             className="text-center tracking-[0.3em]"
           />
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
-          {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
+          {info ? <p className="text-sm text-hm-success">{info}</p> : null}
           <Button type="submit" variant="primary" className="w-full" disabled={verifying}>
             {verifying ? 'Verifying…' : 'Verify & continue'}
           </Button>
@@ -414,7 +414,7 @@ export function ForgotPasswordPage() {
             placeholder="Min. 8 characters"
             register={{ value: newPassword, onChange: (e) => setNewPassword(e.target.value) }}
           />
-          {message ? <p className="text-sm text-hm-accent">{message}</p> : null}
+          {message ? <p className="text-sm text-hm-success">{message}</p> : null}
           {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
           <Button type="submit" variant="primary" className="w-full" disabled={busy}>
             {busy ? 'Resetting…' : 'Reset password'}
@@ -456,7 +456,7 @@ export function ForgotPasswordPage() {
           register={register('email', { required: 'Email required' })}
           error={errors.email?.message}
         />
-        {message ? <p className="text-sm text-hm-accent">{message}</p> : null}
+        {message ? <p className="text-sm text-hm-success">{message}</p> : null}
         {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
         <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Sending…' : 'Send OTP'}
@@ -658,12 +658,21 @@ export function CheckoutPage() {
             })
             resolve(verified)
           } catch (err) {
+            accountApi.failPayment({ orderId: order.id, reason: 'Payment verification failed' }).catch(() => {})
             reject(err)
           }
         },
         modal: {
-          ondismiss: () => reject(new Error('Payment cancelled')),
+          ondismiss: () => {
+            accountApi.failPayment({ orderId: order.id, reason: 'Payment cancelled' }).catch(() => {})
+            reject(new Error('Payment cancelled'))
+          },
         },
+      })
+      rzp.on('payment.failed', (resp) => {
+        const reason = resp?.error?.description || 'Payment failed'
+        accountApi.failPayment({ orderId: order.id, reason }).catch(() => {})
+        reject(new Error(reason))
       })
       rzp.open()
     })

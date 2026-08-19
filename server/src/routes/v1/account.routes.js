@@ -8,6 +8,7 @@ const {
   updateProfileSchema,
   placeOrderSchema,
   verifyPaymentSchema,
+  failPaymentSchema,
   cancelOrderSchema,
   returnSchema,
   wishlistSchema,
@@ -39,6 +40,7 @@ router.post('/notifications/:id/read', accountController.markNotificationRead);
 router.get('/orders', accountController.listOrders);
 router.post('/orders', validate(placeOrderSchema), accountController.placeOrder);
 router.post('/orders/verify-payment', validate(verifyPaymentSchema), accountController.verifyPayment);
+router.post('/orders/fail-payment', validate(failPaymentSchema), accountController.failPayment);
 router.get('/orders/:id', accountController.getOrder);
 router.get('/orders/:id/track', accountController.trackOrder);
 router.post('/orders/:id/cancel', validate(cancelOrderSchema), accountController.cancelOrder);

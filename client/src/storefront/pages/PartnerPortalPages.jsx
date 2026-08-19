@@ -516,7 +516,7 @@ function EarningsPage() {
         <Button type="submit" size="sm">Request withdrawal</Button>
       </form>
       {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
-      {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
+      {info ? <p className="text-sm text-hm-success">{info}</p> : null}
       <div>
         <h2 className="font-semibold">Withdrawal history</h2>
         <ul className="mt-2 space-y-2 text-sm">
@@ -566,7 +566,7 @@ function ProfilePage() {
         <textarea name="address" defaultValue={store.address || ''} rows={2} className="w-full rounded-lg border border-hm-border px-3 py-2" />
         <Button type="submit" size="sm">Save</Button>
       </form>
-      {info ? <p className="text-sm text-hm-accent">{info}</p> : null}
+      {info ? <p className="text-sm text-hm-success">{info}</p> : null}
       {error ? <p className="text-sm text-hm-danger">{error}</p> : null}
     </div>
   )

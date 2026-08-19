@@ -26,6 +26,7 @@ export const accountApi = {
   getOrder: (id) => api.get(`/account/orders/${id}`).then((r) => r.data.data.order),
   placeOrder: (body) => api.post('/account/orders', body).then((r) => r.data.data),
   verifyPayment: (body) => api.post('/account/orders/verify-payment', body).then((r) => r.data.data.order),
+  failPayment: (body) => api.post('/account/orders/fail-payment', body).then((r) => r.data.data.order),
   cancelOrder: (id, reason) => api.post(`/account/orders/${id}/cancel`, { reason }).then((r) => r.data.data.order),
   trackOrder: (id) => api.get(`/account/orders/${id}/track`).then((r) => r.data.data),
   requestReturn: (id, body) => api.post(`/account/orders/${id}/return`, body).then((r) => r.data.data.returnRequest),

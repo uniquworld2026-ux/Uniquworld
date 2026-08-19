@@ -222,7 +222,7 @@ export function AccountOrderDetailPage() {
           </p>
         </div>
         <div className="text-right">
-          <OrderStatusBadge status={order.status} className="text-xs" />
+          <OrderStatusBadge order={order} className="text-xs" />
           <p className="mt-2 font-display text-xl font-semibold text-hm-primary sm:mt-3 sm:text-2xl">
             {formatINR(order.totalAmount)}
           </p>
