@@ -114,7 +114,7 @@ const createWithItems = async ({
          order_number, user_id, status, subtotal, tax_amount, shipping_amount,
          discount_amount, platform_fee_amount, total_amount, shipping_address_id, billing_address_id,
          shipping_address_snap, billing_address_snap, notes
-       ) VALUES ($1,$2,'pending',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       ) VALUES ($1, $2::uuid, 'pending', $3, $4, $5, $6, $7, $8, $9::uuid, $10::uuid, $11, $12, $13)
        RETURNING *`,
       [
         orderNumber,
@@ -136,17 +136,25 @@ const createWithItems = async ({
 
     const createdItems = [];
     for (const item of items) {
+      const productId = item.productId || null;
+      const variantId = item.variantId || null;
+      const storeId = item.storeId || null;
+      const storeProductId = item.storeProductId || null;
       const itemResult = await client.query(
         `INSERT INTO order_items (
            order_id, product_id, variant_id, product_name, sku,
            unit_price, quantity, total_price, image_url, meta,
            store_id, store_product_id, platform_fee, store_earning
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         ) VALUES (
+           $1, $2::uuid, $3::uuid, $4, $5,
+           $6, $7, $8, $9, $10,
+           $11::uuid, $12::uuid, $13, $14
+         )
          RETURNING *`,
         [
           order.id,
-          item.productId || null,
-          item.variantId || null,
+          productId,
+          variantId,
           item.productName,
           item.sku || null,
           item.unitPrice,
@@ -154,8 +162,8 @@ const createWithItems = async ({
           item.totalPrice,
           item.imageUrl || null,
           JSON.stringify(item.meta || {}),
-          item.storeId || null,
-          item.storeProductId || null,
+          storeId,
+          storeProductId,
           item.platformFee || 0,
           item.storeEarning || 0,
         ]
