@@ -82,9 +82,9 @@ export function StorefrontBottomNav() {
           <span>Saved</span>
         </NavLink>
 
-        <NavLink to={accountTo} className={({ isActive }) => itemClass(isActive || pathname.startsWith('/account'))}>
+        <NavLink to={isAuthenticated ? '/account/profile' : '/login'} className={({ isActive }) => itemClass(isActive || pathname.startsWith('/account'))}>
           <User className="h-5 w-5" strokeWidth={1.75} />
-          <span>Account</span>
+          <span>Profile</span>
         </NavLink>
       </div>
     </nav>

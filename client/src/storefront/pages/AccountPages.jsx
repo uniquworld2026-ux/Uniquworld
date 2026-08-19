@@ -65,19 +65,19 @@ export function AccountOverviewPage() {
   ]
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {cards.map((card) => (
           <Link
             key={card.label}
             to={card.to}
-            className="rounded-2xl border border-hm-border bg-hm-elevated p-5 transition hover:border-hm-accent/40 hover:shadow-hm-soft"
+            className="rounded-2xl border border-hm-border bg-hm-elevated p-4 transition hover:border-hm-accent/40 hover:shadow-hm-soft sm:p-5"
           >
-            <p className="font-sans text-xs font-semibold uppercase tracking-wide text-hm-text-subtle">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-wide text-hm-text-subtle sm:text-xs">
               {card.label}
             </p>
-            <p className="mt-2 font-display text-3xl font-semibold text-hm-text">{card.value}</p>
-            <p className="mt-1 font-sans text-xs text-hm-text-muted">{card.hint}</p>
+            <p className="mt-1.5 font-display text-2xl font-semibold text-hm-text sm:mt-2 sm:text-3xl">{card.value}</p>
+            <p className="mt-0.5 font-sans text-[10px] text-hm-text-muted sm:mt-1 sm:text-xs">{card.hint}</p>
           </Link>
         ))}
       </div>
@@ -138,11 +138,11 @@ export function AccountOrdersPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <div>
-        <h2 className="font-display text-2xl font-semibold text-hm-text">My orders</h2>
-        <p className="mt-1 font-sans text-sm text-hm-text-muted">
-          {orders.length} order{orders.length === 1 ? '' : 's'} · tap any order for products & tracking
+        <h2 className="font-display text-xl font-semibold text-hm-text sm:text-2xl">My orders</h2>
+        <p className="mt-0.5 font-sans text-xs text-hm-text-muted sm:mt-1 sm:text-sm">
+          {orders.length} order{orders.length === 1 ? '' : 's'} · tap any order for details
         </p>
       </div>
       {orders.map((order) => (
@@ -204,26 +204,26 @@ export function AccountOrderDetailPage() {
   if (!order) return <LoadingBlock lines={6} />
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
           <Link
             to="/account/orders"
-            className="inline-flex items-center gap-1 font-sans text-sm text-hm-accent hover:underline"
+            className="inline-flex items-center gap-1 font-sans text-xs text-hm-accent hover:underline sm:text-sm"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Back to orders
           </Link>
-          <h2 className="mt-3 font-display text-2xl font-semibold text-hm-text sm:text-3xl">
+          <h2 className="mt-2 truncate font-display text-xl font-semibold text-hm-text sm:mt-3 sm:text-3xl">
             {order.orderNumber}
           </h2>
-          <p className="mt-1 font-sans text-sm text-hm-text-muted">
+          <p className="mt-0.5 font-sans text-xs text-hm-text-muted sm:mt-1 sm:text-sm">
             Placed {formatDate(order.createdAt)}
           </p>
         </div>
         <div className="text-right">
           <OrderStatusBadge status={order.status} className="text-xs" />
-          <p className="mt-3 font-display text-2xl font-semibold text-hm-primary">
+          <p className="mt-2 font-display text-xl font-semibold text-hm-primary sm:mt-3 sm:text-2xl">
             {formatINR(order.totalAmount)}
           </p>
         </div>
@@ -240,32 +240,35 @@ export function AccountOrderDetailPage() {
       <AccountSection title="Products in this order" description="Items included in your purchase.">
         <ul className="divide-y divide-hm-border">
           {(order.items || []).map((item) => (
-            <li key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+            <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0 sm:gap-4 sm:py-4">
               {item.imageUrl ? (
                 <img
                   src={item.imageUrl}
                   alt=""
-                  className="h-20 w-20 shrink-0 rounded-xl border border-hm-border object-contain bg-hm-muted p-1"
+                  className="h-16 w-16 shrink-0 rounded-lg border border-hm-border bg-hm-muted object-contain p-1 sm:h-20 sm:w-20 sm:rounded-xl"
                 />
               ) : (
-                <div className="h-20 w-20 shrink-0 rounded-xl bg-hm-muted" />
+                <div className="h-16 w-16 shrink-0 rounded-lg bg-hm-muted sm:h-20 sm:w-20 sm:rounded-xl" />
               )}
               <div className="min-w-0 flex-1">
                 {item.productId ? (
                   <Link
                     to={`/products/${item.productId}`}
-                    className="font-sans text-sm font-semibold text-hm-text hover:text-hm-accent"
+                    className="line-clamp-2 font-sans text-xs font-semibold text-hm-text hover:text-hm-accent sm:text-sm"
                   >
                     {item.productName}
                   </Link>
                 ) : (
-                  <p className="font-sans text-sm font-semibold text-hm-text">{item.productName}</p>
+                  <p className="line-clamp-2 font-sans text-xs font-semibold text-hm-text sm:text-sm">{item.productName}</p>
                 )}
-                <p className="mt-1 font-sans text-sm text-hm-text-muted">
+                <p className="mt-0.5 font-sans text-[11px] text-hm-text-muted sm:mt-1 sm:text-sm">
                   Qty {item.quantity} · {formatINR(item.unitPrice)} each
                 </p>
+                <p className="mt-0.5 font-sans text-xs font-semibold text-hm-text sm:hidden">
+                  {formatINR(item.totalPrice)}
+                </p>
               </div>
-              <p className="shrink-0 font-sans text-sm font-semibold text-hm-text">
+              <p className="hidden shrink-0 font-sans text-sm font-semibold text-hm-text sm:block">
                 {formatINR(item.totalPrice)}
               </p>
             </li>
@@ -273,7 +276,7 @@ export function AccountOrderDetailPage() {
         </ul>
       </AccountSection>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
         <AccountSection title="Shipping address">
           {order.shippingAddress ? (
             <div className="space-y-1 font-sans text-sm text-hm-text-muted">
@@ -397,16 +400,16 @@ export function AccountProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="font-display text-2xl font-semibold text-hm-text">Profile</h2>
-        <p className="mt-1 font-sans text-sm text-hm-text-muted">
+        <h2 className="font-display text-xl font-semibold text-hm-text sm:text-2xl">Profile</h2>
+        <p className="mt-1 font-sans text-xs text-hm-text-muted sm:text-sm">
           Update your name and phone for orders and delivery updates.
         </p>
       </div>
 
       <form
-        className="max-w-lg space-y-4 rounded-2xl border border-hm-border bg-hm-elevated p-5 sm:p-6"
+        className="space-y-4 rounded-2xl border border-hm-border bg-hm-elevated p-4 sm:max-w-lg sm:p-6"
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="grid gap-4 sm:grid-cols-2">
@@ -500,8 +503,8 @@ export function AccountAddressesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl font-semibold text-hm-text">Addresses</h2>
-          <p className="mt-1 font-sans text-sm text-hm-text-muted">Saved delivery addresses for faster checkout.</p>
+          <h2 className="font-display text-xl font-semibold text-hm-text sm:text-2xl">Addresses</h2>
+          <p className="mt-0.5 font-sans text-xs text-hm-text-muted sm:mt-1 sm:text-sm">Saved delivery addresses for faster checkout.</p>
         </div>
         {!showForm ? (
           <Button variant="outline" onClick={() => setShowForm(true)}>
@@ -642,8 +645,8 @@ export function AccountNotificationsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl font-semibold text-hm-text">Notifications</h2>
-          <p className="mt-1 font-sans text-sm text-hm-text-muted">{data.unreadCount} unread</p>
+          <h2 className="font-display text-xl font-semibold text-hm-text sm:text-2xl">Notifications</h2>
+          <p className="mt-0.5 font-sans text-xs text-hm-text-muted sm:mt-1 sm:text-sm">{data.unreadCount} unread</p>
         </div>
         {data.unreadCount > 0 ? (
           <Button size="sm" variant="outline" onClick={markAll}>
@@ -716,8 +719,8 @@ export function AccountReturnsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-display text-2xl font-semibold text-hm-text">Returns</h2>
-        <p className="mt-1 font-sans text-sm text-hm-text-muted">Status of your return requests.</p>
+        <h2 className="font-display text-xl font-semibold text-hm-text sm:text-2xl">Returns</h2>
+        <p className="mt-0.5 font-sans text-xs text-hm-text-muted sm:mt-1 sm:text-sm">Status of your return requests.</p>
       </div>
       <ul className="space-y-3">
         {items.map((item) => (
