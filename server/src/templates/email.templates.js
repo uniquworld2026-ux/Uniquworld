@@ -422,7 +422,7 @@ function storePartnerWelcomeEmail({ firstName, storeName }) {
         { muted: true, top: 10 },
       )}
       ${paragraph(
-        'When customers buy your products, they pay the product price + 10% platform fee + shipping. You receive the full product amount after the order is delivered, and can withdraw to your bank anytime.',
+        'When customers buy your products, they pay the product price + ₹5 platform fee + shipping. You receive the full product amount after the order is delivered, and can withdraw to your bank anytime.',
         { muted: true, top: 14 },
       )}
     `,
@@ -477,6 +477,51 @@ function storePartnerInviteEmail({ firstName, storeName, tempPassword, loginUrl 
   return { subject, html, text };
 }
 
+function accountCredentialsEmail({ firstName, email, tempPassword, loginUrl }) {
+  const name = escapeHtml(firstName || 'there');
+  const href = escapeHtml(loginUrl || `${config.clientUrl}/login`);
+  const subject = `Your ${brand.name} account is ready`;
+  const html = layout({
+    preheader: 'Save your login details — you can change your name anytime in Profile.',
+    title: subject,
+    bodyHtml: `
+      ${heading('Account created')}
+      ${paragraph(`Hi ${name},`)}
+      ${paragraph(
+        'We created your Uniquworld account so you can track orders and delivery updates.',
+        { muted: true, top: 10 },
+      )}
+      ${paragraph(`Email: <strong>${escapeHtml(email)}</strong>`, { muted: true, top: 10 })}
+      ${paragraph(`Password: <strong>${escapeHtml(tempPassword)}</strong>`, { muted: true, top: 6 })}
+      ${paragraph(
+        'Verify your email with the OTP we sent separately, then you will stay signed in. You can edit your name anytime under Account → Profile.',
+        { muted: true, top: 10 },
+      )}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 8px;">
+        <tr>
+          <td style="border-radius:10px;background-color:${brand.accent};">
+            <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:${brand.white};text-decoration:none;">
+              Sign in
+            </a>
+          </td>
+        </tr>
+      </table>
+    `,
+  });
+  const text = [
+    `Hi ${firstName || 'there'},`,
+    '',
+    `Your ${brand.name} account:`,
+    `Email: ${email}`,
+    `Password: ${tempPassword}`,
+    '',
+    'Verify the OTP we emailed you to complete checkout.',
+    '',
+    `— ${brand.name}`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
 module.exports = {
   otpEmail,
   welcomeEmail,
@@ -487,4 +532,5 @@ module.exports = {
   digitalSurpriseEmail,
   storePartnerWelcomeEmail,
   storePartnerInviteEmail,
+  accountCredentialsEmail,
 };

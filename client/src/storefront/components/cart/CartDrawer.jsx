@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { useCart } from '@/storefront/hooks/useCart'
 import { formatCurrency } from '@/shared/lib/utils'
+import { calcCartTotals } from '@/storefront/lib/orderPricing'
+import { BillingSummary } from '@/storefront/components/checkout/BillingSummary'
 import { Button } from '@/shared/components/ui/Button'
 import { cn } from '@/shared/utils/cn'
 
 export function CartDrawer() {
-  const { items, count, subtotal, removeItem, updateQty, isOpen, closeCart } = useCart()
+  const { items, count, removeItem, updateQty, isOpen, closeCart } = useCart()
+  const billing = calcCartTotals(items)
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -169,10 +172,7 @@ export function CartDrawer() {
 
         {count ? (
           <div className="border-t border-hm-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-hm-text-muted">Subtotal</p>
-              <p className="text-lg font-semibold text-hm-text">{formatCurrency(subtotal)}</p>
-            </div>
+            <BillingSummary {...billing} compact />
             <Link to="/checkout" onClick={closeCart} className="mt-4 block">
               <Button variant="primary" className="w-full" size="lg">
                 Checkout

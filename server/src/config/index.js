@@ -135,7 +135,9 @@ const config = {
     defaultShippingAmount: Number(process.env.DEFAULT_SHIPPING_AMOUNT) || 49,
     freeShippingMin: Number(process.env.FREE_SHIPPING_MIN) || 999,
     codEnabled: process.env.COD_ENABLED !== 'false',
-    /** Platform fee on store products — charged to customer; shop owner receives full product amount */
+    /** Flat platform fee per order (₹5 default) — shown like Flipkart / Meesho */
+    platformFeeFlat: Number(process.env.PLATFORM_FEE_FLAT) || 5,
+    /** Legacy store marketplace % — kept for partner reporting only */
     storePlatformFeePercent: Number(process.env.STORE_PLATFORM_FEE_PERCENT) || 0.1,
   },
 

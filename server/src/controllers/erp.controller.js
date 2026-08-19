@@ -13,6 +13,7 @@ const { hashToken } = require('../utils/jwt');
 const { generateOtpCode, otpExpiresAt } = require('../utils/otp');
 const { OTP_PURPOSE } = require('../types/enums');
 const { prepareProductImages } = require('../utils/catalogImages');
+const { calcOrderTotals } = require('../services/pricing.service');
 const memoryCache = require('../utils/cache');
 
 const CATALOG_PRODUCTS_CACHE = 'catalog:public:products';
@@ -731,6 +732,12 @@ const listPublicCatalogCategories = asyncHandler(async (req, res) => {
   return ApiResponse.ok(res, payload);
 });
 
+/** Public order total breakdown — product + platform fee + shipping */
+const getPublicOrderQuote = asyncHandler(async (req, res) => {
+  const subtotal = Number(req.query.subtotal) || 0;
+  return ApiResponse.ok(res, calcOrderTotals(subtotal));
+});
+
 function averageReviewRating(rows = []) {
   if (!rows.length) return null;
   const sum = rows.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
@@ -901,6 +908,7 @@ module.exports = {
   listPublicCatalogProducts,
   getPublicCatalogProduct,
   listPublicCatalogCategories,
+  getPublicOrderQuote,
   listPublicCatalogProductReviews,
   listPublicCatalogReviews,
   dashboardSummary,

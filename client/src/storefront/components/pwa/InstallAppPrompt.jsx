@@ -3,97 +3,35 @@ import { createPortal } from 'react-dom'
 import { Download, Share, X } from 'lucide-react'
 import { BRAND_ICON_SRC } from '@/storefront/components/brand/BrandLogo'
 import { cn } from '@/shared/utils/cn'
-
-/** Session-only: hide for this tab visit after Not now / X */
-const SESSION_DISMISS_KEY = 'uw_install_prompt_session_dismissed'
-/** Permanent: never ask again after successful install */
-const INSTALLED_KEY = 'uw_install_prompt_installed'
-/** Legacy 14-day key — clear so older dismissals don't block forever */
-const LEGACY_DISMISS_KEY = 'uw_install_prompt_dismissed_at'
+import {
+  clearDeferredInstallPrompt,
+  getDeferredInstallPrompt,
+  initPwaInstall,
+  isAfterLoginInstall,
+  isIos,
+  markDismissedThisSession,
+  markInstalled,
+  shouldShowInstallPrompt,
+  subscribePwaInstall,
+  wasInstalled,
+} from '@/storefront/lib/pwaInstall'
 
 const TAGLINE = 'Make a Moment, Unique the world.'
 
-function isStandalone() {
-  if (typeof window === 'undefined') return true
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.matchMedia('(display-mode: fullscreen)').matches ||
-    Boolean(window.navigator.standalone)
-  )
-}
-
-function isMobileViewport() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches
-}
-
-function isIos() {
-  if (typeof navigator === 'undefined') return false
-  const ua = navigator.userAgent || ''
-  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-}
-
-function clearLegacyDismiss() {
-  try {
-    localStorage.removeItem(LEGACY_DISMISS_KEY)
-  } catch {
-    /* ignore */
-  }
-}
-
-function wasInstalled() {
-  try {
-    if (isStandalone()) return true
-    return localStorage.getItem(INSTALLED_KEY) === '1'
-  } catch {
-    return isStandalone()
-  }
-}
-
-function markInstalled() {
-  try {
-    localStorage.setItem(INSTALLED_KEY, '1')
-    sessionStorage.removeItem(SESSION_DISMISS_KEY)
-  } catch {
-    /* ignore */
-  }
-}
-
-function wasDismissedThisSession() {
-  try {
-    return sessionStorage.getItem(SESSION_DISMISS_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function markDismissedThisSession() {
-  try {
-    sessionStorage.setItem(SESSION_DISMISS_KEY, '1')
-  } catch {
-    /* ignore */
-  }
-}
-
-function shouldShowPrompt() {
-  if (wasInstalled()) return false
-  if (wasDismissedThisSession()) return false
-  if (!isMobileViewport()) return false
-  return true
-}
-
 /**
  * Install ask for Uniquworld.
- * - Shows every new visit until installed
- * - “Not now” only hides for the current session
+ * - Shows immediately after login on mobile
+ * - “Not now” hides for the current session (until next login)
  * - After install, never shows again
  */
 export function InstallAppPrompt() {
   const [open, setOpen] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [, bump] = useState(0)
   const [installing, setInstalling] = useState(false)
   const [showIosHelp, setShowIosHelp] = useState(false)
   const ios = isIos()
+  const deferredPrompt = getDeferredInstallPrompt()
+  const afterLogin = isAfterLoginInstall()
 
   const dismiss = useCallback(() => {
     markDismissedThisSession()
@@ -102,40 +40,33 @@ export function InstallAppPrompt() {
   }, [])
 
   useEffect(() => {
-    clearLegacyDismiss()
+    initPwaInstall()
+    return subscribePwaInstall(() => bump((n) => n + 1))
+  }, [])
 
-    // Already running as installed app → remember permanently
-    if (isStandalone()) {
-      markInstalled()
+  useEffect(() => {
+    if (wasInstalled()) {
+      setOpen(false)
       return undefined
     }
 
-    if (!shouldShowPrompt()) return undefined
-
-    const onBeforeInstall = (event) => {
-      event.preventDefault()
-      setDeferredPrompt(event)
-    }
-    window.addEventListener('beforeinstallprompt', onBeforeInstall)
-
-    const onInstalled = () => {
-      setDeferredPrompt(null)
-      markInstalled()
+    const showNow = shouldShowInstallPrompt({ ignoreSessionDismiss: afterLogin })
+    if (!showNow) {
       setOpen(false)
+      return undefined
     }
-    window.addEventListener('appinstalled', onInstalled)
+
+    if (afterLogin) {
+      setOpen(true)
+      return undefined
+    }
 
     const timer = window.setTimeout(() => {
-      if (!shouldShowPrompt()) return
-      setOpen(true)
+      if (shouldShowInstallPrompt()) setOpen(true)
     }, 2200)
 
-    return () => {
-      window.clearTimeout(timer)
-      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-      window.removeEventListener('appinstalled', onInstalled)
-    }
-  }, [])
+    return () => window.clearTimeout(timer)
+  }, [afterLogin, deferredPrompt])
 
   useEffect(() => {
     if (!open) return undefined
@@ -163,7 +94,7 @@ export function InstallAppPrompt() {
     try {
       deferredPrompt.prompt()
       const choice = await deferredPrompt.userChoice
-      setDeferredPrompt(null)
+      clearDeferredInstallPrompt()
       if (choice?.outcome === 'accepted') {
         markInstalled()
         setOpen(false)
@@ -209,9 +140,13 @@ export function InstallAppPrompt() {
             />
             <div className="min-w-0 pt-0.5">
               <h2 id="uw-install-title" className="text-[17px] font-bold leading-snug text-[#0a2d4d]">
-                Install Uniquworld App
+                {afterLogin ? "You're signed in!" : 'Install Uniquworld App'}
               </h2>
-              <p className="mt-1 text-sm leading-snug text-slate-500">{TAGLINE}</p>
+              <p className="mt-1 text-sm leading-snug text-slate-500">
+                {afterLogin
+                  ? 'Install the app for faster checkout — you stay logged in for 30 days.'
+                  : TAGLINE}
+              </p>
             </div>
           </div>
 

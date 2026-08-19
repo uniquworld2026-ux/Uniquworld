@@ -2,16 +2,15 @@ const config = require('../config');
 const ApiError = require('../utils/ApiError');
 const addressRepository = require('../repositories/address.repository');
 const orderRepository = require('../repositories/order.repository');
+const userRepository = require('../repositories/user.repository');
 const notificationRepository = require('../repositories/notification.repository');
 const returnRepository = require('../repositories/return.repository');
 const razorpayService = require('./razorpay.service');
 const shiprocketService = require('./shiprocket.service');
+const { calcOrderTotals } = require('./pricing.service');
 const { notifyUser } = require('./notification.service');
 
-const calcShipping = (subtotal) => {
-  if (subtotal >= config.commerce.freeShippingMin) return 0;
-  return config.commerce.defaultShippingAmount;
-};
+const calcShipping = (subtotal) => calcOrderTotals(subtotal).shippingAmount;
 
 const placeOrder = async (userId, payload) => {
   const {
@@ -84,9 +83,6 @@ const placeOrder = async (userId, payload) => {
 
     const totalPrice = unitPrice * quantity;
     const isStoreItem = Boolean(storeId || storeProductId);
-    const platformFee = isStoreItem
-      ? Math.round(totalPrice * config.commerce.storePlatformFeePercent * 100) / 100
-      : 0;
     normalizedItems.push({
       productId: item.productId || null,
       variantId: item.variantId || null,
@@ -99,18 +95,19 @@ const placeOrder = async (userId, payload) => {
       meta: { ...meta, channel: isStoreItem ? 'store' : meta.channel },
       storeId,
       storeProductId,
-      platformFee,
+      platformFee: 0,
       storeEarning: isStoreItem ? totalPrice : 0,
     });
   }
 
   const subtotal = normalizedItems.reduce((sum, i) => sum + i.totalPrice, 0);
-  const platformFeeAmount = normalizedItems.reduce((sum, i) => sum + (i.platformFee || 0), 0);
-  const shippingAmount = calcShipping(subtotal);
-  const taxAmount = 0;
-  const discountAmount = 0;
-  // Customer pays: product + 10% platform fee + shipping. Shop owner later receives product amount.
-  const totalAmount = subtotal + platformFeeAmount + shippingAmount + taxAmount - discountAmount;
+  const {
+    platformFeeAmount,
+    shippingAmount,
+    taxAmount,
+    discountAmount,
+    totalAmount,
+  } = calcOrderTotals(subtotal);
 
   const method = paymentMethod === 'cod' ? 'cod' : paymentMethod;
   if (method === 'cod' && !config.commerce.codEnabled) {
@@ -155,11 +152,15 @@ const placeOrder = async (userId, payload) => {
     totalLabel: totalAmount != null ? `Total: ₹${Number(totalAmount).toFixed(2)}` : undefined,
   });
 
+  const buyer = await userRepository.findById(userId);
+  const userEmail = buyer?.email || addressSnap?.email || null;
+
   if (dbMethod === 'cod') {
     await orderRepository.updateStatus(order.id, 'confirmed', 'COD order confirmed');
     const shipmentData = await shiprocketService.createShipmentForOrder({
       ...order,
       status: 'confirmed',
+      userEmail,
     });
     const shipment = await orderRepository.createShipment({
       orderId: order.id,
@@ -250,10 +251,12 @@ const verifyRazorpayPayment = async (userId, payload) => {
 
   await orderRepository.updateStatus(order.id, 'confirmed', 'Payment verified via Razorpay');
 
+  const buyer = await userRepository.findById(userId);
   const shipmentData = await shiprocketService.createShipmentForOrder({
     ...order,
     status: 'confirmed',
     payment: { ...order.payment, status: 'paid' },
+    userEmail: buyer?.email || order.shippingAddress?.email || null,
   });
   await orderRepository.createShipment({
     orderId: order.id,

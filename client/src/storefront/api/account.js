@@ -10,6 +10,7 @@ export const authApi = {
   resetPassword: (body) => api.post('/auth/reset-password', body).then((r) => r.data.data),
   verifyOtp: (body) => api.post('/auth/verify-otp', body).then((r) => r.data.data),
   resendOtp: (body) => api.post('/auth/resend-otp', body).then((r) => r.data.data),
+  checkoutStart: (body) => api.post('/auth/checkout/start', body).then((r) => r.data.data),
 }
 
 export const accountApi = {

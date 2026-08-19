@@ -204,7 +204,7 @@ const getDashboard = async (userId) => {
       platformFeePercent: config.commerce.storePlatformFeePercent,
       shippingAmount: config.commerce.defaultShippingAmount,
       note:
-        'Customer pays product + 10% platform fee + shipping. You receive the full product amount after delivery.',
+        'Customer pays product + ₹5 platform fee + shipping. You receive the full product amount after delivery.',
     },
   };
 };

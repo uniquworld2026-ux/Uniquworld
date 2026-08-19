@@ -118,7 +118,7 @@ export function PartnerRegisterPage() {
           {isSubmitting ? 'Registering…' : 'Register store'}
         </Button>
         <p className="text-xs text-hm-text-muted">
-          Fees: customer pays product + 10% platform fee + shipping. You receive the full product amount after delivery.
+Fees: customer pays product + ₹5 platform fee + shipping. You receive the full product amount after delivery.
         </p>
       </form>
     </Shell>

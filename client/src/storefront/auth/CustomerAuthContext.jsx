@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { authApi } from '@/storefront/api/account'
 import { getErrorMessage, tokenStore } from '@/shared/lib/axios'
+import { requestInstallAfterLogin } from '@/storefront/lib/pwaInstall'
+import { ensureFreshSession, startSessionKeepAlive } from '@/storefront/lib/sessionRefresh'
 
 const CustomerAuthContext = createContext(null)
 
@@ -12,17 +14,9 @@ async function restoreSession() {
     return null
   }
 
-  // Access expired / missing but refresh still in browser → renew quietly
-  if (!access && refresh) {
-    const refreshed = await authApi.refresh(refresh)
-    const tokens = refreshed?.tokens || refreshed
-    if (!tokens?.accessToken) {
-      throw Object.assign(new Error('Refresh failed'), { response: { status: 401 } })
-    }
-    tokenStore.set({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken || refresh,
-    })
+  const fresh = await ensureFreshSession()
+  if (!fresh && !tokenStore.getAccess()) {
+    throw Object.assign(new Error('Refresh failed'), { response: { status: 401 } })
   }
 
   const data = await authApi.me()
@@ -60,6 +54,11 @@ export function CustomerAuthProvider({ children }) {
     bootstrap()
   }, [bootstrap])
 
+  useEffect(() => {
+    if (!user) return undefined
+    return startSessionKeepAlive()
+  }, [user])
+
   const login = useCallback(async (email, password) => {
     const data = await authApi.login({ email, password })
     if (data?.requiresOtp) {
@@ -68,6 +67,7 @@ export function CustomerAuthProvider({ children }) {
     if (data?.tokens) {
       tokenStore.set(data.tokens)
       setUser(data.user)
+      requestInstallAfterLogin()
     }
     return data
   }, [])
@@ -77,6 +77,7 @@ export function CustomerAuthProvider({ children }) {
     if (data?.tokens) {
       tokenStore.set(data.tokens)
       setUser(data.user)
+      requestInstallAfterLogin()
     }
     return data
   }, [])
@@ -105,6 +106,10 @@ export function CustomerAuthProvider({ children }) {
     return next
   }, [])
 
+  const checkoutStart = useCallback(async ({ email, firstName }) => {
+    return authApi.checkoutStart({ email, firstName })
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
@@ -112,12 +117,13 @@ export function CustomerAuthProvider({ children }) {
       isAuthenticated: Boolean(user),
       login,
       completeLoginWithOtp,
+      checkoutStart,
       register,
       logout,
       refreshUser,
       errorMessage: getErrorMessage,
     }),
-    [user, loading, login, completeLoginWithOtp, register, logout, refreshUser],
+    [user, loading, login, completeLoginWithOtp, checkoutStart, register, logout, refreshUser],
   )
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>

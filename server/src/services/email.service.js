@@ -318,6 +318,16 @@ const sendStorePartnerInviteEmail = async ({ to, firstName, storeName, tempPassw
   return sendMail({ to, subject, html, text });
 };
 
+const sendAccountCredentialsEmail = async ({ to, firstName, email, tempPassword, loginUrl }) => {
+  const { subject, html, text } = templates.accountCredentialsEmail({
+    firstName,
+    email,
+    tempPassword,
+    loginUrl,
+  });
+  return sendMail({ to, subject, html, text });
+};
+
 module.exports = {
   sendMail,
   sendOtpEmail,
@@ -328,6 +338,7 @@ module.exports = {
   sendProductActivityEmail,
   sendStorePartnerWelcomeEmail,
   sendStorePartnerInviteEmail,
+  sendAccountCredentialsEmail,
   isSmtpConfigured,
   isResendConfigured,
   isEmailConfigured,

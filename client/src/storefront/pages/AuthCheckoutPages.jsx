@@ -12,6 +12,8 @@ import { accountApi, authApi } from '@/storefront/api/account'
 import { getErrorMessage } from '@/shared/lib/axios'
 import { validatePassword } from '@/shared/lib/password'
 import { formatINR, loadRazorpay } from '@/storefront/lib/commerce'
+import { calcCartTotals } from '@/storefront/lib/orderPricing'
+import { BillingSummary } from '@/storefront/components/checkout/BillingSummary'
 import { cn } from '@/shared/utils/cn'
 
 function AuthShell({ title, subtitle, children, footer, badge }) {
@@ -543,13 +545,8 @@ export function CheckoutPage() {
     )
   }
 
-  const shippingEstimate = subtotal >= 999 ? 0 : 49
-  const storeSubtotal = items.reduce((sum, item) => {
-    const isStore = item.channel === 'store' || item.meta?.channel === 'store' || item.meta?.storeId
-    return isStore ? sum + item.price * item.qty : sum
-  }, 0)
-  const platformFeeEstimate = Math.round(storeSubtotal * 0.1 * 100) / 100
-  const total = subtotal + platformFeeEstimate + shippingEstimate
+  const billing = calcCartTotals(items)
+  const total = billing.totalAmount
 
   const openRazorpay = async (payment, order) => {
     const ok = await loadRazorpay()
@@ -722,36 +719,19 @@ export function CheckoutPage() {
         </div>
 
         <div className="rounded-2xl border border-hm-border bg-hm-elevated p-6 text-sm">
-          <p className="font-semibold text-hm-text">Order summary</p>
+          <p className="font-semibold text-hm-text">Price details</p>
           <ul className="mt-4 space-y-3">
             {items.map((item) => (
               <li key={item.key} className="flex justify-between gap-3 text-hm-text-muted">
-                <span>
+                <span className="line-clamp-2 pr-2">
                   {item.name} × {item.qty}
                 </span>
-                <span className="text-hm-text">{formatINR(item.price * item.qty)}</span>
+                <span className="shrink-0 text-hm-text">{formatINR(item.price * item.qty)}</span>
               </li>
             ))}
           </ul>
-          <div className="mt-4 space-y-1 border-t border-hm-border pt-4 text-hm-text-muted">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>{formatINR(subtotal)}</span>
-            </div>
-            {platformFeeEstimate > 0 ? (
-              <div className="flex justify-between">
-                <span>Platform fee (10%)</span>
-                <span>{formatINR(platformFeeEstimate)}</span>
-              </div>
-            ) : null}
-            <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>{shippingEstimate === 0 ? 'Free' : formatINR(shippingEstimate)}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-hm-text">
-              <span>Total</span>
-              <span>{formatINR(total)}</span>
-            </div>
+          <div className="mt-4 border-t border-hm-border pt-4">
+            <BillingSummary {...billing} compact />
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ const {
   verifyOtpSchema,
   resendOtpSchema,
   googleLoginSchema,
+  checkoutStartSchema,
 } = require('../../validators/auth.validator');
 
 const router = express.Router();
@@ -70,6 +71,8 @@ router.post('/register', authLimiter, validate(registerSchema), authController.r
  *         description: Email not verified / banned / inactive
  */
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
+
+router.post('/checkout/start', authLimiter, validate(checkoutStartSchema), authController.checkoutStart);
 
 /**
  * @openapi

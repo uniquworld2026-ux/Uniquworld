@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const config = require('../config');
 const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
@@ -76,6 +77,109 @@ const verifyOtpCode = async ({ email, purpose, code }) => {
 
   await otpRepository.markVerified(otp.id);
   return otp;
+};
+
+const nameFromEmail = (email) => {
+  const local = String(email || '').split('@')[0] || 'Guest';
+  return local
+    .replace(/[._+-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim()
+    .slice(0, 50) || 'Guest';
+};
+
+const checkoutStart = async ({ email, firstName }) => {
+  const normalizedEmail = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (!normalizedEmail) {
+    throw ApiError.badRequest('Email is required');
+  }
+
+  const displayName = String(firstName || '').trim() || nameFromEmail(normalizedEmail);
+  let user = await userRepository.findByEmail(normalizedEmail);
+
+  if (user) {
+    if (String(firstName || '').trim()) {
+      await userRepository.updateById(user.id, { firstName: String(firstName).trim() });
+      user = await userRepository.findById(user.id);
+    }
+
+    if (user.status === USER_STATUS.BANNED) {
+      throw ApiError.forbidden('Account is banned');
+    }
+    if (user.status === USER_STATUS.INACTIVE) {
+      throw ApiError.forbidden('Account is inactive');
+    }
+
+    const purpose =
+      !user.email_verified_at || user.status === USER_STATUS.PENDING
+        ? OTP_PURPOSE.EMAIL_VERIFICATION
+        : OTP_PURPOSE.LOGIN;
+
+    const otpMeta = await createAndSendOtp({
+      userId: user.id,
+      email: user.email,
+      purpose,
+      firstName: user.first_name || displayName,
+    });
+
+    return {
+      requiresOtp: true,
+      purpose,
+      email: normalizedEmail,
+      isNewUser: false,
+      message:
+        purpose === OTP_PURPOSE.EMAIL_VERIFICATION
+          ? 'Verify your email with the OTP we sent to continue checkout.'
+          : 'Enter the login OTP we sent to your email to continue checkout.',
+      otp: otpMeta,
+    };
+  }
+
+  const tempPassword = crypto.randomBytes(6).toString('base64url').slice(0, 10);
+  const passwordHash = await hashPassword(tempPassword);
+  const roleId = await roleRepository.resolveRoleId(ROLES.CUSTOMER);
+
+  user = await userRepository.create({
+    email: normalizedEmail,
+    passwordHash,
+    firstName: displayName,
+    lastName: null,
+    phone: null,
+    roleId,
+    status: USER_STATUS.PENDING,
+  });
+
+  const withRole = await userRepository.findById(user.id);
+  const otpMeta = await createAndSendOtp({
+    userId: user.id,
+    email: normalizedEmail,
+    purpose: OTP_PURPOSE.EMAIL_VERIFICATION,
+    firstName: displayName,
+  });
+
+  try {
+    await emailService.sendAccountCredentialsEmail({
+      to: normalizedEmail,
+      firstName: displayName,
+      email: normalizedEmail,
+      tempPassword,
+      loginUrl: `${config.clientUrl}/login`,
+    });
+  } catch (err) {
+    logger.warn('Account credentials email skipped', { email: normalizedEmail, message: err.message });
+  }
+
+  return {
+    requiresOtp: true,
+    purpose: OTP_PURPOSE.EMAIL_VERIFICATION,
+    email: normalizedEmail,
+    isNewUser: true,
+    message: 'We created your account and emailed your login details. Enter the OTP to verify and continue.',
+    user: toPublicUser(withRole),
+    otp: otpMeta,
+  };
 };
 
 const register = async (payload) => {
@@ -468,4 +572,5 @@ module.exports = {
   googleLogin,
   me,
   createAndSendOtp,
+  checkoutStart,
 };

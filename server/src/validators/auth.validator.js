@@ -75,6 +75,11 @@ const googleLoginSchema = z
     message: 'Provide idToken (Supabase JWT) or googleId + email',
   });
 
+const checkoutStartSchema = z.object({
+  email: z.string().email().max(255).transform((v) => v.toLowerCase()),
+  firstName: z.string().max(100).trim().optional().nullable(),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -85,4 +90,5 @@ module.exports = {
   verifyOtpSchema,
   resendOtpSchema,
   googleLoginSchema,
+  checkoutStartSchema,
 };

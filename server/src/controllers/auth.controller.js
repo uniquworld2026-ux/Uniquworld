@@ -60,6 +60,11 @@ const me = asyncHandler(async (req, res) => {
   return ApiResponse.ok(res, data, 'Profile fetched');
 });
 
+const checkoutStart = asyncHandler(async (req, res) => {
+  const data = await authService.checkoutStart(req.body);
+  return ApiResponse.ok(res, data, data.message || 'OTP sent');
+});
+
 module.exports = {
   register,
   login,
@@ -71,4 +76,5 @@ module.exports = {
   resendOtp,
   googleLogin,
   me,
+  checkoutStart,
 };

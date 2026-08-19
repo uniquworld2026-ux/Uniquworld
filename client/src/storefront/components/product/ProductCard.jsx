@@ -38,7 +38,7 @@ export function ProductCard({ product, className, href, priority = false }) {
   function handleBuy(e) {
     e.preventDefault()
     e.stopPropagation()
-    addItem({ ...product, image, price: product.price })
+    navigate(`/checkout/buy?product=${product.id}&qty=1`)
   }
 
   return (

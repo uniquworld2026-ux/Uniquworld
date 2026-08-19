@@ -162,7 +162,7 @@ export function StoreProductDetailsPage() {
             ) : null}
           </div>
           <p className="mt-2 text-xs text-hm-text-muted">
-            Checkout adds 10% platform fee + shipping. The store receives the full product price after delivery.
+            Checkout adds a ₹5 platform fee + shipping. The store receives the full product price after delivery.
           </p>
 
           {product.description ? (

@@ -222,7 +222,7 @@ export function ProductDetailsPage() {
         status: 'pending',
       })
     }
-    if (action === 'buy') navigate('/cart')
+    if (action === 'buy') navigate(`/checkout/buy?product=${product.id}&qty=${qty}`)
   }
 
   function handleAddToBag(action) {
@@ -268,7 +268,7 @@ export function ProductDetailsPage() {
         photoDataUrl: next.photoDataUrl || '',
         status: 'pending',
       })
-      if (action === 'buy') navigate('/cart')
+      if (action === 'buy') navigate(`/checkout/buy?product=${product.id}&qty=${qty}`)
     }
   }
 

@@ -12,6 +12,7 @@ import {
   ContactPage,
 } from '@/storefront/pages/ContentPages'
 import { AboutPage } from '@/storefront/pages/AboutPage'
+import { BuyNowCheckoutPage } from '@/storefront/pages/BuyNowCheckoutPage'
 import {
   LoginPage,
   SignupPage,
@@ -238,6 +239,7 @@ export const storefrontRouteTree = (
 
     {/* Commerce */}
     <Route path="cart" element={<CartPage />} />
+    <Route path="checkout/buy" element={<BuyNowCheckoutPage />} />
     <Route path="checkout" element={<CheckoutPage />} />
     <Route path="order-success" element={<OrderSuccessPage />} />
     <Route path="login" element={<LoginPage />} />
