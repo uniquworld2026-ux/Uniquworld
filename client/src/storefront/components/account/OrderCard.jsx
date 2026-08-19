@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { formatDate, formatINR } from '@/storefront/lib/commerce'
-import { OrderStatusBadge } from '@/storefront/components/account/OrderStatusBadge'
+import { OrderStatusBadge, PaymentStatusBadge } from '@/storefront/components/account/OrderStatusBadge'
 import { cn } from '@/shared/utils/cn'
 
 export function OrderCard({ order, className }) {
@@ -25,6 +25,7 @@ export function OrderCard({ order, className }) {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <PaymentStatusBadge order={order} />
           <OrderStatusBadge order={order} />
           <ChevronRight className="h-3.5 w-3.5 text-hm-text-subtle transition group-hover:translate-x-0.5 group-hover:text-hm-accent sm:h-4 sm:w-4" />
         </div>

@@ -13,6 +13,157 @@ const { notifyUser } = require('./notification.service');
 
 const calcShipping = (subtotal) => calcOrderTotals(subtotal).shippingAmount;
 
+const STALE_PENDING_MS = 15 * 60 * 1000;
+
+const isOnlinePayment = (order) => {
+  const method = String(order?.payment?.method || '').toLowerCase();
+  const gateway = String(order?.payment?.gateway || '').toLowerCase();
+  return method !== 'cod' && gateway !== 'cod';
+};
+
+const fulfillPaidOrder = async (order, { razorpayOrderId, razorpayPaymentId, extraMeta } = {}) => {
+  if (order.payment?.id && order.payment.status !== 'paid') {
+    await orderRepository.updatePayment(order.payment.id, {
+      status: 'paid',
+      gatewayPaymentId: razorpayPaymentId || order.payment.gatewayPaymentId || null,
+      gatewayOrderId: razorpayOrderId || order.payment.gatewayOrderId || null,
+      paidAt: new Date().toISOString(),
+      metadata: {
+        ...(order.payment.metadata || {}),
+        ...(extraMeta || {}),
+      },
+    });
+  }
+
+  if (['pending', 'failed'].includes(order.status)) {
+    await orderRepository.updateStatus(order.id, 'confirmed', 'Payment verified via Razorpay');
+  }
+
+  let current = await orderRepository.findById(order.id);
+  if (!current.shipment) {
+    const buyer = await userRepository.findById(current.userId);
+    const shipmentData = await shiprocketService.createShipmentForOrder({
+      ...current,
+      status: 'confirmed',
+      payment: { ...current.payment, status: 'paid' },
+      userEmail: buyer?.email || current.shippingAddress?.email || null,
+    });
+    await orderRepository.createShipment({
+      orderId: current.id,
+      ...shipmentData,
+      status: shipmentData.status || 'created',
+    });
+    if (!shipmentData.mock && current.status !== 'processing') {
+      await orderRepository.updateStatus(current.id, 'processing', 'Shipment created with Shiprocket');
+    }
+    current = await orderRepository.findById(current.id);
+  }
+
+  return current;
+};
+
+const markPaymentFailed = async (order, reason) => {
+  if (order.payment?.id && order.payment.status !== 'paid') {
+    await orderRepository.updatePayment(order.payment.id, {
+      status: 'failed',
+      metadata: {
+        ...(order.payment.metadata || {}),
+        failReason: reason || 'Payment failed or cancelled',
+      },
+    });
+  }
+  if (order.status !== 'failed' && ['pending', 'failed'].includes(order.status)) {
+    await orderRepository.updateStatus(order.id, 'failed', reason || 'Payment failed or cancelled');
+  }
+  return orderRepository.findById(order.id);
+};
+
+/** Sync local order from live Razorpay status (paid vs failed). */
+const reconcileOrderPayment = async (order, { allowStaleFail = false } = {}) => {
+  if (!order?.payment || !isOnlinePayment(order)) return order;
+  if (order.payment.status === 'paid' && !['pending', 'failed'].includes(order.status)) {
+    return order;
+  }
+  if (order.payment.status === 'paid' && ['pending', 'failed'].includes(order.status)) {
+    return fulfillPaidOrder(order, {
+      razorpayOrderId: order.payment.gatewayOrderId,
+      razorpayPaymentId: order.payment.gatewayPaymentId,
+      extraMeta: { syncedFrom: 'local-paid' },
+    });
+  }
+  if (order.payment.gatewayPaymentId && order.payment.status !== 'paid') {
+    return fulfillPaidOrder(order, {
+      razorpayOrderId: order.payment.gatewayOrderId,
+      razorpayPaymentId: order.payment.gatewayPaymentId,
+      extraMeta: { syncedFrom: 'gateway-payment-id' },
+    });
+  }
+
+  const gatewayOrderId = order.payment.gatewayOrderId;
+  if (!gatewayOrderId || !razorpayService.isConfigured()) {
+    if (allowStaleFail && isStalePending(order)) {
+      return markPaymentFailed(order, 'Payment not completed');
+    }
+    return order;
+  }
+
+  try {
+    const info = await razorpayService.inspectOrder(gatewayOrderId);
+    if (info.isPaid) {
+      const paidOrder = await fulfillPaidOrder(order, {
+        razorpayOrderId: gatewayOrderId,
+        razorpayPaymentId: info.captured?.id || order.payment.gatewayPaymentId,
+        extraMeta: { syncedFrom: 'razorpay', razorpayOrderStatus: info.rzpOrder?.status },
+      });
+      if (order.payment.status !== 'paid') {
+        await notifyUser(paidOrder.userId, {
+          title: `Payment received for ${paidOrder.orderNumber}`,
+          body: 'Your payment was successful. We are preparing your order.',
+          type: 'payment',
+          data: { orderId: paidOrder.id, orderNumber: paidOrder.orderNumber },
+          orderNumber: paidOrder.orderNumber,
+        });
+      }
+      return paidOrder;
+    }
+    if (info.failedOnly || (allowStaleFail && isStalePending(order) && !info.isPaid)) {
+      return markPaymentFailed(
+        order,
+        info.failedOnly ? 'Razorpay payment failed' : 'Payment not completed'
+      );
+    }
+  } catch (err) {
+    if (allowStaleFail && isStalePending(order)) {
+      return markPaymentFailed(order, 'Payment not completed');
+    }
+  }
+  return order;
+};
+
+function isStalePending(order) {
+  const created = new Date(order.createdAt || order.created_at || 0).getTime();
+  return Date.now() - created > STALE_PENDING_MS;
+}
+
+const reconcilePendingPayments = async ({ userId, limit = 20 } = {}) => {
+  const result = await query(
+    `SELECT o.id
+     FROM orders o
+     JOIN payments p ON p.order_id = o.id
+     WHERE p.status = 'pending'
+       AND p.method <> 'cod'
+       AND o.status IN ('pending', 'failed')
+       ${userId ? 'AND o.user_id = $1' : ''}
+     ORDER BY o.created_at DESC
+     LIMIT ${userId ? '$2' : '$1'}`,
+    userId ? [userId, limit] : [limit]
+  );
+  for (const row of result.rows) {
+    const order = await orderRepository.findById(row.id);
+    if (order) await reconcileOrderPayment(order, { allowStaleFail: true });
+  }
+};
+
 const findCatalogProductId = async (idOrSlug) => {
   if (!idOrSlug) return null;
   const found = await query(
@@ -274,6 +425,8 @@ const verifyRazorpayPayment = async (userId, payload) => {
     razorpaySignature,
   });
   if (!valid) {
+    const synced = await reconcileOrderPayment(order, { allowStaleFail: false });
+    if (synced.payment?.status === 'paid') return synced;
     await failRazorpayPayment(userId, {
       orderId,
       reason: 'Invalid payment signature',
@@ -281,85 +434,55 @@ const verifyRazorpayPayment = async (userId, payload) => {
     throw ApiError.badRequest('Invalid payment signature');
   }
 
-  await orderRepository.updatePayment(order.payment.id, {
-    status: 'paid',
-    gatewayPaymentId: razorpayPaymentId,
-    gatewayOrderId: razorpayOrderId,
-    paidAt: new Date().toISOString(),
-    metadata: {
-      ...(order.payment.metadata || {}),
-      razorpayPaymentId,
-      razorpaySignature,
-    },
+  const paid = await fulfillPaidOrder(order, {
+    razorpayOrderId,
+    razorpayPaymentId,
+    extraMeta: { razorpayPaymentId, razorpaySignature },
   });
 
-  await orderRepository.updateStatus(order.id, 'confirmed', 'Payment verified via Razorpay');
-
-  const buyer = await userRepository.findById(userId);
-  const shipmentData = await shiprocketService.createShipmentForOrder({
-    ...order,
-    status: 'confirmed',
-    payment: { ...order.payment, status: 'paid' },
-    userEmail: buyer?.email || order.shippingAddress?.email || null,
-  });
-  await orderRepository.createShipment({
-    orderId: order.id,
-    ...shipmentData,
-    status: shipmentData.status || 'created',
-  });
-
-  if (!shipmentData.mock) {
-    await orderRepository.updateStatus(order.id, 'processing', 'Shipment created with Shiprocket');
+  if (order.payment?.status !== 'paid') {
+    await notifyUser(userId, {
+      title: `Payment received for ${paid.orderNumber}`,
+      body: 'Your payment was successful. We are preparing your order.',
+      type: 'payment',
+      data: { orderId: paid.id, orderNumber: paid.orderNumber },
+      orderNumber: paid.orderNumber,
+    });
   }
 
-  await notifyUser(userId, {
-    title: `Payment received for ${order.orderNumber}`,
-    body: 'Your payment was successful. We are preparing your order.',
-    type: 'payment',
-    data: { orderId: order.id, orderNumber: order.orderNumber },
-    orderNumber: order.orderNumber,
-  });
-
-  return orderRepository.findByIdForUser(order.id, userId);
+  return orderRepository.findByIdForUser(paid.id, userId);
 };
 
 const failRazorpayPayment = async (userId, { orderId, reason } = {}) => {
   const order = await orderRepository.findByIdForUser(orderId, userId);
   if (!order) throw ApiError.notFound('Order not found');
-  if (order.payment?.status === 'paid') {
-    return order;
-  }
-  if (!['pending', 'failed'].includes(order.status)) {
+  if (order.payment?.status === 'paid' && !['pending'].includes(order.status)) {
     return order;
   }
 
-  if (order.payment?.id) {
-    await orderRepository.updatePayment(order.payment.id, {
-      status: 'failed',
-      metadata: {
-        ...(order.payment.metadata || {}),
-        failReason: reason || 'Payment failed or cancelled',
-      },
-    });
+  const synced = await reconcileOrderPayment(order, { allowStaleFail: false });
+  if (synced.payment?.status === 'paid') return synced;
+
+  if (!['pending', 'failed'].includes(synced.status) && synced.payment?.status === 'paid') {
+    return synced;
+  }
+  if (!['pending', 'failed'].includes(synced.status)) {
+    return synced;
   }
 
-  if (order.status !== 'failed') {
-    await orderRepository.updateStatus(
-      order.id,
-      'failed',
-      reason || 'Payment failed or cancelled'
-    );
-  }
-
-  return orderRepository.findByIdForUser(order.id, userId);
+  return markPaymentFailed(synced, reason || 'Payment failed or cancelled');
 };
 
-const listOrders = async (userId, query) => orderRepository.listByUser(userId, query);
+const listOrders = async (userId, query) => {
+  await reconcilePendingPayments({ userId, limit: 20 });
+  return orderRepository.listByUser(userId, query);
+};
 
 const getOrder = async (userId, id) => {
-  const order = await orderRepository.findByIdForUser(id, userId);
+  let order = await orderRepository.findByIdForUser(id, userId);
   if (!order) throw ApiError.notFound('Order not found');
-  return order;
+  order = await reconcileOrderPayment(order, { allowStaleFail: true });
+  return orderRepository.findByIdForUser(order.id, userId);
 };
 
 const getOrderByNumber = async (userId, orderNumber) => {
@@ -458,4 +581,7 @@ module.exports = {
   trackOrder,
   accountSummary,
   calcShipping,
+  reconcileOrderPayment,
+  reconcilePendingPayments,
+  fulfillPaidOrder,
 };

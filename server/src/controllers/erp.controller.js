@@ -331,6 +331,9 @@ const listModules = asyncHandler(async (_req, res) => {
 
 /** Commerce ops — orders / payments / shipments for admin */
 const listOrders = asyncHandler(async (req, res) => {
+  const orderService = require('../services/order.service');
+  await orderService.reconcilePendingPayments({ limit: 40 });
+
   const result = await query(
     `SELECT o.*,
       u.email AS customer_email,
@@ -360,8 +363,10 @@ const listOrders = asyncHandler(async (req, res) => {
 
 const getOrderDetail = asyncHandler(async (req, res) => {
   const orderRepository = require('../repositories/order.repository');
-  const order = await orderRepository.findById(req.params.id);
+  const orderService = require('../services/order.service');
+  let order = await orderRepository.findById(req.params.id);
   if (!order) throw ApiError.notFound('Order not found');
+  order = await orderService.reconcileOrderPayment(order, { allowStaleFail: true });
 
   const userResult = await query(
     `SELECT email, first_name, last_name, phone FROM users WHERE id = $1 LIMIT 1`,
@@ -552,6 +557,9 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 });
 
 const listPayments = asyncHandler(async (req, res) => {
+  const orderService = require('../services/order.service');
+  await orderService.reconcilePendingPayments({ limit: 40 });
+
   const result = await query(
     `SELECT p.*, o.order_number
      FROM payments p

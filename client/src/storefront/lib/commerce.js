@@ -22,19 +22,41 @@ export function statusLabel(status) {
   if (key === 'confirmed') return 'Confirmed'
   if (key === 'failed') return 'Failed'
   if (key === 'pending') return 'Pending payment'
+  if (key === 'paid') return 'Paid'
+  if (key === 'cod') return 'Cash on delivery'
   return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 /** Customer-facing order badge: Failed if unpaid/cancelled payment; Confirmed (green) after paid. */
 export function customerFacingOrderStatus(order) {
   const status = String(order?.status || '').toLowerCase()
-  const pay = String(order?.payment?.status || '').toLowerCase()
+  const pay = displayPaymentStatus(order)
 
-  if (['cancelled', 'refunded', 'failed'].includes(status)) return status
-  if (pay === 'failed') return 'failed'
+  if (status === 'cancelled') return 'cancelled'
+  if (status === 'refunded') return 'refunded'
+  if (pay === 'failed' || status === 'failed') return 'failed'
   if (['shipped', 'in_transit', 'out_for_delivery', 'delivered'].includes(status)) return status
-  if (pay === 'paid' || ['confirmed', 'processing'].includes(status)) return 'confirmed'
+  if (pay === 'paid' || pay === 'cod' || ['confirmed', 'processing'].includes(status)) return 'confirmed'
   return 'pending'
+}
+
+/** Paid / failed / pending / COD from payment + order. */
+export function displayPaymentStatus(orderOrPayment, paymentMaybe) {
+  const payment = paymentMaybe || orderOrPayment?.payment || orderOrPayment
+  const order = orderOrPayment?.payment ? orderOrPayment : null
+  const method = String(payment?.method || '').toLowerCase()
+  const pay = String(payment?.status || '').toLowerCase()
+  const orderStatus = String(order?.status || '').toLowerCase()
+  const gatewayId = payment?.gatewayPaymentId || payment?.gateway_payment_id
+
+  if (method === 'cod') {
+    if (orderStatus === 'failed' || pay === 'failed') return 'failed'
+    if (pay === 'paid' || orderStatus === 'delivered') return 'paid'
+    return 'cod'
+  }
+  if (pay === 'paid' || gatewayId) return 'paid'
+  if (pay === 'failed' || orderStatus === 'failed') return 'failed'
+  return pay || 'pending'
 }
 
 export function loadRazorpay() {

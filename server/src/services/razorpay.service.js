@@ -52,10 +52,44 @@ const getPublicKey = () => config.razorpay.keyId || null;
 
 const isConfigured = () => Boolean(config.razorpay.keyId && config.razorpay.keySecret);
 
+const fetchOrder = async (razorpayOrderId) => {
+  if (!razorpayOrderId) return null;
+  return getClient().orders.fetch(razorpayOrderId);
+};
+
+const fetchOrderPayments = async (razorpayOrderId) => {
+  if (!razorpayOrderId) return [];
+  const data = await getClient().orders.fetchPayments(razorpayOrderId);
+  return data?.items || [];
+};
+
+/** Inspect Razorpay order: captured payment vs failed-only vs still open. */
+const inspectOrder = async (razorpayOrderId) => {
+  const rzpOrder = await fetchOrder(razorpayOrderId);
+  const payments = await fetchOrderPayments(razorpayOrderId);
+  const captured = payments.find((p) => p.status === 'captured' || p.status === 'authorized') || null;
+  const inProgress = payments.some((p) => ['created', 'authorized'].includes(p.status));
+  const failedOnly =
+    payments.length > 0 &&
+    payments.every((p) => p.status === 'failed') &&
+    !inProgress &&
+    rzpOrder?.status !== 'paid';
+  return {
+    rzpOrder,
+    payments,
+    captured,
+    failedOnly,
+    isPaid: Boolean(captured) || rzpOrder?.status === 'paid',
+  };
+};
+
 module.exports = {
   createOrder,
   verifyPaymentSignature,
   verifyWebhookSignature,
+  fetchOrder,
+  fetchOrderPayments,
+  inspectOrder,
   getPublicKey,
   isConfigured,
 };

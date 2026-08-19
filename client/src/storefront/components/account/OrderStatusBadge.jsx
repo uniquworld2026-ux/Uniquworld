@@ -1,5 +1,5 @@
 import { cn } from '@/shared/utils/cn'
-import { customerFacingOrderStatus, statusLabel } from '@/storefront/lib/commerce'
+import { customerFacingOrderStatus, displayPaymentStatus, statusLabel } from '@/storefront/lib/commerce'
 
 const STYLES = {
   pending: 'bg-amber-100 text-amber-800 border-amber-200',
@@ -11,7 +11,24 @@ const STYLES = {
   delivered: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   cancelled: 'bg-red-100 text-red-800 border-red-200',
   failed: 'bg-red-100 text-red-800 border-red-200',
+  paid: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  cod: 'bg-sky-100 text-sky-800 border-sky-200',
   refunded: 'bg-hm-muted text-hm-text-muted border-hm-border',
+}
+
+export function PaymentStatusBadge({ order, payment, className }) {
+  const key = displayPaymentStatus(order || { payment }, payment)
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide sm:px-2.5 sm:text-[11px]',
+        STYLES[key] || 'bg-hm-muted text-hm-text border-hm-border',
+        className,
+      )}
+    >
+      {statusLabel(key)}
+    </span>
+  )
 }
 
 export function OrderStatusBadge({ status, order, className }) {

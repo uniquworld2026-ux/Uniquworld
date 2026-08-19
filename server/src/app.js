@@ -30,6 +30,11 @@ app.use(
   })
 );
 app.use(compression());
+app.use(
+  `${config.apiPrefix}/webhooks/razorpay`,
+  express.raw({ type: 'application/json' }),
+  require('./routes/v1/razorpayWebhook.routes')
+);
 app.use(express.json({ limit: config.bodyParserLimit }));
 app.use(express.urlencoded({ extended: true, limit: config.bodyParserLimit }));
 app.use(cookieParser());
