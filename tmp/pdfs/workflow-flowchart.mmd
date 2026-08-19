@@ -1,0 +1,28 @@
+flowchart TB
+  subgraph phase1 [Phase 1 - Checkout]
+    A([Customer]) --> B[Add to cart]
+    B --> C[Enter address]
+    C --> D{Payment method}
+  end
+
+  subgraph phase2 [Phase 2 - Payment]
+    D -->|UPI Card Wallet| E[Razorpay checkout]
+    D -->|COD| F[Skip gateway]
+    E --> G[Payment verified]
+    F --> H[Order confirmed]
+    G --> H
+  end
+
+  subgraph phase3 [Phase 3 - Fulfillment]
+    H --> I[Uniquworld API]
+    I --> J[Shiprocket adhoc order]
+    J --> K[Your office packs]
+    K --> L[Assign courier in Shiprocket]
+    L --> M[Courier pickup from Primary]
+    M --> N[In transit]
+    N --> O([Customer delivery])
+  end
+
+  style phase1 fill:#f5efe8,stroke:#4a3426
+  style phase2 fill:#e8f0f5,stroke:#0a2d4d
+  style phase3 fill:#eef5ea,stroke:#2d5016

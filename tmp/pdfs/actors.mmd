@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph actors [Who does what]
+    direction TB
+    C[Customer<br/>Browse pay receive]
+    U[Uniquworld<br/>Orders payments API]
+    R[Razorpay<br/>Online payments]
+    S[Shiprocket<br/>AWB labels tracking]
+    O[Your office<br/>Stock pack pickup]
+    K[Courier<br/>Pickup and deliver]
+  end
+
+  C --> U
+  U --> R
+  U --> S
+  O --> S
+  S --> K
+  K --> C
+
+  style C fill:#4a3426,color:#fff
+  style U fill:#0a2d4d,color:#fff
+  style R fill:#3395ff,color:#fff
+  style S fill:#7c3aed,color:#fff
+  style O fill:#b45309,color:#fff
+  style K fill:#059669,color:#fff

@@ -1,0 +1,31 @@
+sequenceDiagram
+  autonumber
+  participant Customer
+  participant Uniquworld
+  participant Razorpay
+  participant Shiprocket
+  participant Courier
+  participant YourOffice
+
+  Customer->>Uniquworld: Place order + shipping address
+  Uniquworld->>Uniquworld: Save order (status pending)
+
+  alt Online payment
+    Uniquworld->>Razorpay: Create Razorpay order
+    Razorpay-->>Customer: Checkout modal
+    Customer->>Razorpay: Pay
+    Razorpay-->>Uniquworld: Payment verified
+    Uniquworld->>Uniquworld: Order confirmed
+  else Cash on delivery
+    Uniquworld->>Uniquworld: Order confirmed
+  end
+
+  Uniquworld->>Shiprocket: Create order (pickup Primary)
+  Shiprocket-->>Uniquworld: AWB / shipment id
+  Uniquworld->>Uniquworld: Order processing
+
+  Note over YourOffice: Pack, label, schedule pickup
+
+  Courier->>YourOffice: Pick up parcel
+  Courier->>Customer: Deliver to address
+  Uniquworld->>Uniquworld: Order delivered
