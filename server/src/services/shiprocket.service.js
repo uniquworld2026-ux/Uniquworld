@@ -148,6 +148,8 @@ const buildOrderPayload = (order) => {
 
 /**
  * Create Shiprocket shipment for a paid/confirmed order.
+ * Pickup is always config.shiprocket.pickupLocation (your office in Shiprocket dashboard).
+ * Courier assignment and pickup scheduling are completed in Shiprocket after this API call.
  * When Shiprocket is disabled, returns a mock tracking stub for local/dev.
  */
 const createShipmentForOrder = async (order) => {
