@@ -26,7 +26,7 @@ export function InvoiceGeneratorPage() {
     gstPercent: 18,
     discount: 0,
     shipping: 0,
-    notes: '',
+    notes: 'Thank you for your business. Payment is due as per agreed terms. For queries, contact us at the email above.',
     customer: {
       name: '',
       email: '',
@@ -255,7 +255,7 @@ export function InvoiceGeneratorPage() {
               rows={2}
               value={form.notes}
               onChange={(e) => updateField('notes', e.target.value)}
-              placeholder="Payment terms, PO reference, etc."
+              placeholder="Thank you for your business. Payment is due as per agreed terms…"
             />
           </label>
 

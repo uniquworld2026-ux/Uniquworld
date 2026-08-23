@@ -3,7 +3,10 @@ const config = require('../config');
 const COMPANY = {
   name: config.appName || 'Uniquworld',
   url: config.clientUrl || 'https://uniquworld.com',
-  email: config.smtp?.fromEmail || 'admin@uniquworld.com',
+  email:
+    process.env.COMPANY_EMAIL ||
+    config.smtp?.fromEmail ||
+    'admin@uniquworld.com',
   gstin: process.env.COMPANY_GSTIN || '',
   address: process.env.COMPANY_ADDRESS || 'India',
   state: process.env.COMPANY_STATE || '',
@@ -44,21 +47,15 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
-/** Prefer explicit state; otherwise use billing address for place of supply. */
-function resolvePlaceOfSupply({ state, address, city, postalCode } = {}) {
-  const trimmedState = String(state || '').trim();
-  if (trimmedState) return trimmedState;
+const DEFAULT_INVOICE_NOTES =
+  'Thank you for your business. Payment is due as per agreed terms. For queries, contact us at the email above.';
 
-  const billLine = [address, city, postalCode]
-    .map((part) => String(part || '').trim())
-    .filter(Boolean)
-    .join(', ');
-  if (billLine) return billLine;
-
-  const companyState = String(COMPANY.state || '').trim();
-  if (companyState) return companyState;
-
-  return String(COMPANY.address || '').trim() || '—';
+function companyBillFromHtml({ showGstin = false } = {}) {
+  return `
+    <p style="margin:0;font-size:16px;font-weight:700;">${escapeHtml(COMPANY.name)}</p>
+    <p style="margin:6px 0 0;font-size:13px;color:#555;">${escapeHtml(COMPANY.email)}</p>
+    ${showGstin && COMPANY.gstin ? `<p style="margin:6px 0 0;font-size:13px;color:#555;">GSTIN: ${escapeHtml(COMPANY.gstin)}</p>` : ''}
+    ${COMPANY.address ? `<p style="margin:8px 0 0;font-size:13px;color:#555;line-height:1.5;">${escapeHtml(COMPANY.address)}</p>` : ''}`;
 }
 
 function normalizeGstMode(value) {
@@ -88,13 +85,16 @@ function buildInvoiceShell({
   invoiceNumber,
   invoiceDate,
   statusLine,
+  billFromHtml,
   billToHtml,
-  sidePanelHtml,
+  metaPanelHtml = '',
   tableHeadHtml,
   itemRowsHtml,
   totalsHtml,
   footerNote,
+  showGstin = false,
 }) {
+  const fromHtml = billFromHtml || companyBillFromHtml({ showGstin });
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,10 +111,7 @@ function buildInvoiceShell({
     <div style="display:flex;justify-content:space-between;gap:24px;align-items:flex-start;border-bottom:2px solid #0a2d4d;padding-bottom:18px;">
       <div>
         ${companyLogoHtml()}
-        <h1 style="margin:0;font-size:28px;">${escapeHtml(COMPANY.name)}</h1>
         <p style="margin:6px 0 0;color:#666;font-size:13px;">${escapeHtml(documentSubtitle)}</p>
-        ${COMPANY.gstin && documentSubtitle.toLowerCase().includes('tax') ? `<p style="margin:4px 0 0;font-size:13px;color:#555;">GSTIN: ${escapeHtml(COMPANY.gstin)}</p>` : ''}
-        ${COMPANY.address ? `<p style="margin:4px 0 0;font-size:12px;color:#64748b;line-height:1.5;">${escapeHtml(COMPANY.address)}</p>` : ''}
       </div>
       <div style="text-align:right;font-size:13px;color:#444;">
         <p style="margin:0;"><strong>Invoice #</strong> ${escapeHtml(invoiceNumber)}</p>
@@ -125,19 +122,22 @@ function buildInvoiceShell({
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;">
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
+        <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Bill from</p>
+        ${fromHtml}
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
         <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Bill to</p>
         ${billToHtml}
       </div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
-        ${sidePanelHtml}
-      </div>
     </div>
+
+    ${metaPanelHtml ? `<div style="margin-top:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">${metaPanelHtml}</div>` : ''}
 
     <table style="margin-top:28px;font-size:13px;">
       <thead>
         <tr style="background:#0a2d4d;color:#fff;">${tableHeadHtml}</tr>
       </thead>
-      <tbody>${itemRowsHtml || '<tr><td colspan="6" style="padding:12px;">No items</td></tr>'}</tbody>
+      <tbody>${itemRowsHtml || '<tr><td colspan="10" style="padding:12px;">No items</td></tr>'}</tbody>
     </table>
 
     <div style="margin-top:24px;margin-left:auto;max-width:360px;font-size:14px;">
@@ -187,12 +187,12 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
     ? `<p style="margin:4px 0 0;font-size:13px;color:#555;">Razorpay payment ID: <strong>${escapeHtml(payment.gatewayPaymentId)}</strong></p>`
     : '';
 
-  const placeOfSupply = resolvePlaceOfSupply({
-    state: addr.state,
-    address: [addr.line1, addr.line2].filter(Boolean).join(', '),
-    city: addr.city,
-    postalCode: addr.postalCode,
-  });
+  const paymentMetaHtml = `
+    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Payment</p>
+    <p style="margin:0;font-size:14px;"><strong>Method:</strong> ${escapeHtml(String(payment.method || '—').toUpperCase())}</p>
+    <p style="margin:6px 0 0;font-size:14px;"><strong>Status:</strong> ${escapeHtml(payment.status || 'pending')}</p>
+    ${razorpayRef}
+    <p style="margin:10px 0 0;font-size:13px;color:#555;line-height:1.5;"><strong>Notes:</strong> ${escapeHtml(DEFAULT_INVOICE_NOTES)}</p>`;
 
   const billToHtml = `
     <p style="margin:0;font-size:16px;font-weight:700;">${escapeHtml(customerName)}</p>
@@ -202,24 +202,12 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
       ${escapeHtml([addr.line1, addr.line2, addr.city, addr.state, addr.postalCode].filter(Boolean).join(', '))}
     </p>`;
 
-  const sidePanelHtml = `
-    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Payment</p>
-    <p style="margin:0;font-size:14px;"><strong>Method:</strong> ${escapeHtml(String(payment.method || '—').toUpperCase())}</p>
-    <p style="margin:6px 0 0;font-size:14px;"><strong>Status:</strong> ${escapeHtml(payment.status || 'pending')}</p>
-    ${razorpayRef}`;
-
-  const gstSidePanelHtml = `
-    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Invoice details</p>
-    <p style="margin:0;font-size:14px;"><strong>Place of supply:</strong> ${escapeHtml(placeOfSupply)}</p>
-    <p style="margin:8px 0 0;font-size:14px;"><strong>Payment method:</strong> ${escapeHtml(String(payment.method || '—').toUpperCase())}</p>
-    <p style="margin:6px 0 0;font-size:14px;"><strong>Payment status:</strong> ${escapeHtml(payment.status || 'pending')}</p>
-    ${razorpayRef}`;
-
   if (gstMode === 'without') {
     const itemRows = items
       .map(
-        (item) => `
+        (item, index) => `
       <tr>
+        ${td(String(index + 1), 'center')}
         ${td(escapeHtml(item.productName))}
         ${td(String(item.quantity), 'center')}
         ${td(money(item.unitPrice), 'right')}
@@ -243,8 +231,9 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
       invoiceDate: formatDate(order.createdAt),
       statusLine: String(order.status).replace(/_/g, ' '),
       billToHtml,
-      sidePanelHtml,
+      metaPanelHtml: paymentMetaHtml,
       tableHeadHtml: `
+        <th style="padding:10px 12px;text-align:center;width:44px;">S.No</th>
         <th style="padding:10px 12px;text-align:left;">Product</th>
         <th style="padding:10px 12px;text-align:center;width:70px;">Qty</th>
         <th style="padding:10px 12px;text-align:right;width:100px;">Rate</th>
@@ -269,13 +258,14 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
   );
 
   const itemRows = items
-    .map((item) => {
+    .map((item, index) => {
       const lineTotal = round2(item.totalPrice ?? item.unitPrice * item.quantity);
       const lineTaxable = lineTotal;
       const lineCgst = round2((lineTaxable * (gstPercent / 2)) / 100);
       const lineSgst = lineCgst;
       return `
       <tr>
+        ${td(String(index + 1), 'center')}
         ${td(escapeHtml(item.productName))}
         ${td(String(item.quantity), 'center')}
         ${td(money(item.unitPrice), 'right')}
@@ -306,8 +296,10 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
     invoiceDate: formatDate(order.createdAt),
     statusLine: String(order.status).replace(/_/g, ' '),
     billToHtml,
-    sidePanelHtml: gstSidePanelHtml,
+    metaPanelHtml: paymentMetaHtml,
+    showGstin: true,
     tableHeadHtml: `
+      <th style="padding:10px 12px;text-align:center;width:44px;">S.No</th>
       <th style="padding:10px 12px;text-align:left;">Product</th>
       <th style="padding:10px 12px;text-align:center;width:50px;">Qty</th>
       <th style="padding:10px 12px;text-align:right;width:90px;">Rate</th>
@@ -331,11 +323,7 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
   const customerName = customer.name || 'Customer';
   const discount = round2(payload.discount || 0);
   const shipping = round2(payload.shipping || 0);
-  const notes = payload.notes || '';
-  const placeOfSupply = resolvePlaceOfSupply({
-    state: customer.state,
-    address: customer.address,
-  });
+  const notes = String(payload.notes || '').trim() || DEFAULT_INVOICE_NOTES;
 
   const billToHtml = `
     <p style="margin:0;font-size:16px;font-weight:700;">${escapeHtml(customerName)}</p>
@@ -344,10 +332,9 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
     <p style="margin:6px 0 0;font-size:13px;color:#555;">${escapeHtml(customer.phone || '')}</p>
     <p style="margin:8px 0 0;font-size:13px;color:#555;line-height:1.5;">${escapeHtml(customer.address || '')}</p>`;
 
-  const sidePanelHtml = `
-    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Invoice details</p>
-    <p style="margin:0;font-size:14px;"><strong>Place of supply:</strong> ${escapeHtml(placeOfSupply)}</p>
-    ${notes ? `<p style="margin:8px 0 0;font-size:13px;color:#555;line-height:1.5;"><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}`;
+  const notesMetaHtml = notes
+    ? `<p style="margin:0;font-size:13px;color:#555;line-height:1.5;"><strong>Notes:</strong> ${escapeHtml(notes)}</p>`
+    : '';
 
   const lineTotals = items.map((item) => {
     const qty = Number(item.quantity) || 1;
@@ -361,8 +348,9 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
   if (gstMode === 'without') {
     const itemRows = lineTotals
       .map(
-        (line) => `
+        (line, index) => `
       <tr>
+        ${td(String(index + 1), 'center')}
         ${td(escapeHtml(line.description))}
         ${td(String(line.qty), 'center')}
         ${td(money(line.rate), 'right')}
@@ -386,8 +374,9 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
       invoiceNumber,
       invoiceDate,
       billToHtml,
-      sidePanelHtml,
+      metaPanelHtml: notesMetaHtml,
       tableHeadHtml: `
+        <th style="padding:10px 12px;text-align:center;width:44px;">S.No</th>
         <th style="padding:10px 12px;text-align:left;">Description</th>
         <th style="padding:10px 12px;text-align:center;width:70px;">Qty</th>
         <th style="padding:10px 12px;text-align:right;width:100px;">Rate</th>
@@ -401,11 +390,12 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
   const grandTotal = round2(gst.grandTotal + shipping - discount);
 
   const itemRows = lineTotals
-    .map((line) => {
+    .map((line, index) => {
       const lineCgst = round2((line.taxable * (gstPercent / 2)) / 100);
       const lineSgst = lineCgst;
       return `
       <tr>
+        ${td(String(index + 1), 'center')}
         ${td(escapeHtml(line.description))}
         ${td(String(line.qty), 'center')}
         ${td(money(line.rate), 'right')}
@@ -434,8 +424,10 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
     invoiceNumber,
     invoiceDate,
     billToHtml,
-    sidePanelHtml,
+    metaPanelHtml: notesMetaHtml,
+    showGstin: true,
     tableHeadHtml: `
+      <th style="padding:10px 12px;text-align:center;width:44px;">S.No</th>
       <th style="padding:10px 12px;text-align:left;">Description</th>
       <th style="padding:10px 12px;text-align:center;width:50px;">Qty</th>
       <th style="padding:10px 12px;text-align:right;width:90px;">Rate</th>
