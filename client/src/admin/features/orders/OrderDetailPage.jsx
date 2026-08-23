@@ -49,6 +49,18 @@ export function OrderDetailPage() {
     onSuccess: () => setFlash('Email sent to customer'),
   })
 
+  const generateInvoiceMutation = useMutation({
+    mutationFn: () => erpApi.generateOrderInvoice(orderId, invoiceGstMode),
+    onSuccess: (data) => {
+      qc.setQueryData(['erp', 'commerce', 'orders', orderId, 'invoice', invoiceGstMode], data)
+      setFlash(
+        invoiceGstMode === 'with'
+          ? 'GST invoice generated and saved'
+          : 'Invoice (without GST) generated and saved',
+      )
+    },
+  })
+
   const cancelShipmentMutation = useMutation({
     mutationFn: () => erpApi.cancelShipment(orderQuery.data.shipment.id, { reason: 'Cancelled from order admin' }),
     onSuccess: () => {
@@ -148,12 +160,16 @@ export function OrderDetailPage() {
           {flash}
         </p>
       ) : null}
-      {sendEmailMutation.error || cancelShipmentMutation.error || createShipmentMutation.error ? (
+      {sendEmailMutation.error ||
+      cancelShipmentMutation.error ||
+      createShipmentMutation.error ||
+      generateInvoiceMutation.error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {getErrorMessage(
             sendEmailMutation.error ||
               cancelShipmentMutation.error ||
-              createShipmentMutation.error,
+              createShipmentMutation.error ||
+              generateInvoiceMutation.error,
           )}
         </p>
       ) : null}
@@ -245,8 +261,12 @@ export function OrderDetailPage() {
           ) : (
             <OrderInvoicePanel
               html={invoiceQuery.data?.html}
-              orderNumber={order.orderNumber}
+              orderNumber={invoiceQuery.data?.invoiceNumber || order.orderNumber}
+              stored={Boolean(invoiceQuery.data?.stored)}
+              savedAt={invoiceQuery.data?.updatedAt || invoiceQuery.data?.createdAt}
               sending={sendEmailMutation.isPending}
+              generating={generateInvoiceMutation.isPending}
+              onGenerateSave={() => generateInvoiceMutation.mutate()}
               onSendEmail={(type) => sendEmailMutation.mutate({ type })}
             />
           )}
