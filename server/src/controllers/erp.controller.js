@@ -409,8 +409,18 @@ const getOrderInvoice = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const html = invoiceService.buildOrderInvoiceHtml(order, customer);
-  return ApiResponse.ok(res, { html, orderNumber: order.orderNumber });
+  const gstMode = invoiceService.normalizeGstMode(req.query.gst);
+  const html = invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
+  return ApiResponse.ok(res, { html, orderNumber: order.orderNumber, gstMode });
+});
+
+const previewCustomInvoice = asyncHandler(async (req, res) => {
+  const invoiceService = require('../services/invoice.service');
+  const body = req.body || {};
+  const gstMode = invoiceService.normalizeGstMode(body.gstMode ?? req.query.gst);
+  const html = invoiceService.buildCustomInvoiceHtml(body, { gstMode });
+  const invoiceNumber = body.invoiceNumber || `INV-${Date.now()}`;
+  return ApiResponse.ok(res, { html, invoiceNumber, gstMode });
 });
 
 const sendOrderCustomerEmail = asyncHandler(async (req, res) => {
@@ -1189,6 +1199,7 @@ module.exports = {
   listOrders,
   getOrderDetail,
   getOrderInvoice,
+  previewCustomInvoice,
   sendOrderCustomerEmail,
   getOrderTracking,
   updateOrderStatus,

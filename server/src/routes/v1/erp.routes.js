@@ -33,6 +33,7 @@ router.post('/auth/verify-otp', erpController.adminVerifyOtp);
 
 router.get('/commerce/orders', requireAdminAccess, erpController.listOrders);
 router.get('/commerce/orders/:id/invoice', requireAdminAccess, erpController.getOrderInvoice);
+router.post('/commerce/invoices/preview', requireAdminAccess, erpController.previewCustomInvoice);
 router.get('/commerce/orders/:id/tracking', requireAdminAccess, erpController.getOrderTracking);
 router.post('/commerce/orders/:id/email', requireAdminAccess, erpController.sendOrderCustomerEmail);
 router.get('/commerce/orders/:id', requireAdminAccess, erpController.getOrderDetail);

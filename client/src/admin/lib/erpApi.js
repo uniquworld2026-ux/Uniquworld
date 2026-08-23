@@ -35,8 +35,12 @@ export const erpApi = {
     api.get('/erp/commerce/orders', adminConfig({ params })).then((r) => r.data.data.items),
   getOrder: (id) =>
     api.get(`/erp/commerce/orders/${id}`, adminConfig()).then((r) => r.data.data.item),
-  getOrderInvoice: (id) =>
-    api.get(`/erp/commerce/orders/${id}/invoice`, adminConfig()).then((r) => r.data.data),
+  getOrderInvoice: (id, gstMode = 'with') =>
+    api
+      .get(`/erp/commerce/orders/${id}/invoice`, adminConfig({ params: { gst: gstMode } }))
+      .then((r) => r.data.data),
+  previewCustomInvoice: (body) =>
+    api.post('/erp/commerce/invoices/preview', body, adminConfig()).then((r) => r.data.data),
   getOrderTracking: (id) =>
     api.get(`/erp/commerce/orders/${id}/tracking`, adminConfig()).then((r) => r.data.data),
   sendOrderEmail: (id, body) =>

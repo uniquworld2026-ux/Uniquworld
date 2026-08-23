@@ -3,6 +3,7 @@ import {
   Package,
   Layers,
   ShoppingCart,
+  Receipt,
   Users,
   Building2,
   FileText,
@@ -131,6 +132,12 @@ export const adminNavigation = [
         label: 'Order Management',
         path: '/admin/orders',
         icon: ShoppingCart,
+      },
+      {
+        id: 'invoice-generator',
+        label: 'Invoice Generator',
+        path: '/admin/invoice-generator',
+        icon: Receipt,
       },
       {
         id: 'payments',

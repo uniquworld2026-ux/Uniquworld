@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Mail, Truck, XCircle } from 'lucide-react'
 import { erpApi } from '@/admin/lib/erpApi'
+import { InvoiceGstTabs } from '@/admin/components/commerce/InvoiceGstTabs'
 import { OrderInvoicePanel } from '@/admin/components/commerce/OrderInvoicePanel'
 import { ShipmentTrackingPanel } from '@/admin/components/commerce/ShipmentTrackingPanel'
 import { StatusBadge } from '@/admin/components/crud/AdminCrudPage'
@@ -21,6 +22,7 @@ export function OrderDetailPage() {
   const { orderId } = useParams()
   const qc = useQueryClient()
   const [tab, setTab] = useState('overview')
+  const [invoiceGstMode, setInvoiceGstMode] = useState('with')
   const [emailMsg, setEmailMsg] = useState('')
   const [flash, setFlash] = useState('')
 
@@ -31,8 +33,8 @@ export function OrderDetailPage() {
   })
 
   const invoiceQuery = useQuery({
-    queryKey: ['erp', 'commerce', 'orders', orderId, 'invoice'],
-    queryFn: () => erpApi.getOrderInvoice(orderId),
+    queryKey: ['erp', 'commerce', 'orders', orderId, 'invoice', invoiceGstMode],
+    queryFn: () => erpApi.getOrderInvoice(orderId, invoiceGstMode),
     enabled: Boolean(orderId) && tab === 'invoice',
   })
 
@@ -226,12 +228,29 @@ export function OrderDetailPage() {
       ) : null}
 
       {tab === 'invoice' ? (
-        <OrderInvoicePanel
-          html={invoiceQuery.data?.html}
-          orderNumber={order.orderNumber}
-          sending={sendEmailMutation.isPending}
-          onSendEmail={(type) => sendEmailMutation.mutate({ type })}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-admin-text">Billing invoice</h3>
+              <p className="text-sm text-admin-text-muted">
+                Generate a tax invoice with GST breakdown or a simple bill without GST.
+              </p>
+            </div>
+            <InvoiceGstTabs value={invoiceGstMode} onChange={setInvoiceGstMode} />
+          </div>
+          {invoiceQuery.isLoading ? (
+            <p className="rounded-2xl border border-admin-border bg-admin-elevated p-8 text-center text-sm text-admin-text-muted">
+              Loading invoice preview…
+            </p>
+          ) : (
+            <OrderInvoicePanel
+              html={invoiceQuery.data?.html}
+              orderNumber={order.orderNumber}
+              sending={sendEmailMutation.isPending}
+              onSendEmail={(type) => sendEmailMutation.mutate({ type })}
+            />
+          )}
+        </div>
       ) : null}
 
       {tab === 'shipment' ? (
