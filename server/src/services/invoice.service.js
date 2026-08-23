@@ -306,7 +306,7 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
     invoiceDate: formatDate(order.createdAt),
     statusLine: String(order.status).replace(/_/g, ' '),
     billToHtml,
-    sidePanelHtml,
+    sidePanelHtml: gstSidePanelHtml,
     tableHeadHtml: `
       <th style="padding:10px 12px;text-align:left;">Product</th>
       <th style="padding:10px 12px;text-align:center;width:50px;">Qty</th>
