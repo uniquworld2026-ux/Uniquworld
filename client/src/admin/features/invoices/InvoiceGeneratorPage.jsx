@@ -7,7 +7,7 @@ import { OrderInvoicePanel } from '@/admin/components/commerce/OrderInvoicePanel
 import { Button } from '@/shared/components/ui/Button'
 import { getErrorMessage } from '@/shared/lib/axios'
 
-const emptyItem = () => ({ description: '', quantity: 1, rate: 0, hsn: '9985' })
+const emptyItem = () => ({ description: '', quantity: 1, rate: 0 })
 
 function defaultInvoiceNumber() {
   const d = new Date()
@@ -198,14 +198,6 @@ export function InvoiceGeneratorPage() {
                       value={item.rate}
                       onChange={(e) => updateItem(index, 'rate', Number(e.target.value))}
                     />
-                    {gstMode === 'with' ? (
-                      <input
-                        className={inputClass}
-                        placeholder="HSN"
-                        value={item.hsn}
-                        onChange={(e) => updateItem(index, 'hsn', e.target.value)}
-                      />
-                    ) : null}
                     <Button
                       size="sm"
                       variant="outline"

@@ -246,7 +246,6 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
       return `
       <tr>
         ${td(escapeHtml(item.productName))}
-        ${td('9985', 'center')}
         ${td(String(item.quantity), 'center')}
         ${td(money(item.unitPrice), 'right')}
         ${td(money(lineTaxable), 'right')}
@@ -279,7 +278,6 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
     sidePanelHtml,
     tableHeadHtml: `
       <th style="padding:10px 12px;text-align:left;">Product</th>
-      <th style="padding:10px 12px;text-align:center;width:60px;">HSN</th>
       <th style="padding:10px 12px;text-align:center;width:50px;">Qty</th>
       <th style="padding:10px 12px;text-align:right;width:90px;">Rate</th>
       <th style="padding:10px 12px;text-align:right;width:90px;">Taxable</th>
@@ -374,7 +372,6 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
       return `
       <tr>
         ${td(escapeHtml(line.description))}
-        ${td(escapeHtml(line.hsn || '9985'), 'center')}
         ${td(String(line.qty), 'center')}
         ${td(money(line.rate), 'right')}
         ${td(money(line.taxable), 'right')}
@@ -405,7 +402,6 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
     sidePanelHtml,
     tableHeadHtml: `
       <th style="padding:10px 12px;text-align:left;">Description</th>
-      <th style="padding:10px 12px;text-align:center;width:60px;">HSN</th>
       <th style="padding:10px 12px;text-align:center;width:50px;">Qty</th>
       <th style="padding:10px 12px;text-align:right;width:90px;">Rate</th>
       <th style="padding:10px 12px;text-align:right;width:90px;">Taxable</th>
