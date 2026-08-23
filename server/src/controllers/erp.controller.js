@@ -391,9 +391,26 @@ const getOrderDetail = asyncHandler(async (req, res) => {
 
 const getOrderInvoice = asyncHandler(async (req, res) => {
   const orderRepository = require('../repositories/order.repository');
+  const orderInvoiceRepository = require('../repositories/orderInvoice.repository');
   const invoiceService = require('../services/invoice.service');
   const order = await orderRepository.findById(req.params.id);
   if (!order) throw ApiError.notFound('Order not found');
+
+  const gstMode = invoiceService.normalizeGstMode(req.query.gst);
+  const stored = await orderInvoiceRepository.findByOrderAndGstMode(order.id, gstMode);
+
+  if (stored) {
+    return ApiResponse.ok(res, {
+      html: stored.html,
+      orderNumber: order.orderNumber,
+      invoiceNumber: stored.invoiceNumber,
+      gstMode: stored.gstMode,
+      stored: true,
+      invoiceId: stored.id,
+      createdAt: stored.createdAt,
+      updatedAt: stored.updatedAt,
+    });
+  }
 
   const userResult = await query(
     `SELECT email, first_name, last_name, phone FROM users WHERE id = $1 LIMIT 1`,
@@ -409,9 +426,63 @@ const getOrderInvoice = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const gstMode = invoiceService.normalizeGstMode(req.query.gst);
   const html = invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
-  return ApiResponse.ok(res, { html, orderNumber: order.orderNumber, gstMode });
+  return ApiResponse.ok(res, {
+    html,
+    orderNumber: order.orderNumber,
+    invoiceNumber: order.orderNumber,
+    gstMode,
+    stored: false,
+  });
+});
+
+const generateOrderInvoice = asyncHandler(async (req, res) => {
+  const orderRepository = require('../repositories/order.repository');
+  const orderInvoiceRepository = require('../repositories/orderInvoice.repository');
+  const invoiceService = require('../services/invoice.service');
+  const order = await orderRepository.findById(req.params.id);
+  if (!order) throw ApiError.notFound('Order not found');
+
+  const gstMode = invoiceService.normalizeGstMode(req.body?.gstMode ?? req.query.gst);
+  const userResult = await query(
+    `SELECT email, first_name, last_name, phone FROM users WHERE id = $1 LIMIT 1`,
+    [order.userId]
+  );
+  const user = userResult.rows[0];
+  const customer = user
+    ? {
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phone: user.phone,
+      }
+    : {};
+
+  const html = invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
+  const invoiceNumber =
+    gstMode === 'with' ? `${order.orderNumber}-GST` : `${order.orderNumber}-BILL`;
+
+  const saved = await orderInvoiceRepository.upsert({
+    orderId: order.id,
+    gstMode,
+    invoiceNumber,
+    html,
+  });
+
+  return ApiResponse.ok(
+    res,
+    {
+      html: saved.html,
+      orderNumber: order.orderNumber,
+      invoiceNumber: saved.invoiceNumber,
+      gstMode: saved.gstMode,
+      stored: true,
+      invoiceId: saved.id,
+      createdAt: saved.createdAt,
+      updatedAt: saved.updatedAt,
+    },
+    'Invoice generated and saved',
+  );
 });
 
 const previewCustomInvoice = asyncHandler(async (req, res) => {
@@ -1199,6 +1270,7 @@ module.exports = {
   listOrders,
   getOrderDetail,
   getOrderInvoice,
+  generateOrderInvoice,
   previewCustomInvoice,
   sendOrderCustomerEmail,
   getOrderTracking,
