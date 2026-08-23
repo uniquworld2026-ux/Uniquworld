@@ -44,6 +44,23 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
+/** Prefer explicit state; otherwise use billing address for place of supply. */
+function resolvePlaceOfSupply({ state, address, city, postalCode } = {}) {
+  const trimmedState = String(state || '').trim();
+  if (trimmedState) return trimmedState;
+
+  const billLine = [address, city, postalCode]
+    .map((part) => String(part || '').trim())
+    .filter(Boolean)
+    .join(', ');
+  if (billLine) return billLine;
+
+  const companyState = String(COMPANY.state || '').trim();
+  if (companyState) return companyState;
+
+  return String(COMPANY.address || '').trim() || '—';
+}
+
 function normalizeGstMode(value) {
   const v = String(value || 'with').toLowerCase();
   return v === 'without' || v === 'no' || v === 'false' ? 'without' : 'with';
@@ -170,6 +187,13 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
     ? `<p style="margin:4px 0 0;font-size:13px;color:#555;">Razorpay payment ID: <strong>${escapeHtml(payment.gatewayPaymentId)}</strong></p>`
     : '';
 
+  const placeOfSupply = resolvePlaceOfSupply({
+    state: addr.state,
+    address: [addr.line1, addr.line2].filter(Boolean).join(', '),
+    city: addr.city,
+    postalCode: addr.postalCode,
+  });
+
   const billToHtml = `
     <p style="margin:0;font-size:16px;font-weight:700;">${escapeHtml(customerName)}</p>
     <p style="margin:6px 0 0;font-size:13px;color:#555;">${escapeHtml(customer.email || addr.email || '')}</p>
@@ -182,6 +206,13 @@ function buildOrderInvoiceHtml(order, customer = {}, options = {}) {
     <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Payment</p>
     <p style="margin:0;font-size:14px;"><strong>Method:</strong> ${escapeHtml(String(payment.method || '—').toUpperCase())}</p>
     <p style="margin:6px 0 0;font-size:14px;"><strong>Status:</strong> ${escapeHtml(payment.status || 'pending')}</p>
+    ${razorpayRef}`;
+
+  const gstSidePanelHtml = `
+    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Invoice details</p>
+    <p style="margin:0;font-size:14px;"><strong>Place of supply:</strong> ${escapeHtml(placeOfSupply)}</p>
+    <p style="margin:8px 0 0;font-size:14px;"><strong>Payment method:</strong> ${escapeHtml(String(payment.method || '—').toUpperCase())}</p>
+    <p style="margin:6px 0 0;font-size:14px;"><strong>Payment status:</strong> ${escapeHtml(payment.status || 'pending')}</p>
     ${razorpayRef}`;
 
   if (gstMode === 'without') {
@@ -301,6 +332,10 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
   const discount = round2(payload.discount || 0);
   const shipping = round2(payload.shipping || 0);
   const notes = payload.notes || '';
+  const placeOfSupply = resolvePlaceOfSupply({
+    state: customer.state,
+    address: customer.address,
+  });
 
   const billToHtml = `
     <p style="margin:0;font-size:16px;font-weight:700;">${escapeHtml(customerName)}</p>
@@ -311,7 +346,7 @@ function buildCustomInvoiceHtml(payload = {}, options = {}) {
 
   const sidePanelHtml = `
     <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Invoice details</p>
-    <p style="margin:0;font-size:14px;"><strong>Place of supply:</strong> ${escapeHtml(customer.state || COMPANY.state || '—')}</p>
+    <p style="margin:0;font-size:14px;"><strong>Place of supply:</strong> ${escapeHtml(placeOfSupply)}</p>
     ${notes ? `<p style="margin:8px 0 0;font-size:13px;color:#555;line-height:1.5;"><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}`;
 
   const lineTotals = items.map((item) => {
