@@ -7,7 +7,7 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "target": "ESNext",
+    "target": "ESNext", 
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "checkJs": false,
     "allowJs": true,
