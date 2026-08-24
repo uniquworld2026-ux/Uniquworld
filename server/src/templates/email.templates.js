@@ -359,27 +359,20 @@ function productActivityEmail({
   return { subject, html, text };
 }
 
-function digitalSurpriseEmail({ buyerName, recipientName, occasionTitle, shareUrl, expiresAt }) {
+function digitalSurpriseEmail({ buyerName, recipientName, occasionTitle, shareUrl }) {
   const name = escapeHtml(buyerName || 'there');
   const recipient = escapeHtml(recipientName || 'them');
   const occasion = escapeHtml(occasionTitle || 'Digital Surprise');
   const href = escapeHtml(shareUrl);
-  const expiry = expiresAt
-    ? new Date(expiresAt).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      })
-    : '30 days';
   const subject = `Your ${occasionTitle || 'Digital Surprise'} link is ready`;
   const html = layout({
-    preheader: `Share this link with ${recipientName || 'them'} — valid for 30 days.`,
+    preheader: `Share this link with ${recipientName || 'them'} — it stays live forever.`,
     title: subject,
     bodyHtml: `
       ${heading('Your surprise is live')}
       ${paragraph(`Hi ${name},`)}
       ${paragraph(
-        `Your <strong>${occasion}</strong> page for <strong>${recipient}</strong> is ready. Share the private link below — it auto-expires in 30 days (${escapeHtml(String(expiry))}).`,
+        `Your <strong>${occasion}</strong> page for <strong>${recipient}</strong> is ready. Share the private link below — it never expires.`,
         { muted: true, top: 10 }
       )}
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 8px;">
@@ -400,7 +393,7 @@ function digitalSurpriseEmail({ buyerName, recipientName, occasionTitle, shareUr
     '',
     `Your ${occasionTitle || 'Digital Surprise'} for ${recipientName || 'them'} is ready.`,
     `Open: ${shareUrl}`,
-    `Expires: ${expiry}`,
+    `This link never expires.`,
     '',
     `— ${brand.name}`,
   ].join('\n');

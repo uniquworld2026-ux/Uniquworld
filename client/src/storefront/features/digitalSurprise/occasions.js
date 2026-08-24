@@ -1,60 +1,20 @@
-export const DIGITAL_PRICE_INR = 49
+export const DIGITAL_PRICE_INR = 39
 
 export const digitalOccasions = [
-  {
-    id: 'girlfriends_day',
-    slug: 'girlfriends-day',
-    title: 'National Girlfriends Day',
-    dateLabel: 'August 1',
-    headline: 'Celebrate the special women in your life with beautiful blooms!',
-    blurb: 'A romantic interactive page — enter her name, add Insta / video, preview once, then unlock for ₹49.',
-    image: '/gifts/flowers.jpg',
-    accent: '#d92c2b',
-    templates: [
-      { id: 'gf-bloom', name: 'Bloom Cascade', hint: 'Falling petals + name reveal' },
-      { id: 'gf-polaroid', name: 'Polaroid Stack', hint: 'Flip memories' },
-      { id: 'gf-constellation', name: 'Heart Stars', hint: 'Constellation of love' },
-      { id: 'gf-letter', name: 'Love Letter', hint: 'Typewriter message' },
-      { id: 'gf-spotlight', name: 'Insta Spotlight', hint: 'Feature her post' },
-      { id: 'gf-balloons', name: 'Soft Balloons', hint: 'Floating wishes' },
-      { id: 'gf-scrapbook', name: 'Scrapbook', hint: 'Page-turn story' },
-      { id: 'gf-neon', name: 'Neon Night', hint: 'City lights + name' },
-    ],
-  },
   {
     id: 'birthday',
     slug: 'birthday',
     title: 'Birthday Surprise',
     dateLabel: 'Any day',
     headline: 'Candles, confetti, and their name in lights — a birthday site that moves.',
-    blurb: 'Pick a lively template, add a message & media, preview once, pay ₹49 for a private 30-day link.',
+    blurb: 'Pick a lively template, add a message & media, preview once, pay ₹39 for a private lifetime link.',
     image: '/gifts/birthday.jpg',
     accent: '#d4af37',
     templates: [
-      { id: 'bd-mocha', name: 'ft. Tuji Bunny - interactive', hint: '8-card animated story · camera + cake cut' },
+      { id: 'bd-mocha', name: 'ft. Tuji Bunny - interactive', hint: '7-card animated story · cake cut' },
       { id: 'bd-countdown', name: 'Countdown', hint: '3…2…1 surprise' },
       { id: 'bd-story', name: 'Story Slides', hint: 'Tap-through chapters' },
       { id: 'bd-orbit', name: 'Gift Orbit', hint: 'Icons circle their name' },
-    ],
-  },
-  {
-    id: 'diwali',
-    slug: 'diwali',
-    title: 'Diwali Surprise',
-    dateLabel: 'Festival of Lights',
-    headline: 'Diyas, sparklers, and a warm festive wish made just for them.',
-    blurb: 'Eight glowing templates — light diyas, rise lanterns, share your Diwali page for ₹49.',
-    image: '/gifts/festival.jpg',
-    accent: '#c45c26',
-    templates: [
-      { id: 'dw-diya', name: 'Light the Diya', hint: 'Tap to glow' },
-      { id: 'dw-rangoli', name: 'Rangoli Bloom', hint: 'Colour unfold' },
-      { id: 'dw-sparkler', name: 'Sparkler Trail', hint: 'Follow the light' },
-      { id: 'dw-lantern', name: 'Sky Lanterns', hint: 'Rise & shine' },
-      { id: 'dw-cracker', name: 'Cracker Burst', hint: 'Name fireworks' },
-      { id: 'dw-mandala', name: 'Mandala Spin', hint: 'Sacred geometry' },
-      { id: 'dw-foil', name: 'Gold Foil Card', hint: 'Shimmer greet' },
-      { id: 'dw-bells', name: 'Temple Lights', hint: 'Bells & glow' },
     ],
   },
 ]

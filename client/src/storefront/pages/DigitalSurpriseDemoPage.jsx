@@ -259,7 +259,7 @@ export function DigitalSurpriseDemoPage() {
         {IS_LOCAL ? (
           <div className="z-40 flex shrink-0 items-center justify-between gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#be123c]/80">
-              Testing · 8 cards · song play / stop / upload
+              Testing · 7 cards · song play / stop / upload
             </p>
             <button
               type="button"
@@ -274,7 +274,7 @@ export function DigitalSurpriseDemoPage() {
           <div className="z-40 flex shrink-0 items-center justify-between gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:gap-3 sm:px-4 sm:py-3">
             <div className="min-w-0">
               <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#be123c]/80 sm:text-[10px]">
-                Full interactive demo · 8 cards
+                Full interactive demo · 7 cards
               </p>
               <p className="truncate text-xs font-semibold text-[#9f1239] sm:text-sm">
                 {occasion.templates.find((t) => t.id === templateId)?.name || occasion.title}
@@ -331,12 +331,7 @@ export function DigitalSurpriseDemoPage() {
 
   const overlay = DEMO_TONE_STYLES[slide.tone] || DEMO_TONE_STYLES.unlock
   const isLast = index === slides.length - 1
-  const floatEmojis =
-    occasion.id === 'diwali'
-      ? ['🪔', '✨', '🎆', '🏮', '💫', '🙏']
-      : occasion.id === 'girlfriends_day'
-        ? ['💖', '🌹', '✨', '🌸', '💌', '🥰']
-        : ['🎂', '🎈', '🎉', '🎁', '🌟', '✨']
+  const floatEmojis = ['🎂', '🎈', '🎉', '🎁', '🌟', '✨']
 
   return (
     <div

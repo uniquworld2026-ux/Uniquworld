@@ -41,11 +41,11 @@ export function SurpriseHubPage() {
             Uniquworld Surprise
           </p>
           <h1 className="mt-3 max-w-2xl font-display text-4xl leading-tight text-white sm:text-5xl md:text-6xl">
-            Surprise, two ways
+            Surprise, three ways
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/80 sm:text-base">
-            Book a local experience with Chennai partners — or craft a shareable digital surprise
-            website in minutes.
+            Book a local experience in Chennai, craft an interactive digital surprise, or send a
+            polished digital invitation — all from one place.
           </p>
         </Container>
       </section>
@@ -55,12 +55,12 @@ export function SurpriseHubPage() {
           <Reveal>
             <SectionHeading
               eyebrow="Choose your path"
-              title="How do you want to surprise them?"
-              description="Pick Local for in-city décor and experiences, or Digital for a personalised website they can open anywhere."
+              title="How do you want to celebrate?"
+              description="Local for in-city experiences, Digital Surprise for interactive pages, or Digital Invitation for elegant event invites."
             />
           </Reveal>
 
-          <div className="mt-10 grid gap-5 lg:grid-cols-2">
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {surprisePaths.map((path, i) => (
               <Reveal key={path.id} delay={i * 0.08}>
                 <Link

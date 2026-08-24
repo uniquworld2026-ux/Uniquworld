@@ -1,7 +1,7 @@
 const { z } = require('zod');
 
 const createDigitalSurpriseSchema = z.object({
-  occasion: z.enum(['girlfriends_day', 'birthday', 'diwali']),
+  occasion: z.enum(['birthday', 'wedding', 'birthday_party', 'housewarming', 'baby_shower']),
   templateId: z.string().min(2).max(40),
   recipientName: z.string().min(2).max(120),
   senderName: z.string().max(120).optional().nullable(),
@@ -12,6 +12,10 @@ const createDigitalSurpriseSchema = z.object({
   videoUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
   photoUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
   musicUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
+  eventDate: z.string().max(120).optional().nullable(),
+  eventTime: z.string().max(80).optional().nullable(),
+  venue: z.string().max(300).optional().nullable(),
+  rsvpContact: z.string().max(120).optional().nullable(),
 });
 
 const verifyDigitalPaymentSchema = z.object({

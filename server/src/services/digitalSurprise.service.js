@@ -11,7 +11,6 @@ const { uploadFile } = require('../config/supabase');
 const {
   OCCASIONS,
   PRICE_PAISE,
-  EXPIRY_DAYS,
   isValidOccasion,
   isValidTemplate,
 } = require('../constants/digitalSurprise');
@@ -52,8 +51,12 @@ const listOccasions = () =>
     dateLabel: o.dateLabel,
     headline: o.headline,
     priceInr: o.priceInr,
+    kind: o.kind || 'surprise',
     templateIds: o.templates,
-    customizePath: `/surprise/digital/${o.slug}`,
+    customizePath:
+      o.kind === 'invitation'
+        ? `/surprise/invitation/${o.slug}`
+        : `/surprise/digital/${o.slug}`,
   }));
 
 const createDraft = async (payload, user = null) => {
@@ -98,6 +101,10 @@ const createDraft = async (payload, user = null) => {
       videoUrl: payload.videoUrl?.trim() || null,
       photoUrl: payload.photoUrl?.trim() || null,
       musicUrl: payload.musicUrl?.trim() || null,
+      eventDate: payload.eventDate?.trim() || null,
+      eventTime: payload.eventTime?.trim() || null,
+      venue: payload.venue?.trim() || null,
+      rsvpContact: payload.rsvpContact?.trim() || null,
     },
     buyerEmail,
     buyerPhone: payload.buyerPhone?.trim() || null,
@@ -220,12 +227,9 @@ const verifyAndActivate = async (id, payment) => {
     }
   }
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + EXPIRY_DAYS);
-
   const activated = await digitalSurpriseRepository.activatePaid(row.id, {
     razorpayPaymentId: payment.razorpayPaymentId || (isMock ? 'dev_mock' : null),
-    expiresAt,
+    expiresAt: null,
   });
 
   await sendLinkEmail(activated);
@@ -244,13 +248,10 @@ const getPublicBySlug = async (slug) => {
     throw ApiError.notFound('Surprise not found');
   }
 
-  if (row.status === 'active' && row.expires_at && new Date(row.expires_at) < new Date()) {
-    await digitalSurpriseRepository.markExpired(row.id);
-    throw ApiError.gone('This digital surprise has expired (30 days).');
-  }
-
+  // Lifetime links — serve even if an older 30-day window already marked them expired.
   if (row.status === 'expired') {
-    throw ApiError.gone('This digital surprise has expired (30 days).');
+    const revived = await digitalSurpriseRepository.reviveLifetime(row.id);
+    return toPublic(revived || row);
   }
 
   return toPublic(row);
@@ -309,5 +310,4 @@ module.exports = {
   recordPreview,
   uploadMusic,
   PRICE_PAISE,
-  EXPIRY_DAYS,
 };

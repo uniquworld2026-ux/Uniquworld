@@ -389,21 +389,6 @@ function LeftScene({ step }) {
       </>
     )
   }
-  if (step === 'camera') {
-    return (
-      <>
-        <Floater className="left-[8%] top-[12%] w-14" delay={0.1}>
-          <SvgHeart />
-        </Floater>
-        <Floater className="left-[4%] top-[36%] w-12" delay={0.2}>
-          <SvgRose />
-        </Floater>
-        <Floater className="bottom-[16%] left-[12%] w-12" delay={0.3}>
-          <SvgGiftBox color="#7edcc3" />
-        </Floater>
-      </>
-    )
-  }
   if (step === 'cake') {
     return (
       <>
@@ -527,21 +512,6 @@ function RightScene({ step }) {
         </Floater>
         <Floater className="bottom-[14%] right-[10%] w-10" delay={0.2}>
           <SvgHeart />
-        </Floater>
-      </>
-    )
-  }
-  if (step === 'camera') {
-    return (
-      <>
-        <Floater className="right-[8%] top-[12%] w-14" delay={0.1}>
-          <SvgHeartBalloon />
-        </Floater>
-        <Floater className="right-[6%] top-[40%] w-12" delay={0.2}>
-          <SvgRose />
-        </Floater>
-        <Floater className="bottom-[14%] right-[10%] w-11" delay={0.25}>
-          <SvgEnvelope />
         </Floater>
       </>
     )
@@ -1283,133 +1253,6 @@ function LoveGift() {
   )
 }
 
-function CardCamera({ name, media, onNext }) {
-  const [shots, setShots] = useState(0)
-  const [flash, setFlash] = useState(false)
-  const photos = useMemo(() => {
-    const first = media?.photoUrl || '/gifts/flowers.jpg'
-    const second = first === '/gifts/relationship.jpg' ? '/gifts/anniversary.jpg' : '/gifts/relationship.jpg'
-    return [first, second]
-  }, [media?.photoUrl])
-
-  function clickCamera() {
-    if (shots >= 2) return
-    setFlash(true)
-    window.setTimeout(() => setFlash(false), 220)
-    fireHearts()
-    setShots((n) => n + 1)
-  }
-
-  return (
-    <CardFrame>
-      <div className="shrink-0">
-        <ArcTitle>I saved these for you</ArcTitle>
-        <Sub>
-          {shots === 0
-            ? 'Tap the big camera — first click reveals one photo.'
-            : shots === 1
-              ? 'One more click for the second photo.'
-              : name && name !== 'You'
-                ? `${name}, these memories are yours.`
-                : 'These memories are yours.'}
-        </Sub>
-      </div>
-
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center">
-        <AnimatePresence>
-          {flash ? (
-            <motion.div
-              key="flash"
-              className="pointer-events-none absolute inset-0 z-20 rounded-2xl bg-white"
-              initial={{ opacity: 0.9 }}
-              animate={{ opacity: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.28 }}
-            />
-          ) : null}
-        </AnimatePresence>
-
-        <div className="relative flex min-h-[9rem] w-full items-end justify-center gap-3 px-2 sm:min-h-[11rem]">
-          <AnimatePresence>
-            {shots >= 1 ? (
-              <motion.div
-                key="p1"
-                initial={{ y: 40, opacity: 0, rotate: -18, scale: 0.7 }}
-                animate={{ y: 0, opacity: 1, rotate: -10, scale: 1 }}
-                className="w-[42%] max-w-[9.5rem] origin-bottom"
-              >
-                <div className="rounded-sm bg-white p-1.5 pb-6 shadow-xl">
-                  <div className="aspect-[4/5] overflow-hidden bg-[#dbeafe]">
-                    <img src={photos[0]} alt="" className="h-full w-full object-cover" draggable={false} />
-                  </div>
-                </div>
-              </motion.div>
-            ) : null}
-            {shots >= 2 ? (
-              <motion.div
-                key="p2"
-                initial={{ y: 40, opacity: 0, rotate: 16, scale: 0.7 }}
-                animate={{ y: 0, opacity: 1, rotate: 8, scale: 1 }}
-                className="w-[42%] max-w-[9.5rem] origin-bottom"
-              >
-                <div className="rounded-sm bg-white p-1.5 pb-6 shadow-xl">
-                  <div className="aspect-[4/5] overflow-hidden bg-[#dbeafe]">
-                    <img src={photos[1]} alt="" className="h-full w-full object-cover" draggable={false} />
-                  </div>
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
-
-        {shots < 2 ? (
-          <motion.button
-            type="button"
-            onClick={clickCamera}
-            className="relative z-10 mt-2 h-[7.5rem] w-[9.5rem] sm:h-36 sm:w-44"
-            animate={{ scale: [1, 1.06, 1], rotate: [-2, 2, -2] }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-            whileTap={{ scale: 0.94 }}
-            aria-label="Click camera"
-          >
-            <BigCamera />
-            <span className="mt-1 block text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#be123c]">
-              Click camera
-            </span>
-          </motion.button>
-        ) : (
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-3 font-hand text-xl font-bold text-[#e11d48]"
-          >
-            Click to keep going ↓
-          </motion.p>
-        )}
-      </div>
-
-      {shots >= 2 ? <NextBar onClick={onNext} /> : <div className="h-4 shrink-0" />}
-    </CardFrame>
-  )
-}
-
-function BigCamera() {
-  return (
-    <svg viewBox="0 0 120 96" className="h-full w-full overflow-visible drop-shadow-[0_8px_0_rgba(159,18,57,0.18)]">
-      <rect x="10" y="28" width="100" height="60" rx="16" fill="#7edcc3" stroke="#fff" strokeWidth="4" />
-      <rect x="44" y="12" width="32" height="22" rx="6" fill="#7edcc3" stroke="#fff" strokeWidth="3.5" />
-      <circle cx="60" cy="58" r="24" fill="#fff" />
-      <circle cx="60" cy="58" r="17" fill="#1f2a44" />
-      <path
-        d="M60 64.5c-4-3.6-9.4-1.2-9.4 2.6 0 5 9.4 9.4 9.4 9.4s9.4-4.4 9.4-9.4c0-3.8-5.4-6.2-9.4-2.6z"
-        fill="#ff8fb4"
-      />
-      <circle cx="92" cy="42" r="6" fill="#ff9fbe" stroke="#fff" strokeWidth="2" />
-      <circle cx="28" cy="42" r="4" fill="#fff" opacity="0.7" />
-    </svg>
-  )
-}
-
 function CardCakeCut({ name, onNext }) {
   const [phase, setPhase] = useState('ready')
   const cutting = phase === 'cutting' || phase === 'done'
@@ -1602,7 +1445,7 @@ export function MilkMochaInteractive({ name = 'You', sender, message, media, pre
   const [step, setStep] = useState('intro')
   const dateLabel = useMemo(formatCardDate, [])
   const cardNumber =
-    { intro: 1, no: 2, birthday: 3, wish: 4, hug: 5, camera: 6, cake: 7, finale: 8 }[step] || 1
+    { intro: 1, no: 2, birthday: 3, wish: 4, hug: 5, cake: 6, finale: 7 }[step] || 1
   const loveCard = step === 'hug'
 
   return (
@@ -1639,7 +1482,7 @@ export function MilkMochaInteractive({ name = 'You', sender, message, media, pre
           loveCard ? 'text-white/60' : 'text-[#be123c]/70',
         )}
       >
-        Card {cardNumber}/8
+        Card {cardNumber}/7
       </p>
       <div className="relative z-10 flex min-h-0 flex-1 items-stretch">
         <SideColumn side="left" step={step} />
@@ -1665,10 +1508,7 @@ export function MilkMochaInteractive({ name = 'You', sender, message, media, pre
               <CardWish key="wish" name={name} message={message} sender={sender} onNext={() => setStep('hug')} />
             ) : null}
             {step === 'hug' ? (
-              <CardLove key="hug" name={name} media={media} onNext={() => setStep('camera')} />
-            ) : null}
-            {step === 'camera' ? (
-              <CardCamera key="camera" name={name} media={media} onNext={() => setStep('cake')} />
+              <CardLove key="hug" name={name} media={media} onNext={() => setStep('cake')} />
             ) : null}
             {step === 'cake' ? (
               <CardCakeCut key="cake" name={name} onNext={() => setStep('finale')} />

@@ -78,10 +78,12 @@ const activatePaid = async (id, { razorpayPaymentId, expiresAt }) => {
   return result.rows[0] || null;
 };
 
-const markExpired = async (id) => {
+const reviveLifetime = async (id) => {
   const result = await query(
     `UPDATE digital_surprises
-     SET status = 'expired', updated_at = NOW()
+     SET status = 'active',
+         expires_at = NULL,
+         updated_at = NOW()
      WHERE id = $1
      RETURNING ${COLUMNS}`,
     [id]
@@ -108,7 +110,7 @@ module.exports = {
   findBySlug,
   setRazorpayOrder,
   activatePaid,
-  markExpired,
+  reviveLifetime,
   incrementPreview,
   generateSlug,
 };

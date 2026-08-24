@@ -15,6 +15,11 @@ import {
 } from '@/storefront/features/digitalSurprise/occasions'
 import { digitalSurpriseApi } from '@/storefront/features/digitalSurprise/api'
 import { DigitalSurpriseExperience } from '@/storefront/features/digitalSurprise/DigitalSurpriseExperience'
+import { InvitationExperience } from '@/storefront/features/digitalInvitation/InvitationExperience'
+import {
+  getInvitationById,
+  isInvitationOccasion,
+} from '@/storefront/features/digitalInvitation/occasions'
 import { BACKGROUND_TRACKS } from '@/storefront/features/digitalSurprise/musicTracks'
 import { BackgroundMusic } from '@/storefront/features/digitalSurprise/BackgroundMusic'
 import {
@@ -38,8 +43,8 @@ export function DigitalSurprisePage() {
             Interactive surprise websites
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
-            Pick an occasion, preview once, personalise with their name + Insta/video, then unlock a
-            private share link for 30 days.
+            Pick an occasion, preview once, personalise with their name and a message, then unlock a
+            private share link that stays live forever.
           </p>
         </Container>
       </section>
@@ -49,12 +54,12 @@ export function DigitalSurprisePage() {
           <Reveal>
             <SectionHeading
               eyebrow="Choose a card"
-              title="Three occasions · unique interactive pages"
-              description="Girlfriends Day, Birthday, and Diwali — watch a sharable 8-page demo, then unlock for ₹49."
+              title="Birthday Surprise · unique interactive pages"
+              description="Watch a sharable 8-page demo, then unlock for ₹39."
             />
           </Reveal>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <div className="mt-10 grid max-w-md gap-5">
             {digitalOccasions.map((occ, i) => (
               <Reveal key={occ.id} delay={i * 0.08}>
                 <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-hm-border bg-hm-elevated transition hover:border-hm-accent/40">
@@ -79,7 +84,7 @@ export function DigitalSurprisePage() {
                     </Link>
                     <p className="mt-2 flex-1 text-sm text-hm-text-muted">{occ.headline}</p>
                     <p className="mt-3 text-xs text-hm-text-subtle">
-                      {occ.templates.length} unique templates · 30-day private link
+                      {occ.templates.length} unique templates · lifetime private link
                     </p>
                     <div className="mt-4 grid grid-cols-2 gap-2">
                       <a href={`/surprise/digital/${occ.slug}/demo`} className="block">
@@ -122,9 +127,6 @@ export function DigitalSurpriseCustomizePage() {
   const [message, setMessage] = useState('')
   const [buyerEmail, setBuyerEmail] = useState('')
   const [buyerPhone, setBuyerPhone] = useState('')
-  const [instagramUrl, setInstagramUrl] = useState('')
-  const [videoUrl, setVideoUrl] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
   const [musicTrackId, setMusicTrackId] = useState('birthday-piano')
   const [customMusicUrl, setCustomMusicUrl] = useState('')
   const [musicFile, setMusicFile] = useState(null)
@@ -176,12 +178,9 @@ export function DigitalSurpriseCustomizePage() {
 
   const draftMedia = useMemo(
     () => ({
-      instagramUrl: instagramUrl || null,
-      videoUrl: videoUrl || null,
-      photoUrl: photoUrl || null,
       musicUrl: musicUrl || null,
     }),
-    [instagramUrl, videoUrl, photoUrl, musicUrl],
+    [musicUrl],
   )
 
   if (!occasion) {
@@ -216,9 +215,6 @@ export function DigitalSurpriseCustomizePage() {
         message: message || undefined,
         buyerEmail,
         buyerPhone: buyerPhone || undefined,
-        instagramUrl: instagramUrl || undefined,
-        videoUrl: videoUrl || undefined,
-        photoUrl: photoUrl || undefined,
         musicUrl: resolvedMusicUrl || undefined,
       })
 
@@ -309,7 +305,7 @@ export function DigitalSurpriseCustomizePage() {
           </div>
           <h1 className="mt-4 font-display text-3xl text-hm-text">Surprise is live</h1>
           <p className="mt-2 text-sm text-hm-text-muted">
-            We emailed the private link to <strong>{published.buyerEmail}</strong>. Valid for 30 days.
+            We emailed the private link to <strong>{published.buyerEmail}</strong>. It never expires.
           </p>
           <a
             href={published.shareUrl || published.sharePath}
@@ -351,7 +347,7 @@ export function DigitalSurpriseCustomizePage() {
           <h1 className="mt-3 font-display text-3xl text-hm-text sm:text-4xl">{occasion.title}</h1>
           <p className="mt-2 max-w-2xl text-sm text-hm-text-muted">{occasion.headline}</p>
           <p className="mt-3 text-sm font-semibold text-hm-primary">
-            {formatINR(DIGITAL_PRICE_INR)} · private link · auto-expires in 30 days
+            {formatINR(DIGITAL_PRICE_INR)} · private link · never expires
           </p>
         </Container>
       </section>
@@ -422,7 +418,7 @@ export function DigitalSurpriseCustomizePage() {
                 <input
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder={occasion.id === 'girlfriends_day' ? 'Girlfriend’s name' : 'Recipient name'}
+                  placeholder="Recipient name"
                   className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
                 />
               </label>
@@ -546,32 +542,6 @@ export function DigitalSurpriseCustomizePage() {
                 ) : null}
               </div>
               <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-hm-text-muted">Instagram post / reel URL</span>
-                <input
-                  value={instagramUrl}
-                  onChange={(e) => setInstagramUrl(e.target.value)}
-                  placeholder="https://www.instagram.com/p/…"
-                  className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
-                />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-hm-text-muted">Video to show on the page (optional)</span>
-                <input
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=…"
-                  className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
-                />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-hm-text-muted">Photo URL (optional)</span>
-                <input
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-hm-border bg-hm-elevated px-3 text-sm outline-none focus:border-hm-accent"
-                />
-              </label>
-              <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-hm-text-muted">Your email * (we send the link here)</span>
                 <input
                   type="email"
@@ -679,13 +649,24 @@ export function DigitalSurpriseLivePage() {
 
   return (
     <div className="min-h-svh w-full bg-black">
-      <DigitalSurpriseExperience
-        templateId={data.templateId}
-        recipientName={data.recipientName}
-        senderName={data.senderName}
-        message={data.message}
-        media={data.media}
-      />
+      {isInvitationOccasion(data.occasion) ? (
+        <InvitationExperience
+          templateId={data.templateId}
+          occasionTitle={getInvitationById(data.occasion)?.title || 'You’re invited'}
+          recipientName={data.recipientName}
+          senderName={data.senderName}
+          message={data.message}
+          media={data.media}
+        />
+      ) : (
+        <DigitalSurpriseExperience
+          templateId={data.templateId}
+          recipientName={data.recipientName}
+          senderName={data.senderName}
+          message={data.message}
+          media={data.media}
+        />
+      )}
     </div>
   )
 }
