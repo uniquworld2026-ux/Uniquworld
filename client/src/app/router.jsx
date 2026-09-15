@@ -25,6 +25,7 @@ import {
 import { StoreWithdrawalsPage } from '@/admin/features/stores/StoreWithdrawalsPage'
 import { OrdersPage } from '@/admin/features/orders/OrdersPage'
 import { OrderDetailPage } from '@/admin/features/orders/OrderDetailPage'
+import { InvoiceGeneratorPage } from '@/admin/features/invoices/InvoiceGeneratorPage'
 import { PaymentsPage } from '@/admin/features/payments/PaymentsPage'
 import { ShippingPage } from '@/admin/features/shipping/ShippingPage'
 import { ShipmentDetailPage } from '@/admin/features/shipping/ShipmentDetailPage'
@@ -66,6 +67,7 @@ const implementedAdminPaths = new Set([
   '/admin/store-products/new',
   '/admin/store-withdrawals',
   '/admin/orders',
+  '/admin/invoice-generator',
   '/admin/payments',
   '/admin/shipping',
   '/admin/customers',
@@ -128,6 +130,7 @@ export function AppRouter() {
         <Route path="store-withdrawals" element={<StoreWithdrawalsPage />} />
         <Route path="orders/:orderId" element={<OrderDetailPage />} />
         <Route path="orders" element={<OrdersPage />} />
+        <Route path="invoice-generator" element={<InvoiceGeneratorPage />} />
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="shipping/:shipmentId" element={<ShipmentDetailPage />} />
         <Route path="shipping" element={<ShippingPage />} />

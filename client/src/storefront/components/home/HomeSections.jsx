@@ -318,11 +318,11 @@ export function SurpriseDual() {
         <Reveal>
           <SectionHeading
             eyebrow="Signature feature"
-            title="Surprise, two ways"
-            description="Book local experiences with city partners — or create a shareable digital surprise website."
+            title="Surprise, three ways"
+            description="Local experiences, interactive digital surprises, and polished digital invitations — pick the path that fits the moment."
           />
         </Reveal>
-        <div className="mt-10 grid gap-5 lg:grid-cols-2">
+        <div className="mt-10 grid gap-5 lg:grid-cols-3">
           {surprisePaths.map((path, i) => (
             <Reveal key={path.id} delay={i * 0.08}>
               <Link

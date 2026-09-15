@@ -235,11 +235,21 @@ export const sitemap = [
         id: 'digital-surprise',
         label: 'Digital Surprise',
         path: '/surprise/digital',
-        status: 'scaffold',
+        status: 'live',
         children: [
-          { id: 'digital-plans', label: 'Plans', path: '/surprise/digital/plans', status: 'planned' },
-          { id: 'digital-customize', label: 'Customize', path: '/surprise/digital/customize/:planId', status: 'planned' },
-          { id: 'digital-preview', label: 'Preview', path: '/surprise/digital/preview/:id', status: 'planned' },
+          { id: 'digital-birthday', label: 'Birthday Surprise', path: '/surprise/digital/birthday', status: 'live' },
+        ],
+      },
+      {
+        id: 'digital-invitation',
+        label: 'Digital Invitation',
+        path: '/surprise/invitation',
+        status: 'live',
+        children: [
+          { id: 'inv-wedding', label: 'Wedding', path: '/surprise/invitation/wedding', status: 'live' },
+          { id: 'inv-birthday-party', label: 'Birthday Party', path: '/surprise/invitation/birthday-party', status: 'live' },
+          { id: 'inv-housewarming', label: 'Housewarming', path: '/surprise/invitation/housewarming', status: 'live' },
+          { id: 'inv-baby-shower', label: 'Baby Shower', path: '/surprise/invitation/baby-shower', status: 'live' },
         ],
       },
     ],
@@ -388,6 +398,7 @@ export const megaMenu = [
     links: [
       { label: 'Local Surprise', path: '/surprise/local' },
       { label: 'Digital Surprise', path: '/surprise/digital' },
+      { label: 'Digital Invitation', path: '/surprise/invitation' },
       { label: 'AI Gift Finder', path: '/ai/quiz' },
     ],
   },

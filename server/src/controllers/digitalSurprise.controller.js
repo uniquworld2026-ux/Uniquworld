@@ -9,7 +9,7 @@ const listOccasions = asyncHandler(async (_req, res) => {
 
 const create = asyncHandler(async (req, res) => {
   const data = await digitalSurpriseService.createDraft(req.body, req.user || null);
-  return ApiResponse.created(res, data, 'Draft created — complete ₹49 payment to publish');
+  return ApiResponse.created(res, data, 'Draft created — complete ₹39 payment to publish');
 });
 
 const checkout = asyncHandler(async (req, res) => {

@@ -41,7 +41,7 @@ export function OrdersPage() {
   return (
     <AdminCrudPage
       title="Order Management"
-      description="Live storefront orders — view invoice, email customer, and manage Shiprocket delivery."
+      description="Storefront orders with billing invoices — open any order and use the Invoice tab for With GST / Without GST documents, or create manual invoices from Invoice Generator."
       addLabel="From checkout"
       data={rows}
       isLoading={isLoading}

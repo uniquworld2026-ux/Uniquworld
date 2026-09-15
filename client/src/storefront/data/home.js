@@ -139,11 +139,19 @@ export const surprisePaths = [
   {
     id: 'digital',
     title: 'Digital Surprise',
-    hint: 'Girlfriends Day, Birthday & Diwali — interactive pages from ₹49, 30-day private link',
+    hint: 'Birthday Surprise — interactive pages from ₹39, lifetime private link',
     cta: 'Create digital',
     path: '/surprise/digital',
     image:
       'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80',
+  },
+  {
+    id: 'invitation',
+    title: 'Digital Invitation',
+    hint: 'Wedding, party, housewarming & baby shower invites — shareable from ₹39',
+    cta: 'Create invite',
+    path: '/surprise/invitation',
+    image: '/gifts/wedding.jpg',
   },
 ]
 
