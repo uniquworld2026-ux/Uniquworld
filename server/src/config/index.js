@@ -141,6 +141,28 @@ const config = {
     storePlatformFeePercent: Number(process.env.STORE_PLATFORM_FEE_PERCENT) || 0.1,
   },
 
+  /** Company letterhead + bank details for Flipkart/Amazon-style tax invoices */
+  company: {
+    name: process.env.COMPANY_NAME || process.env.APP_NAME || 'Uniquworld',
+    legalName: process.env.COMPANY_LEGAL_NAME || process.env.APP_NAME || 'Uniquworld',
+    email: process.env.COMPANY_EMAIL || process.env.SMTP_FROM_EMAIL || 'admin@uniquworld.com',
+    phone: process.env.COMPANY_PHONE || '',
+    address: process.env.COMPANY_ADDRESS || '',
+    city: process.env.COMPANY_CITY || '',
+    state: process.env.COMPANY_STATE || '',
+    postalCode: process.env.COMPANY_POSTAL_CODE || '',
+    gstin: process.env.COMPANY_GSTIN || '',
+    pan: process.env.COMPANY_PAN || '',
+    bank: {
+      accountName: process.env.COMPANY_BANK_ACCOUNT_NAME || '',
+      accountNumber: process.env.COMPANY_BANK_ACCOUNT_NUMBER || '',
+      bankName: process.env.COMPANY_BANK_NAME || '',
+      branch: process.env.COMPANY_BANK_BRANCH || '',
+      ifsc: process.env.COMPANY_BANK_IFSC || '',
+      upi: process.env.COMPANY_BANK_UPI || '',
+    },
+  },
+
   adminApiKey: process.env.ADMIN_API_KEY || 'uniquworld-admin-dev-key',
 
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173')

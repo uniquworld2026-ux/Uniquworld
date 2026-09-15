@@ -54,7 +54,7 @@ export function OrderInvoicePanel({ html, orderNumber, onSendEmail, sending = fa
           ref={frameRef}
           title={`Invoice ${orderNumber}`}
           srcDoc={html}
-          className="h-[720px] w-full bg-white"
+          className="h-[960px] w-full bg-white"
         />
       </div>
     </div>
