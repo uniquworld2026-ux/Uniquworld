@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Mail, Truck, XCircle } from 'lucide-react'
 import { erpApi } from '@/admin/lib/erpApi'
 import { InvoiceGstTabs } from '@/admin/components/commerce/InvoiceGstTabs'
+import { InvoiceBankForm } from '@/admin/components/commerce/InvoiceBankButton'
 import { OrderInvoicePanel } from '@/admin/components/commerce/OrderInvoicePanel'
 import { ShipmentTrackingPanel } from '@/admin/components/commerce/ShipmentTrackingPanel'
 import { StatusBadge } from '@/admin/components/crud/AdminCrudPage'
@@ -53,10 +54,11 @@ export function OrderDetailPage() {
     mutationFn: () => erpApi.generateOrderInvoice(orderId, invoiceGstMode),
     onSuccess: (data) => {
       qc.setQueryData(['erp', 'commerce', 'orders', orderId, 'invoice', invoiceGstMode], data)
+      qc.invalidateQueries({ queryKey: ['erp', 'commerce', 'invoices'] })
       setFlash(
         invoiceGstMode === 'with'
-          ? 'GST invoice generated and saved'
-          : 'Invoice (without GST) generated and saved',
+          ? 'GST invoice saved to Invoice Management'
+          : 'Invoice (without GST) saved to Invoice Management',
       )
     },
   })
@@ -250,10 +252,26 @@ export function OrderDetailPage() {
               <h3 className="text-sm font-semibold text-admin-text">Billing invoice</h3>
               <p className="text-sm text-admin-text-muted">
                 Generate a tax invoice with GST breakdown or a simple bill without GST.
+                Saved copies are listed in Invoice Management.
               </p>
             </div>
             <InvoiceGstTabs value={invoiceGstMode} onChange={setInvoiceGstMode} />
           </div>
+          <InvoiceBankForm
+            onSaved={() => {
+              qc.invalidateQueries({ queryKey: ['erp', 'commerce', 'orders', orderId, 'invoice'] })
+              qc.invalidateQueries({ queryKey: ['erp', 'commerce', 'invoices'] })
+              setFlash('Bank details saved on the invoice.')
+            }}
+          />
+          {invoiceQuery.data?.invoiceId ? (
+            <Link
+              to={`/admin/invoices/order/${invoiceQuery.data.invoiceId}`}
+              className="text-sm text-admin-accent hover:underline"
+            >
+              Open this invoice page
+            </Link>
+          ) : null}
           {invoiceQuery.isLoading ? (
             <p className="rounded-2xl border border-admin-border bg-admin-elevated p-8 text-center text-sm text-admin-text-muted">
               Loading invoice preview…

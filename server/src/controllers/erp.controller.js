@@ -426,7 +426,7 @@ const getOrderInvoice = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const html = invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
+  const html = await invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
   return ApiResponse.ok(res, {
     html,
     orderNumber: order.orderNumber,
@@ -458,7 +458,7 @@ const generateOrderInvoice = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const html = invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
+  const html = await invoiceService.buildOrderInvoiceHtml(order, customer, { gstMode });
   const invoiceNumber =
     gstMode === 'with' ? `${order.orderNumber}-GST` : `${order.orderNumber}-BILL`;
 
@@ -485,11 +485,71 @@ const generateOrderInvoice = asyncHandler(async (req, res) => {
   );
 });
 
+const getInvoiceBank = asyncHandler(async (req, res) => {
+  const invoiceService = require('../services/invoice.service');
+  const bank = await invoiceService.getInvoiceBank();
+  return ApiResponse.ok(res, { bank });
+});
+
+const saveInvoiceBank = asyncHandler(async (req, res) => {
+  const invoiceService = require('../services/invoice.service');
+  const bank = await invoiceService.saveInvoiceBank(req.body || {});
+  return ApiResponse.ok(res, { bank }, 'Bank details saved');
+});
+
+const listInvoices = asyncHandler(async (req, res) => {
+  const manualInvoiceRepository = require('../repositories/manualInvoice.repository');
+  const items = await manualInvoiceRepository.listAll();
+  return ApiResponse.ok(res, { items });
+});
+
+const getInvoiceDocument = asyncHandler(async (req, res) => {
+  const manualInvoiceRepository = require('../repositories/manualInvoice.repository');
+  const source = req.params.source;
+  if (source !== 'order' && source !== 'manual') {
+    throw ApiError.badRequest('Invalid invoice source');
+  }
+  const item =
+    source === 'order'
+      ? await manualInvoiceRepository.findOrderInvoice(req.params.id)
+      : await manualInvoiceRepository.findManual(req.params.id);
+  if (!item) throw ApiError.notFound('Invoice not found');
+  return ApiResponse.ok(res, { item });
+});
+
+const saveManualInvoice = asyncHandler(async (req, res) => {
+  const invoiceService = require('../services/invoice.service');
+  const manualInvoiceRepository = require('../repositories/manualInvoice.repository');
+  const body = req.body || {};
+  const gstMode = invoiceService.normalizeGstMode(body.gstMode ?? req.query.gst);
+  const invoiceNumber = String(body.invoiceNumber || '').trim() || `INV-${Date.now()}`;
+  const html = await invoiceService.buildCustomInvoiceHtml(
+    { ...body, invoiceNumber },
+    { gstMode },
+  );
+  const items = (body.items || []).filter((item) => String(item.description || '').trim());
+  const subtotal = items.reduce(
+    (sum, item) => sum + (Number(item.quantity) || 1) * Number(item.rate || 0),
+    0,
+  );
+  const totalAmount = Math.round((subtotal + Number(body.shipping || 0) - Number(body.discount || 0)) * 100) / 100;
+  const saved = await manualInvoiceRepository.upsertManual({
+    invoiceNumber,
+    gstMode,
+    customerName: body.customer?.name,
+    customerEmail: body.customer?.email,
+    totalAmount,
+    payload: { ...body, invoiceNumber, gstMode },
+    html,
+  });
+  return ApiResponse.ok(res, { item: saved }, 'Invoice saved');
+});
+
 const previewCustomInvoice = asyncHandler(async (req, res) => {
   const invoiceService = require('../services/invoice.service');
   const body = req.body || {};
   const gstMode = invoiceService.normalizeGstMode(body.gstMode ?? req.query.gst);
-  const html = invoiceService.buildCustomInvoiceHtml(body, { gstMode });
+  const html = await invoiceService.buildCustomInvoiceHtml(body, { gstMode });
   const invoiceNumber = body.invoiceNumber || `INV-${Date.now()}`;
   return ApiResponse.ok(res, { html, invoiceNumber, gstMode });
 });
@@ -1272,6 +1332,11 @@ module.exports = {
   getOrderInvoice,
   generateOrderInvoice,
   previewCustomInvoice,
+  listInvoices,
+  getInvoiceDocument,
+  saveManualInvoice,
+  getInvoiceBank,
+  saveInvoiceBank,
   sendOrderCustomerEmail,
   getOrderTracking,
   updateOrderStatus,

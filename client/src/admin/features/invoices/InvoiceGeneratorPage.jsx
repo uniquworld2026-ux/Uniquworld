@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileText, Plus, Trash2 } from 'lucide-react'
 import { erpApi } from '@/admin/lib/erpApi'
 import { InvoiceGstTabs } from '@/admin/components/commerce/InvoiceGstTabs'
+import { InvoiceBankForm } from '@/admin/components/commerce/InvoiceBankButton'
 import { OrderInvoicePanel } from '@/admin/components/commerce/OrderInvoicePanel'
 import { Button } from '@/shared/components/ui/Button'
 import { getErrorMessage } from '@/shared/lib/axios'
@@ -19,6 +21,8 @@ const inputClass =
   'w-full rounded-xl border border-admin-border bg-admin-bg px-3 py-2 text-sm outline-none focus:border-admin-accent'
 
 export function InvoiceGeneratorPage() {
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const [gstMode, setGstMode] = useState('with')
   const [form, setForm] = useState({
     invoiceNumber: defaultInvoiceNumber(),
@@ -49,6 +53,14 @@ export function InvoiceGeneratorPage() {
 
   const previewMutation = useMutation({
     mutationFn: () => erpApi.previewCustomInvoice(payload),
+  })
+
+  const saveMutation = useMutation({
+    mutationFn: () => erpApi.saveManualInvoice(payload),
+    onSuccess: (saved) => {
+      qc.invalidateQueries({ queryKey: ['erp', 'commerce', 'invoices'] })
+      navigate(`/admin/invoices/manual/${saved.id}`)
+    },
   })
 
   function updateField(key, value) {
@@ -91,7 +103,24 @@ export function InvoiceGeneratorPage() {
             Switch between GST tax invoices and simple bills without GST.
           </p>
         </div>
-        <InvoiceGstTabs value={gstMode} onChange={setGstMode} />
+        <div className="flex flex-wrap items-center gap-2">
+          <InvoiceGstTabs value={gstMode} onChange={setGstMode} />
+          <a
+            href="#bank-details"
+            className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Bank details
+          </a>
+        </div>
+      </div>
+
+      <div id="bank-details">
+        <InvoiceBankForm
+          onSaved={() => {
+            previewMutation.reset()
+            qc.invalidateQueries({ queryKey: ['erp', 'commerce', 'invoices'] })
+          }}
+        />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
@@ -259,13 +288,28 @@ export function InvoiceGeneratorPage() {
             />
           </label>
 
-          <Button
-            variant="accent"
-            disabled={previewMutation.isPending || !form.customer.name.trim()}
-            onClick={() => previewMutation.mutate()}
-          >
-            {previewMutation.isPending ? 'Generating…' : 'Generate invoice preview'}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              disabled={previewMutation.isPending || !form.customer.name.trim()}
+              onClick={() => previewMutation.mutate()}
+            >
+              {previewMutation.isPending ? 'Generating…' : 'Preview'}
+            </Button>
+            <Button
+              variant="accent"
+              disabled={saveMutation.isPending || !form.customer.name.trim() || payload.items.length === 0}
+              onClick={() => saveMutation.mutate()}
+            >
+              {saveMutation.isPending ? 'Saving…' : 'Save invoice page'}
+            </Button>
+          </div>
+
+          {saveMutation.error ? (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {getErrorMessage(saveMutation.error)}
+            </p>
+          ) : null}
 
           {previewMutation.error ? (
             <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

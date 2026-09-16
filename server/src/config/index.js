@@ -145,12 +145,12 @@ const config = {
   company: {
     name: process.env.COMPANY_NAME || process.env.APP_NAME || 'Uniquworld',
     legalName: process.env.COMPANY_LEGAL_NAME || process.env.APP_NAME || 'Uniquworld',
-    email: process.env.COMPANY_EMAIL || process.env.SMTP_FROM_EMAIL || 'admin@uniquworld.com',
-    phone: process.env.COMPANY_PHONE || '',
-    address: process.env.COMPANY_ADDRESS || '',
-    city: process.env.COMPANY_CITY || '',
-    state: process.env.COMPANY_STATE || '',
-    postalCode: process.env.COMPANY_POSTAL_CODE || '',
+    email: process.env.COMPANY_EMAIL || 'uniquworld2026@gmail.com',
+    phone: process.env.COMPANY_PHONE || '6383528117',
+    address: process.env.COMPANY_ADDRESS || 'No 8, Subagiri Nagar 2nd Street, Chettiyar Agarm, Thundalam',
+    city: process.env.COMPANY_CITY || 'Chennai',
+    state: process.env.COMPANY_STATE || 'Tamil Nadu',
+    postalCode: process.env.COMPANY_POSTAL_CODE || '600077',
     gstin: process.env.COMPANY_GSTIN || '',
     pan: process.env.COMPANY_PAN || '',
     bank: {

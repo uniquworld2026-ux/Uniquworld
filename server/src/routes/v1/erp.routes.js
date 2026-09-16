@@ -32,9 +32,14 @@ router.post('/auth/login', erpController.adminLogin);
 router.post('/auth/verify-otp', erpController.adminVerifyOtp);
 
 router.get('/commerce/orders', requireAdminAccess, erpController.listOrders);
+router.get('/commerce/invoice-bank', requireAdminAccess, erpController.getInvoiceBank);
+router.put('/commerce/invoice-bank', requireAdminAccess, erpController.saveInvoiceBank);
 router.get('/commerce/orders/:id/invoice', requireAdminAccess, erpController.getOrderInvoice);
 router.post('/commerce/orders/:id/invoice', requireAdminAccess, erpController.generateOrderInvoice);
 router.post('/commerce/invoices/preview', requireAdminAccess, erpController.previewCustomInvoice);
+router.get('/commerce/invoices', requireAdminAccess, erpController.listInvoices);
+router.post('/commerce/invoices', requireAdminAccess, erpController.saveManualInvoice);
+router.get('/commerce/invoices/:source/:id', requireAdminAccess, erpController.getInvoiceDocument);
 router.get('/commerce/orders/:id/tracking', requireAdminAccess, erpController.getOrderTracking);
 router.post('/commerce/orders/:id/email', requireAdminAccess, erpController.sendOrderCustomerEmail);
 router.get('/commerce/orders/:id', requireAdminAccess, erpController.getOrderDetail);

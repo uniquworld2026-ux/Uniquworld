@@ -134,6 +134,12 @@ export const adminNavigation = [
         icon: ShoppingCart,
       },
       {
+        id: 'invoices',
+        label: 'Invoice Management',
+        path: '/admin/invoices',
+        icon: FileText,
+      },
+      {
         id: 'invoice-generator',
         label: 'Invoice Generator',
         path: '/admin/invoice-generator',
