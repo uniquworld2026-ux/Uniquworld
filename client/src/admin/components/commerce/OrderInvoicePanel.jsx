@@ -1,4 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import { Download, Mail, Printer, Save, RefreshCw } from 'lucide-react'
 import { Button } from '@/shared/components/ui/Button'
 import { cn } from '@/shared/utils/cn'
@@ -16,6 +18,8 @@ export function OrderInvoicePanel({
   className,
 }) {
   const frameRef = useRef(null)
+  const [downloading, setDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState('')
 
   function printInvoice() {
     const frame = frameRef.current
@@ -24,14 +28,40 @@ export function OrderInvoicePanel({
     frame.contentWindow.print()
   }
 
-  function downloadHtml() {
-    const blob = new Blob([html || ''], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `invoice-${orderNumber || 'order'}.html`
-    a.click()
-    URL.revokeObjectURL(url)
+  async function downloadPdf() {
+    const sheet = frameRef.current?.contentDocument?.querySelector('.sheet')
+    if (!sheet) return
+    setDownloading(true)
+    setDownloadError('')
+    try {
+      const canvas = await html2canvas(sheet, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        windowWidth: 820,
+      })
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const img = canvas.toDataURL('image/jpeg', 0.95)
+      let heightLeft = imgHeight
+      let position = 0
+      pdf.addImage(img, 'JPEG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+      while (heightLeft > 8) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(img, 'JPEG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+      pdf.save(`invoice-${orderNumber || 'order'}.pdf`)
+    } catch {
+      setDownloadError('Could not create the PDF. Try Print invoice and choose Save as PDF.')
+    } finally {
+      setDownloading(false)
+    }
   }
 
   if (!html) {
@@ -66,9 +96,9 @@ export function OrderInvoicePanel({
           <Printer className="h-4 w-4" />
           Print invoice
         </Button>
-        <Button size="sm" variant="outline" onClick={downloadHtml}>
+        <Button size="sm" variant="outline" disabled={downloading} onClick={downloadPdf}>
           <Download className="h-4 w-4" />
-          Download
+          {downloading ? 'Creating PDF…' : 'Download PDF'}
         </Button>
         {onSendEmail ? (
           <Button size="sm" variant="outline" disabled={sending} onClick={() => onSendEmail('invoice')}>
@@ -77,6 +107,8 @@ export function OrderInvoicePanel({
           </Button>
         ) : null}
       </div>
+
+      {downloadError ? <p className="text-sm text-red-600">{downloadError}</p> : null}
 
       <div className="overflow-hidden rounded-2xl border border-admin-border bg-white shadow-admin">
         <iframe
